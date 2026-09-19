@@ -1,21 +1,27 @@
 name: Deploy to GitHub Pages
 
+# Every branch publishes: main becomes the site, anything else a preview under
+# previews/<branch>/. Both land in the `gh-pages` branch, which is what Pages serves.
 on:
   push:
-    branches: [main]
+    branches:
+      - '**'
+      - '!gh-pages'
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
+  pull-requests: write
 
+# One publish per branch: a new push makes the one in flight pointless.
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
+  publish:
+    # A fork cannot write to this repository's gh-pages branch.
+    if: github.event.repository.fork == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -29,25 +35,89 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - id: pages
-        uses: actions/configure-pages@v6
-
       - run: pnpm check
+
+      - id: target
+        name: Work out where this push goes
+        run: |
+          owner=$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          repo='${{ github.event.repository.name }}'
+          site="https://$owner.github.io/$repo"
+
+          if [ "$GITHUB_REF_NAME" = '${{ github.event.repository.default_branch }}' ]; then
+            {
+              echo "preview=false"
+              echo "base=/$repo"
+              echo "url=$site/"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          slug=$(scripts/preview-slug.sh "$GITHUB_REF_NAME")
+          if [ -z "$slug" ]; then
+            echo "✖ No usable preview name for branch $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+          {
+            echo "preview=true"
+            echo "slug=$slug"
+            echo "base=/$repo/previews/$slug"
+            echo "url=$site/previews/$slug/"
+          } >> "$GITHUB_OUTPUT"
 
       - run: pnpm build
         env:
-          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          BASE_PATH: ${{ steps.target.outputs.base }}
 
-      - uses: actions/upload-pages-artifact@v5
-        with:
-          path: dist
+      # Read back by scripts/previews-index.mjs to label the preview with its branch.
+      - name: Note the branch behind the preview
+        if: steps.target.outputs.preview == 'true'
+        env:
+          BRANCH: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+        run: |
+          node -e 'require("node:fs").writeFileSync(
+            "dist/preview.json",
+            JSON.stringify({
+              branch: process.env.BRANCH,
+              sha: process.env.SHA,
+              updated: new Date().toISOString().replace(/\.\d+Z$/, "Z")
+            })
+          )'
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v5
+      - name: Publish to gh-pages
+        env:
+          PREVIEW: ${{ steps.target.outputs.preview }}
+          SLUG: ${{ steps.target.outputs.slug }}
+          PAGES_MESSAGE: ${{ github.ref_name }} @ ${{ github.sha }}
+        run: |
+          if [ "$PREVIEW" = 'true' ]; then
+            scripts/publish-pages.sh preview "$SLUG" dist
+          else
+            scripts/publish-pages.sh site dist
+          fi
+
+      - name: Leave the link
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREVIEW: ${{ steps.target.outputs.preview }}
+          URL: ${{ steps.target.outputs.url }}
+        run: |
+          if [ "$PREVIEW" = 'true' ]; then
+            printf '### Vista previa\n\n%s\n\nRama `%s`, commit `%s`.\n' \
+              "$URL" "$GITHUB_REF_NAME" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf '### Sitio publicado\n\n%s\n\nCommit `%s`.\n' \
+              "$URL" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # Sticky comment on the pull request of this branch, if it has one open.
+          pr=$(gh pr list --head "$GITHUB_REF_NAME" --state open --json number --jq '.[0].number // empty')
+          [ -n "$pr" ] || exit 0
+
+          body=$(printf '**Vista previa de este PR:** %s\n\nActualizada con `%s`. GitHub Pages tarda un minuto en servir el cambio. Se republica en cada push y se borra al eliminar la rama.' \
+            "$URL" "${GITHUB_SHA:0:7}")
+          gh pr comment "$pr" --body "$body" --edit-last --create-if-none ||
+            gh pr comment "$pr" --body "$body" ||
+            echo "▸ Published, but could not comment on the pull request." >&2

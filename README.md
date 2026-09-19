@@ -19,8 +19,13 @@ Colección de web apps estáticas que se publican juntas en GitHub Pages. La pá
 ├── scripts/
 │   ├── build.mjs            # Construye el inicio y todas las apps en dist/
 │   ├── icons.mjs            # Convierte cada icon.svg en el PNG que pide iOS
-│   └── preview.mjs          # Sirve dist/ igual que GitHub Pages
-└── .github/workflows/deploy.yml
+│   ├── preview.mjs          # Sirve dist/ igual que GitHub Pages
+│   ├── preview-slug.sh      # El nombre que le toca a una rama dentro de previews/
+│   ├── previews-index.mjs   # Arma la lista de vistas previas publicadas
+│   └── publish-pages.sh     # Escribe el sitio (o una vista previa) en gh-pages
+└── .github/workflows/
+    ├── deploy.yml           # Publica en cada push
+    └── preview-cleanup.yml  # Quita la vista previa al borrar la rama
 ```
 
 ## Contrato de una app
@@ -63,9 +68,28 @@ BASE_PATH=/apps pnpm preview   # http://localhost:4173/apps/
 
 ## Deploy
 
-Cada push a `main` compila y publica el sitio con GitHub Actions. La ruta base (`/apps`) la da GitHub Pages automáticamente.
+Todo se publica en la rama `gh-pages`, que es la única que GitHub Pages sirve:
 
-Solo la primera vez: en el repositorio, **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+| Lo que se empuja    | Dónde queda           | URL                                  |
+| ------------------- | --------------------- | ------------------------------------ |
+| `main`              | la raíz de `gh-pages` | `…github.io/leo-os/`                 |
+| cualquier otra rama | `previews/<rama>/`    | `…github.io/leo-os/previews/<rama>/` | `…github.io/leo-os/previews/<rama>/`   |
+
+`deploy.yml` corre en cada push: pasa `pnpm check`, compila con la ruta base que le toca y `scripts/publish-pages.sh` escribe el resultado en `gh-pages`. Publicar el sitio no borra las vistas previas, y cada rama solo toca su carpeta; si dos publican a la vez, el script vuelve a leer la rama y reintenta.
+
+Solo la primera vez, y en este orden: primero un push a `main`, que es el que escribe el sitio en la raíz de `gh-pages`; después, en el repositorio, **Settings → Pages → Build and deployment → Source: Deploy from a branch**, y elegir la rama `gh-pages` con la carpeta `/ (root)`. Al revés, el sitio queda en 404 hasta el siguiente push a `main`. Mientras no se cambie el ajuste, Pages sigue sirviendo el último deploy hecho con la opción anterior («GitHub Actions») y nada de esto se ve publicado.
+
+## Vistas previas
+
+Cada rama que no es `main` se publica por su cuenta, para poder abrir un cambio y probarlo antes de mezclarlo.
+
+- El nombre de la carpeta sale del de la rama con la misma regla que las apps —minúsculas, dígitos y guiones—, así que `claude/wizardly-euler` se sirve en `/leo-os/previews/claude-wizardly-euler/`.
+- Si la rama tiene un PR abierto, el workflow deja ahí un comentario con el enlace y lo va actualizando. El enlace sale también en el resumen de cada ejecución, aunque todavía no haya PR.
+- `…/leo-os/previews/` lista las que hay, de la más reciente a la más vieja.
+- Al borrar la rama, `preview-cleanup.yml` quita su carpeta. Cuando no queda ninguna, `previews/` desaparece. GitHub corre ese workflow desde `main`, así que la limpieza empieza a funcionar cuando el archivo llega ahí.
+- GitHub Pages tarda alrededor de un minuto en servir lo que se acaba de publicar.
+
+Una vista previa vive en el mismo origen que el sitio publicado, así que comparte con él `localStorage` e IndexedDB: probar «Me deben» en una vista previa mueve los mismos datos que la app de verdad.
 
 ## Ícono en la pantalla de inicio
 
@@ -99,6 +123,8 @@ Libreta de quién te debe dinero: al abrir se ve cuánto te deben en total, cuá
 - **−** («Me pagaron») registra un pago. Solo lista a quienes deben algo y propone el adeudo completo como monto, que se puede editar para un abono parcial.
 - Vencido es lo que pasó de su fecha de devolución y sigue sin pagarse; con acuerdo de pago, lo que suman los cobros que ya quedaron atrás y todavía no se cubren. El cobro del día no cuenta como vencido hasta el día siguiente. Cada fila de la lista muestra cuánto debe esa persona de vencido, o **Al corriente** si no le ha vencido nada; quien tiene vencido aparece primero.
 - Los pagos no se capturan contra un préstamo en concreto, así que se reparten sobre los préstamos que vencen primero: quien abona salda antes lo más atrasado.
-- Al tocar una persona se ve cuánto debe en total y cuánto ya venció, su historial de préstamos y pagos —cada préstamo con su fecha de devolución, o con su acuerdo y el próximo cobro, y lo que le falta por cubrir—, y ahí mismo se le puede prestar de nuevo, registrar un pago, cambiar su nombre o eliminarla. «Editar» borra movimientos capturados por error.
+- Al tocar una persona se ve cuánto debe en total y cuánto ya venció, su historial de préstamos y pagos —cada préstamo con su fecha de devolución, o **Sin fecha de devolución** si no se pactó ninguna, o con su acuerdo y el próximo cobro, y lo que le falta por cubrir—, y ahí mismo se le puede prestar de nuevo, registrar un pago, cambiar su nombre o eliminarla.
+- Al tocar un movimiento se abre para corregirlo: monto, fechas, acuerdo de pago, cuentas y nota. De quién es y si fue préstamo o pago no se cambian; para eso está «Editar», que saca el botón rojo de cada renglón para borrar lo capturado por error.
+- Solo se puede eliminar a una persona que ya no debe nada, y antes hay que escribir su nombre para confirmar: se va con todo su historial y no se puede deshacer.
 - La lista de bancos («Cuentas») trae las instituciones mexicanas agrupadas: bancos, fintech y no bancarias, banca de desarrollo, corporativos y extranjeros, y efectivo. Se guarda el nombre del banco, nunca un número de cuenta. El banco propio se recuerda para no elegirlo cada vez.
 - Todo vive en el `localStorage` del navegador con las claves `me-deben:*`; no hay servidor ni cuenta. Los montos se guardan en centavos enteros para que los saldos no acumulen errores de redondeo.

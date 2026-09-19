@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { ledger, type MovementKind, type Person } from '$lib/ledger.svelte';
+	import { ledger, type Movement, type MovementKind, type Person } from '$lib/ledger.svelte';
 	import { formatDateShort, formatMoney, parseMoney, toAmountInput, today } from '$lib/money';
 	import { chargeCount, chargeDate, perLabel, plans, type Plan } from '$lib/plan';
 	import BankSelect from './BankSelect.svelte';
@@ -12,9 +12,14 @@
 		kind: MovementKind;
 		/** Si se abre desde una persona, ya se sabe de quién se trata y se salta elegirla. */
 		person?: Person | null;
+		/**
+		 * Un movimiento ya capturado: la hoja lo corrige en vez de registrar uno nuevo. Se edita
+		 * desde la hoja de la persona, así que llega junto con su `person`.
+		 */
+		movement?: Movement | null;
 	}
 
-	let { open = $bindable(), kind, person = null }: Props = $props();
+	let { open = $bindable(), kind, person = null, movement = null }: Props = $props();
 
 	let selected = $state<Person | null>(null);
 	let amount = $state('');
@@ -28,10 +33,28 @@
 	let note = $state('');
 
 	const loan = $derived(kind === 'loan');
-	const title = $derived(loan ? 'Nuevo préstamo' : 'Registrar pago');
+
+	const title = $derived.by(() => {
+		if (movement) return loan ? 'Editar préstamo' : 'Editar pago';
+		return loan ? 'Nuevo préstamo' : 'Registrar pago';
+	});
+
+	const saveLabel = $derived.by(() => {
+		if (movement) return 'Guardar cambios';
+		return loan ? 'Guardar préstamo' : 'Guardar pago';
+	});
 
 	const cents = $derived(parseMoney(amount));
-	const owed = $derived(selected ? ledger.owedBy(selected.id) : 0);
+
+	/** Lo que debe sin contar este movimiento: al editar, el saldo guardado ya lo incluye. */
+	const owed = $derived.by(() => {
+		if (!selected) return 0;
+
+		const balance = ledger.owedBy(selected.id);
+		if (!movement) return balance;
+		return balance + (movement.kind === 'loan' ? -movement.amount : movement.amount);
+	});
+
 	const remaining = $derived(owed - (cents ?? 0));
 	// Un préstamo viejo se captura con las dos fechas en el pasado: ninguna se limita.
 	// Devolver antes de prestar sí es raro, pero solo se avisa; guardar nunca se bloquea por eso.
@@ -58,12 +81,17 @@
 	// Un acuerdo a medio capturar no se puede guardar: le falta el monto o el primer cobro.
 	const complete = $derived(cents !== null && date !== '' && (plan === '' || schedule !== null));
 
-	// Cada vez que se abre la hoja se empieza de cero.
+	// Cada vez que se abre la hoja se parte de cero, o de lo que trae el movimiento que se corrige.
 	$effect(() => {
 		if (open) untrack(reset);
 	});
 
 	function reset() {
+		if (movement) load(movement);
+		else blank();
+	}
+
+	function blank() {
 		selected = person;
 		amount = person && !loan ? toAmountInput(ledger.owedBy(person.id)) : '';
 		date = today();
@@ -77,6 +105,20 @@
 		note = '';
 	}
 
+	/** Un movimiento capturado se edita con sus propios datos, no con los de siempre. */
+	function load(existing: Movement) {
+		selected = person;
+		amount = toAmountInput(existing.amount);
+		date = existing.date;
+		dueDate = existing.dueDate;
+		plan = existing.plan;
+		planAmount = existing.plan === '' ? '' : toAmountInput(existing.planAmount);
+		planStart = existing.planStart;
+		fromBank = existing.fromBank;
+		toBank = existing.toBank;
+		note = existing.note;
+	}
+
 	function pick(picked: Person) {
 		selected = picked;
 		// Lo normal es que paguen todo lo que deben: se propone ese monto y se puede editar.
@@ -86,9 +128,7 @@
 	function save() {
 		if (!selected || !complete || cents === null) return;
 
-		ledger.addMovement({
-			personId: selected.id,
-			kind,
+		const fields = {
 			amount: cents,
 			date,
 			// El acuerdo de pago sustituye a la fecha de devolución: nunca se guardan los dos.
@@ -99,7 +139,10 @@
 			fromBank,
 			toBank,
 			note: note.trim()
-		});
+		};
+
+		if (movement) ledger.updateMovement(movement.id, fields);
+		else ledger.addMovement({ personId: selected.id, kind, ...fields });
 
 		// Mi banco casi nunca cambia: se recuerda como valor por omisión del siguiente movimiento.
 		const mine = loan ? fromBank : toBank;
@@ -231,7 +274,7 @@
 
 		<div class="save">
 			<button class="primary" type="button" disabled={!complete} onclick={save}>
-				{loan ? 'Guardar préstamo' : 'Guardar pago'}
+				{saveLabel}
 			</button>
 		</div>
 	{/if}

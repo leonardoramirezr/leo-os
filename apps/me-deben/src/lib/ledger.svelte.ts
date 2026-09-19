@@ -34,6 +34,12 @@ export interface Movement {
 	createdAt: number;
 }
 
+/**
+ * Los datos de un movimiento que se pueden corregir después de capturarlo. La persona y el
+ * tipo no están: cambiarlos es otro movimiento, no una corrección.
+ */
+export type MovementEdit = Omit<Movement, 'id' | 'personId' | 'kind' | 'createdAt'>;
+
 /** Una persona con su saldo ya calculado, que es lo que pintan las listas. */
 export interface Balance {
 	person: Person;
@@ -365,6 +371,15 @@ class Ledger {
 
 	addMovement(movement: Omit<Movement, 'id' | 'createdAt'>) {
 		this.movements.push({ ...movement, id: newId(), createdAt: Date.now() });
+		save(MOVEMENTS_KEY, this.movements);
+	}
+
+	/** Corrige un movimiento capturado con un dato equivocado. `createdAt` no se toca: es el desempate. */
+	updateMovement(id: string, changes: MovementEdit) {
+		const movement = this.movements.find((candidate) => candidate.id === id);
+		if (!movement) return;
+
+		Object.assign(movement, changes);
 		save(MOVEMENTS_KEY, this.movements);
 	}
 

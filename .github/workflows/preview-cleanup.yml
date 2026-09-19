@@ -1,0 +1,31 @@
+name: Drop the preview
+
+# A deleted branch leaves its preview behind; this takes it out of gh-pages.
+on:
+  delete:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-cleanup
+
+jobs:
+  remove:
+    if: github.event.ref_type == 'branch' && github.event.repository.fork == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Drop previews/<branch>
+        env:
+          DELETED: ${{ github.event.ref }}
+          PAGES_MESSAGE: Drop the preview of ${{ github.event.ref }}
+        run: |
+          slug=$(scripts/preview-slug.sh "$DELETED")
+          [ -n "$slug" ] || exit 0
+          scripts/publish-pages.sh remove "$slug"

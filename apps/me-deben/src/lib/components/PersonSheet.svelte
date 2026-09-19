@@ -2,6 +2,7 @@
 	import { ledger, type Movement, type Person } from '$lib/ledger.svelte';
 	import { formatDate, formatDateShort, formatMoney } from '$lib/money';
 	import { perLabel } from '$lib/plan';
+	import DeletePersonSheet from './DeletePersonSheet.svelte';
 	import MovementSheet from './MovementSheet.svelte';
 	import Sheet from './Sheet.svelte';
 
@@ -15,6 +16,10 @@
 	let editing = $state(false);
 	let lending = $state(false);
 	let collecting = $state(false);
+	let deleting = $state(false);
+	/** El movimiento que se está corrigiendo, y si su hoja está abierta. */
+	let edited = $state<Movement | null>(null);
+	let editOpen = $state(false);
 
 	const owed = $derived(ledger.owedBy(person.id));
 	const overdue = $derived(ledger.overdueBy(person.id));
@@ -34,23 +39,17 @@
 		return '';
 	}
 
+	function editMovement(movement: Movement) {
+		edited = movement;
+		editOpen = true;
+	}
+
 	function removeMovement(movement: Movement) {
 		const what = movement.kind === 'loan' ? 'préstamo' : 'pago';
 		if (!confirm(`¿Eliminar este ${what} de ${formatMoney(movement.amount)}?`)) return;
 
 		ledger.removeMovement(movement.id);
 		if (ledger.movementsOf(person.id).length === 0) editing = false;
-	}
-
-	function removePerson() {
-		const warning =
-			movements.length > 0
-				? `¿Eliminar a ${person.name}? También se borran sus ${movements.length} movimiento(s).`
-				: `¿Eliminar a ${person.name}?`;
-		if (!confirm(warning)) return;
-
-		ledger.removePerson(person.id);
-		open = false;
 	}
 </script>
 
@@ -115,43 +114,53 @@
 							−
 						</button>
 					{/if}
-					<div class="detail">
-						<p class="kind">{movement.kind === 'loan' ? 'Préstamo' : 'Pago'}</p>
-						<p class="meta">
-							{formatDate(movement.date)}{#if route(movement)}&nbsp;· {route(movement)}{/if}
-						</p>
-						{#if movement.plan !== ''}
-							{@const next = ledger.nextChargeOn(movement)}
-							<p class="due" class:late={ledger.isOverdue(movement)}>
-								{formatMoney(movement.planAmount)}
-								{perLabel(movement.plan)}
-								{#if ledger.isOverdue(movement)}
-									· ya venció <span class="amount">{formatMoney(ledger.overdueOn(movement))}</span>
-								{:else if ledger.pendingOn(movement) === 0}
-									· pagado
-								{:else if next !== ''}
-									· próximo cobro el {formatDateShort(next)}
-								{/if}
-							</p>
-						{:else if movement.kind === 'loan' && movement.dueDate}
-							<p class="due" class:late={ledger.isOverdue(movement)}>
-								{#if ledger.isOverdue(movement)}
-									Venció el {formatDateShort(movement.dueDate)} ·
-									<span class="amount">{formatMoney(ledger.pendingOn(movement))}</span> sin pagar
-								{:else if ledger.pendingOn(movement) === 0}
-									Pagado (vencía el {formatDateShort(movement.dueDate)})
-								{:else}
-									Se devuelve el {formatDateShort(movement.dueDate)}
-								{/if}
-							</p>
-						{/if}
-						{#if movement.note}
-							<p class="note">{movement.note}</p>
-						{/if}
-					</div>
-					<span class="amount" class:out={movement.kind === 'loan'} class:in={movement.kind === 'payment'}>
-						{movement.kind === 'loan' ? '+' : '−'}{formatMoney(movement.amount)}
-					</span>
+					<button class="open" type="button" onclick={() => editMovement(movement)}>
+						<span class="detail">
+							<span class="kind">{movement.kind === 'loan' ? 'Préstamo' : 'Pago'}</span>
+							<span class="meta">
+								{formatDate(movement.date)}{#if route(movement)}&nbsp;· {route(movement)}{/if}
+							</span>
+							{#if movement.plan !== ''}
+								{@const next = ledger.nextChargeOn(movement)}
+								<span class="due" class:late={ledger.isOverdue(movement)}>
+									{formatMoney(movement.planAmount)}
+									{perLabel(movement.plan)}
+									{#if ledger.isOverdue(movement)}
+										· ya venció <span class="amount">{formatMoney(ledger.overdueOn(movement))}</span>
+									{:else if ledger.pendingOn(movement) === 0}
+										· pagado
+									{:else if next !== ''}
+										· próximo cobro el {formatDateShort(next)}
+									{/if}
+								</span>
+							{:else if movement.kind === 'loan'}
+								<span class="due" class:late={ledger.isOverdue(movement)}>
+									<!-- Sin fecha ni acuerdo el préstamo nunca vence, y eso también hay que decirlo. -->
+									{#if movement.dueDate === ''}
+										{ledger.pendingOn(movement) === 0 ? 'Pagado' : 'Sin fecha de devolución'}
+									{:else if ledger.isOverdue(movement)}
+										Venció el {formatDateShort(movement.dueDate)} ·
+										<span class="amount">{formatMoney(ledger.pendingOn(movement))}</span> sin pagar
+									{:else if ledger.pendingOn(movement) === 0}
+										Pagado (vencía el {formatDateShort(movement.dueDate)})
+									{:else}
+										Se devuelve el {formatDateShort(movement.dueDate)}
+									{/if}
+								</span>
+							{/if}
+							{#if movement.note}
+								<span class="note">{movement.note}</span>
+							{/if}
+						</span>
+						<span
+							class="amount"
+							class:out={movement.kind === 'loan'}
+							class:in={movement.kind === 'payment'}
+						>
+							{movement.kind === 'loan' ? '+' : '−'}{formatMoney(movement.amount)}
+						</span>
+						<span class="chevron" aria-hidden="true">›</span>
+					</button>
 				</div>
 			{/each}
 		</div>
@@ -172,12 +181,24 @@
 				}}
 			/>
 		</label>
-		<button class="row delete" type="button" onclick={removePerson}>Eliminar persona</button>
+		<!-- Borrar a quien todavía debe perdería la deuda: primero hay que saldarla. -->
+		<button class="row delete" type="button" disabled={owed > 0} onclick={() => (deleting = true)}>
+			Eliminar persona
+		</button>
 	</div>
+	{#if owed > 0}
+		<p class="hint">
+			Solo se puede eliminar a quien ya no debe nada. Todavía te debe {formatMoney(owed)}.
+		</p>
+	{/if}
 </Sheet>
 
 <MovementSheet bind:open={lending} kind="loan" {person} />
 <MovementSheet bind:open={collecting} kind="payment" {person} />
+{#if edited}
+	<MovementSheet bind:open={editOpen} kind={edited.kind} {person} movement={edited} />
+{/if}
+<DeletePersonSheet bind:open={deleting} {person} ondelete={() => (open = false)} />
 
 <style>
 	.plain {
@@ -278,24 +299,43 @@
 		color: var(--muted);
 	}
 
+	/* El renglón entero abre el movimiento, y el botón de borrar queda fuera de ese botón. */
 	.movement {
+		gap: 0;
+		padding: 0;
+	}
+
+	.open {
+		display: flex;
+		flex: 1;
+		align-items: center;
 		gap: 10px;
+		min-width: 0;
+		padding: 10px 16px;
+		border: 0;
+		background: none;
+		text-align: left;
+	}
+
+	.open:active {
+		background: var(--hover);
 	}
 
 	.detail {
+		display: flex;
 		flex: 1;
 		min-width: 0;
+		flex-direction: column;
+		gap: 2px;
 	}
 
 	.kind {
-		margin: 0;
 		font-size: 16px;
 	}
 
 	.meta,
 	.due,
 	.note {
-		margin: 2px 0 0;
 		color: var(--muted);
 		font-size: 13px;
 	}
@@ -323,12 +363,20 @@
 		color: var(--in);
 	}
 
+	.chevron {
+		flex: none;
+		color: var(--faint);
+		font-size: 20px;
+		line-height: 1;
+	}
+
 	.remove {
 		display: grid;
 		width: 24px;
 		height: 24px;
 		flex: none;
 		place-items: center;
+		margin-left: 16px;
 		border: 0;
 		border-radius: 50%;
 		background: var(--danger);
@@ -344,5 +392,15 @@
 
 	.delete:active {
 		background: var(--hover);
+	}
+
+	.delete:disabled {
+		color: var(--faint);
+	}
+
+	.hint {
+		margin: 8px 4px 0;
+		color: var(--muted);
+		font-size: 14px;
 	}
 </style>
