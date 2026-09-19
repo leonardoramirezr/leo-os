@@ -104,10 +104,10 @@ jobs:
           URL: ${{ steps.target.outputs.url }}
         run: |
           if [ "$PREVIEW" = 'true' ]; then
-            printf '### Vista previa\n\n%s\n\nRama `%s`, commit `%s`.\n' \
+            printf '### Preview\n\n%s\n\nBranch `%s`, commit `%s`.\n' \
               "$URL" "$GITHUB_REF_NAME" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
           else
-            printf '### Sitio publicado\n\n%s\n\nCommit `%s`.\n' \
+            printf '### Published site\n\n%s\n\nCommit `%s`.\n' \
               "$URL" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
@@ -116,7 +116,7 @@ jobs:
           pr=$(gh pr list --head "$GITHUB_REF_NAME" --state open --json number --jq '.[0].number // empty')
           [ -n "$pr" ] || exit 0
 
-          body=$(printf '**Vista previa de este PR:** %s\n\nActualizada con `%s`. GitHub Pages tarda un minuto en servir el cambio. Se republica en cada push y se borra al eliminar la rama.' \
+          body=$(printf '**Preview of this PR:** %s\n\nUpdated with `%s`. GitHub Pages takes a minute to serve the change. It is republished on every push and removed when the branch is deleted.' \
             "$URL" "${GITHUB_SHA:0:7}")
           gh pr comment "$pr" --body "$body" --edit-last --create-if-none ||
             gh pr comment "$pr" --body "$body" ||

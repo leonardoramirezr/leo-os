@@ -1,25 +1,25 @@
 /**
- * Acuerdo de pago: en vez de una sola fecha de devolución, el préstamo se cobra por semana
- * o por mes a partir de la primera fecha de cobro, siempre el mismo día de la semana (o del mes).
+ * Payment agreement: instead of a single due date, the loan is collected weekly or monthly
+ * from the first charge date on, always on the same day of the week (or of the month).
  */
 
 import { toDate, toIso } from './money';
 
-/** Cada cuándo se cobra. Vacío es un préstamo sin acuerdo. */
+/** How often it is collected. Empty is a loan without an agreement. */
 export type Plan = '' | 'weekly' | 'monthly';
 
-/** Los dos acuerdos que se pueden pactar, en el orden en que se ofrecen. */
+/** The two agreements that can be arranged, in the order they are offered. */
 export const plans: { value: Plan; label: string; per: string }[] = [
 	{ value: 'weekly', label: 'Por semana', per: 'por semana' },
 	{ value: 'monthly', label: 'Por mes', per: 'por mes' }
 ];
 
-/** Lo guardado pudo escribirlo otra versión: solo estos dos valores son un acuerdo. */
+/** Stored data may come from another version: only these two values are an agreement. */
 export function isPlan(value: unknown): value is Plan {
 	return value === 'weekly' || value === 'monthly';
 }
 
-/** "por semana" o "por mes", para armar frases. Vacío si no hay acuerdo. */
+/** "por semana" or "por mes", to build sentences with. Empty without an agreement. */
 export function perLabel(plan: Plan): string {
 	return plans.find((option) => option.value === plan)?.per ?? '';
 }
@@ -29,8 +29,8 @@ function daysInMonth(year: number, month: number): number {
 }
 
 /**
- * La fecha del cobro número `index` (el primero es el 0). Al sumar meses el día se recorta
- * al último del mes: un acuerdo que empieza el 31 de enero cobra el 28 de febrero.
+ * The date of charge number `index` (the first one is 0). Adding months clamps the day to the
+ * last of the month: an agreement starting on January 31 charges on February 28.
  */
 export function chargeDate(start: string, plan: Plan, index: number): string {
 	const first = toDate(start);
@@ -43,7 +43,7 @@ export function chargeDate(start: string, plan: Plan, index: number): string {
 	return toIso(new Date(month.getFullYear(), month.getMonth(), day));
 }
 
-/** Cuántos cobros ya pasaron antes de `on`. El cobro del mismo día todavía no se vence. */
+/** How many charges fell before `on`. The charge of that same day is not due yet. */
 export function chargesDueBefore(start: string, plan: Plan, on: string): number {
 	if (plan === '' || start === '' || on <= start) return 0;
 
@@ -51,7 +51,7 @@ export function chargesDueBefore(start: string, plan: Plan, on: string): number 
 	const until = toDate(on);
 
 	if (plan === 'weekly') {
-		// Con horario de verano un día dura 23 o 25 horas: se redondea a días completos.
+		// Under daylight saving a day lasts 23 or 25 hours: round to whole days.
 		const days = Math.round((until.getTime() - first.getTime()) / 86_400_000);
 		return Math.floor((days - 1) / 7) + 1;
 	}
@@ -59,11 +59,11 @@ export function chargesDueBefore(start: string, plan: Plan, on: string): number 
 	const months =
 		(until.getFullYear() - first.getFullYear()) * 12 + until.getMonth() - first.getMonth();
 	const day = Math.min(first.getDate(), daysInMonth(until.getFullYear(), until.getMonth()));
-	// El cobro de este mes solo cuenta si su día ya quedó atrás.
+	// This month's charge only counts once its day is behind us.
 	return Math.max(0, until.getDate() <= day ? months : months + 1);
 }
 
-/** En cuántos cobros se cubre un préstamo. El último es el que sobra, y puede ser menor. */
+/** How many charges cover a loan. The last one is the remainder, so it can be smaller. */
 export function chargeCount(amount: number, installment: number): number {
 	return installment > 0 ? Math.ceil(amount / installment) : 0;
 }

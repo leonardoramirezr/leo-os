@@ -17,7 +17,7 @@
 	let lending = $state(false);
 	let collecting = $state(false);
 	let deleting = $state(false);
-	/** El movimiento que se está corrigiendo, y si su hoja está abierta. */
+	/** The movement being corrected, and whether its sheet is open. */
 	let edited = $state<Movement | null>(null);
 	let editOpen = $state(false);
 
@@ -25,12 +25,12 @@
 	const overdue = $derived(ledger.overdueBy(person.id));
 	const movements = $derived(ledger.movementsOf(person.id));
 
-	// Salir del modo edición al cerrar, para no reabrir la hoja con los botones rojos puestos.
+	// Leave edit mode on close, so the sheet does not reopen with the red buttons showing.
 	$effect(() => {
 		if (!open) editing = false;
 	});
 
-	/** "BBVA México → Nu México", o lo que se haya capturado de las dos cuentas. */
+	/** "BBVA México → Nu México", or whatever was filled in of the two accounts. */
 	function route(movement: Movement): string {
 		const { fromBank: from, toBank: to } = movement;
 		if (from && to) return `${from} → ${to}`;
@@ -135,7 +135,7 @@
 								</span>
 							{:else if movement.kind === 'loan'}
 								<span class="due" class:late={ledger.isOverdue(movement)}>
-									<!-- Sin fecha ni acuerdo el préstamo nunca vence, y eso también hay que decirlo. -->
+									<!-- With no date and no agreement the loan never comes due, which also has to be said. -->
 									{#if movement.dueDate === ''}
 										{ledger.pendingOn(movement) === 0 ? 'Pagado' : 'Sin fecha de devolución'}
 									{:else if ledger.isOverdue(movement)}
@@ -181,7 +181,7 @@
 				}}
 			/>
 		</label>
-		<!-- Borrar a quien todavía debe perdería la deuda: primero hay que saldarla. -->
+		<!-- Deleting someone who still owes would lose the debt: it has to be settled first. -->
 		<button class="row delete" type="button" disabled={owed > 0} onclick={() => (deleting = true)}>
 			Eliminar persona
 		</button>
@@ -299,7 +299,7 @@
 		color: var(--muted);
 	}
 
-	/* El renglón entero abre el movimiento, y el botón de borrar queda fuera de ese botón. */
+	/* The whole row opens the movement, and the delete button stays outside that button. */
 	.movement {
 		gap: 0;
 		padding: 0;

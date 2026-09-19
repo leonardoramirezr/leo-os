@@ -5,7 +5,7 @@
 	interface Props {
 		open: boolean;
 		person: Person;
-		/** Se avisa al borrar para que la hoja de la persona se cierre con ella. */
+		/** Deleting is announced so the person's sheet closes along with them. */
 		ondelete: () => void;
 	}
 
@@ -15,12 +15,12 @@
 
 	const movements = $derived(ledger.movementsOf(person.id).length);
 
-	/** Escribir el nombre es la confirmación; no se exige acertar mayúsculas ni espacios. */
+	/** Typing the name is the confirmation; case and surrounding spaces do not have to match. */
 	const confirmed = $derived(
 		typed.trim().toLocaleLowerCase('es') === person.name.toLocaleLowerCase('es')
 	);
 
-	// Cada vez que se abre la hoja hay que volver a escribir el nombre.
+	// Every time the sheet opens, the name has to be typed again.
 	$effect(() => {
 		if (open) typed = '';
 	});

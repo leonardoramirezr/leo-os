@@ -1,8 +1,8 @@
 /**
- * Instituciones mexicanas donde alguien puede tener una cuenta, agrupadas para el selector.
+ * Mexican institutions where someone may hold an account, grouped for the picker.
  *
- * Se guarda el nombre tal cual, no un código: un préstamo viejo sigue mostrando su banco
- * aunque la institución cambie de nombre o desaparezca de esta lista.
+ * The name is stored as it reads, not a code: an old loan keeps showing its bank even if the
+ * institution is renamed or drops off this list.
  */
 export interface BankGroup {
 	label: string;
@@ -107,5 +107,5 @@ export const bankGroups: BankGroup[] = [
 	}
 ];
 
-/** Todos los nombres en una sola lista, para búsquedas y validación. */
+/** Every name in a single list, for lookups and validation. */
 export const allBanks: string[] = bankGroups.flatMap((group) => group.banks);

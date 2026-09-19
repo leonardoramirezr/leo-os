@@ -3,7 +3,7 @@
 	import { formatMoney } from '$lib/money';
 
 	interface Props {
-		/** Para registrar un pago solo tiene sentido quien debe algo; ahí no se crean personas. */
+		/** Only someone who owes can be paid, and no one is created from a payment. */
 		onlyDebtors?: boolean;
 		onpick: (person: Person) => void;
 	}
@@ -25,8 +25,8 @@
 	);
 
 	/**
-	 * El mismo campo busca y da de alta: se ofrece crear solo si lo escrito no es ya
-	 * el nombre de alguien, así no se duplican personas por accidente.
+	 * The same field searches and creates: creating is offered only when what was typed is not
+	 * already someone's name, so people are not duplicated by accident.
 	 */
 	const canCreate = $derived(!onlyDebtors && search !== '' && !ledger.findByName(query));
 

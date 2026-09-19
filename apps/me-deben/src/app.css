@@ -12,7 +12,7 @@
 	--accent: #17a34a;
 	--link: #0a84ff;
 	--danger: #d4382c;
-	/* Salidas (lo que presté) y entradas (lo que me pagaron). */
+	/* Money out (what I lent) and money in (what I was paid). */
 	--out: #d4382c;
 	--in: #17a34a;
 	--shadow: 0 2px 12px rgb(0 0 0 / 0.07);
@@ -88,14 +88,14 @@ dialog::backdrop {
 	background: rgb(0 0 0 / 0.4);
 }
 
-/* Montos: tabulares para que las cifras se alineen en las listas. */
+/* Amounts: tabular figures so the digits line up down a list. */
 .amount {
 	font-variant-numeric: tabular-nums;
 }
 
 /*
- * Listas agrupadas al estilo de Ajustes de iOS. Van aquí y no en cada componente porque
- * los estilos de Svelte tienen alcance local y estas clases las comparten varias vistas.
+ * Grouped lists in the style of iOS Settings. They live here rather than in each component
+ * because Svelte styles are scoped and several views share these classes.
  */
 .group {
 	overflow: hidden;
@@ -149,9 +149,9 @@ dialog::backdrop {
 
 .row select {
 	max-width: 100%;
-	/* `text-align` no basta para el texto ya elegido de un select. */
+	/* `text-align` is not enough for the selected text of a select. */
 	text-align-last: right;
-	/* Un punto menos: los nombres largos de banco caben sin cortarse. */
+	/* One point smaller: long bank names fit without being cut off. */
 	font-size: 15px;
 }
 
@@ -166,7 +166,7 @@ dialog::backdrop {
 	outline: none;
 }
 
-/* Botón principal de las hojas: ancho completo, al fondo. */
+/* The sheets' primary button: full width, at the bottom. */
 .primary {
 	width: 100%;
 	padding: 14px;

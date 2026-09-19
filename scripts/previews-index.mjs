@@ -67,11 +67,11 @@ const items = previews
 writeFileSync(
 	join(dir, 'index.html'),
 	`<!doctype html>
-<html lang="es">
+<html lang="en">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Vistas previas · Leo OS</title>
+		<title>Previews · Leo OS</title>
 		<style>
 			:root {
 				color-scheme: light dark;
@@ -127,7 +127,7 @@ writeFileSync(
 				border-top: 1px solid var(--border);
 			}
 
-			/* Apilados: el nombre de una rama es largo y no se debe cortar. */
+			/* Stacked: a branch name is long and must not be cut off. */
 			a {
 				display: flex;
 				flex-direction: column;
@@ -149,8 +149,8 @@ writeFileSync(
 		</style>
 	</head>
 	<body>
-		<h1>Vistas previas</h1>
-		<p>Una por rama con cambios sin publicar. Se borra al eliminar la rama.</p>
+		<h1>Previews</h1>
+		<p>One per branch with unpublished changes. Deleting the branch removes it.</p>
 		<ul>
 ${items}
 		</ul>

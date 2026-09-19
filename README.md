@@ -1,65 +1,70 @@
 # Leo OS
 
-Colección de web apps estáticas que se publican juntas en GitHub Pages. La página de inicio imita la pantalla de inicio de un iPhone: cada app es un ícono.
+A collection of static web apps published together on GitHub Pages. The home screen mimics an
+iPhone home screen: every app is an icon.
 
-- Inicio: https://leonardoramirezr.github.io/leo-os/
+- Home: https://leonardoramirezr.github.io/leo-os/
 - WillChat: https://leonardoramirezr.github.io/leo-os/willchat/
 - Me deben: https://leonardoramirezr.github.io/leo-os/me-deben/
 
-## Estructura
+## Layout
 
 ```
 .
-├── home/                    # Pantalla de inicio (SvelteKit + Svelte 5)
+├── home/                    # Home screen (SvelteKit + Svelte 5)
 ├── apps/
-│   └── willchat/            # Una carpeta por app
-│       ├── app.json         # Manifiesto: { "name": "WillChat" }
-│       ├── icon.svg         # Ícono de la app
+│   └── willchat/            # One folder per app
+│       ├── app.json         # Manifest: { "name": "WillChat" }
+│       ├── icon.svg         # The app's icon
 │       └── …
 ├── scripts/
-│   ├── build.mjs            # Construye el inicio y todas las apps en dist/
-│   ├── icons.mjs            # Convierte cada icon.svg en el PNG que pide iOS
-│   ├── preview.mjs          # Sirve dist/ igual que GitHub Pages
-│   ├── preview-slug.sh      # El nombre que le toca a una rama dentro de previews/
-│   ├── previews-index.mjs   # Arma la lista de vistas previas publicadas
-│   └── publish-pages.sh     # Escribe el sitio (o una vista previa) en gh-pages
+│   ├── build.mjs            # Builds the home screen and every app into dist/
+│   ├── icons.mjs            # Turns each icon.svg into the PNG iOS asks for
+│   ├── preview.mjs          # Serves dist/ the way GitHub Pages does
+│   ├── preview-slug.sh      # The folder a branch gets inside previews/
+│   ├── previews-index.mjs   # Builds the list of published previews
+│   └── publish-pages.sh     # Writes the site (or a preview) into gh-pages
 └── .github/workflows/
-    ├── deploy.yml           # Publica en cada push
-    └── preview-cleanup.yml  # Quita la vista previa al borrar la rama
+    ├── deploy.yml           # Publishes on every push
+    └── preview-cleanup.yml  # Drops the preview when the branch is deleted
 ```
 
-## Contrato de una app
+## An app's contract
 
-Cada carpeta dentro de `apps/` es una app y se publica en `<BASE_PATH>/<carpeta>/`. El inicio las descubre al compilar, así que no hay que registrarlas en otro lado.
+Every folder inside `apps/` is an app and is published at `<BASE_PATH>/<folder>/`. The home screen
+discovers them at build time, so there is nowhere else to register them.
 
-| Archivo        | Qué debe contener                                                                                        |
-| -------------- | -------------------------------------------------------------------------------------------------------- |
-| `app.json`     | `{ "name": "Nombre visible" }`                                                                           |
-| `icon.svg`     | Ícono cuadrado, a sangre completa y sin esquinas redondeadas: el inicio e iOS aplican la máscara.        |
-| `package.json` | Un script `build` que genere `build/index.html` usando la variable de entorno `BASE_PATH` como ruta base. |
+| File           | What it must hold                                                                                |
+| -------------- | ------------------------------------------------------------------------------------------------ |
+| `app.json`     | `{ "name": "Visible name" }`                                                                     |
+| `icon.svg`     | A square, full-bleed icon with no rounded corners: the home screen and iOS apply the mask.       |
+| `package.json` | A `build` script that writes `build/index.html` using the `BASE_PATH` environment variable as its base path. |
 
-Además:
+On top of that:
 
-- El nombre de la carpeta es parte de la URL: solo minúsculas, dígitos y guiones.
-- El ícono de la pantalla de inicio del iPhone sale del mismo `icon.svg`: no hay que dibujarlo aparte.
-- Todo se renderiza en el cliente; ninguna app necesita backend propio.
-- Todas las apps comparten el origen `leonardoramirezr.github.io`, y por lo tanto `localStorage` e IndexedDB. Usa un prefijo propio en las claves (p. ej. `willchat:`).
+- The folder name is part of the URL: lowercase letters, digits and dashes only.
+- The iPhone home screen icon comes from that same `icon.svg`: there is no second drawing to make.
+- Everything renders on the client; no app needs a backend of its own.
+- Every app shares the `leonardoramirezr.github.io` origin, and therefore `localStorage` and
+  IndexedDB too. Use a prefix of your own in the keys (e.g. `willchat:`).
 
-Para una app nueva con SvelteKit, parte de `pnpm dlx sv create apps/<carpeta> --template minimal --types ts --add sveltekit-adapter="adapter:static"` y copia de `apps/willchat` dos detalles: `paths.base` leído de `BASE_PATH` en `vite.config.ts`, y `ssr = false` + `prerender = true` en `src/routes/+layout.ts`.
+For a new SvelteKit app, start from `pnpm dlx sv create apps/<folder> --template minimal --types ts --add sveltekit-adapter="adapter:static"`
+and copy two details from `apps/willchat`: `paths.base` read from `BASE_PATH` in `vite.config.ts`,
+and `ssr = false` + `prerender = true` in `src/routes/+layout.ts`.
 
-## Desarrollo
+## Development
 
-Requiere Node 24+ y pnpm.
+Requires Node 24+ and pnpm.
 
 ```sh
 pnpm install
-pnpm --filter willchat dev     # una app
-pnpm --filter home dev         # el inicio
-pnpm check                     # svelte-check en todos los proyectos
-pnpm icons                     # regenera los apple-touch-icon.png tras editar un icon.svg
+pnpm --filter willchat dev     # one app
+pnpm --filter home dev         # the home screen
+pnpm check                     # svelte-check across every project
+pnpm icons                     # regenerates the apple-touch-icon.png files after editing an icon.svg
 ```
 
-Para probar el sitio completo como queda publicado:
+To try the whole site the way it is published:
 
 ```sh
 BASE_PATH=/apps pnpm build
@@ -68,63 +73,111 @@ BASE_PATH=/apps pnpm preview   # http://localhost:4173/apps/
 
 ## Deploy
 
-Todo se publica en la rama `gh-pages`, que es la única que GitHub Pages sirve:
+Everything is published to the `gh-pages` branch, which is the only thing GitHub Pages serves:
 
-| Lo que se empuja    | Dónde queda           | URL                                  |
-| ------------------- | --------------------- | ------------------------------------ |
-| `main`              | la raíz de `gh-pages` | `…github.io/leo-os/`                 |
-| cualquier otra rama | `previews/<rama>/`    | `…github.io/leo-os/previews/<rama>/` | `…github.io/leo-os/previews/<rama>/`   |
+| What is pushed | Where it lands         | URL                                  |
+| -------------- | ---------------------- | ------------------------------------ |
+| `main`         | the root of `gh-pages` | `…github.io/leo-os/`                 |
+| any other branch | `previews/<branch>/` | `…github.io/leo-os/previews/<branch>/` |
 
-`deploy.yml` corre en cada push: pasa `pnpm check`, compila con la ruta base que le toca y `scripts/publish-pages.sh` escribe el resultado en `gh-pages`. Publicar el sitio no borra las vistas previas, y cada rama solo toca su carpeta; si dos publican a la vez, el script vuelve a leer la rama y reintenta.
+`deploy.yml` runs on every push: it passes `pnpm check`, builds with the base path it is due and
+`scripts/publish-pages.sh` writes the result into `gh-pages`. Publishing the site does not wipe the
+previews, and each branch only touches its own folder; if two publish at once, the script reads the
+branch again and retries.
 
-Solo la primera vez, y en este orden: primero un push a `main`, que es el que escribe el sitio en la raíz de `gh-pages`; después, en el repositorio, **Settings → Pages → Build and deployment → Source: Deploy from a branch**, y elegir la rama `gh-pages` con la carpeta `/ (root)`. Al revés, el sitio queda en 404 hasta el siguiente push a `main`. Mientras no se cambie el ajuste, Pages sigue sirviendo el último deploy hecho con la opción anterior («GitHub Actions») y nada de esto se ve publicado.
+The very first time, and in this order: first a push to `main`, which is what writes the site to the
+root of `gh-pages`; then, in the repository, **Settings → Pages → Build and deployment → Source:
+Deploy from a branch**, choosing the `gh-pages` branch with the `/ (root)` folder. The other way
+round, the site stays a 404 until the next push to `main`. As long as that setting is left alone,
+Pages keeps serving the last deploy made with the previous option («GitHub Actions») and none of
+this shows up published.
 
-## Vistas previas
+## Previews
 
-Cada rama que no es `main` se publica por su cuenta, para poder abrir un cambio y probarlo antes de mezclarlo.
+Every branch other than `main` is published on its own, so a change can be opened and tried before
+it is merged.
 
-- El nombre de la carpeta sale del de la rama con la misma regla que las apps —minúsculas, dígitos y guiones—, así que `claude/wizardly-euler` se sirve en `/leo-os/previews/claude-wizardly-euler/`.
-- Si la rama tiene un PR abierto, el workflow deja ahí un comentario con el enlace y lo va actualizando. El enlace sale también en el resumen de cada ejecución, aunque todavía no haya PR.
-- `…/leo-os/previews/` lista las que hay, de la más reciente a la más vieja.
-- Al borrar la rama, `preview-cleanup.yml` quita su carpeta. Cuando no queda ninguna, `previews/` desaparece. GitHub corre ese workflow desde `main`, así que la limpieza empieza a funcionar cuando el archivo llega ahí.
-- GitHub Pages tarda alrededor de un minuto en servir lo que se acaba de publicar.
+- The folder name comes from the branch name under the same rule as the apps —lowercase, digits and
+  dashes—, so `claude/wizardly-euler` is served at `/leo-os/previews/claude-wizardly-euler/`.
+- If the branch has an open PR, the workflow leaves a comment there with the link and keeps it
+  updated. The link also shows up in each run's summary, even before there is a PR.
+- `…/leo-os/previews/` lists the ones that exist, newest to oldest.
+- When the branch is deleted, `preview-cleanup.yml` drops its folder. Once none are left,
+  `previews/` disappears. GitHub runs that workflow from `main`, so the cleanup starts working once
+  the file lands there.
+- GitHub Pages takes about a minute to serve what was just published.
 
-Una vista previa vive en el mismo origen que el sitio publicado, así que comparte con él `localStorage` e IndexedDB: probar «Me deben» en una vista previa mueve los mismos datos que la app de verdad.
+A preview lives on the same origin as the published site, so it shares `localStorage` and IndexedDB
+with it: trying «Me deben» in a preview moves the same data as the real app.
 
-## Ícono en la pantalla de inicio
+## Home screen icon
 
-Safari no acepta un SVG para el ícono que se guarda con «Agregar a pantalla de inicio»: si no encuentra un PNG, guarda una captura de la página. Por eso `scripts/icons.mjs` convierte cada `icon.svg` en un `apple-touch-icon.png` de 180 × 180 dentro de `static/` del proyecto, y cada `app.html` lo enlaza con `<link rel="apple-touch-icon">`. El PNG se genera al compilar y al instalar; no se versiona, así que el SVG sigue siendo la única fuente.
+Safari will not take an SVG for the icon saved with «Add to Home Screen»: without a PNG, it saves a
+screenshot of the page instead. That is why `scripts/icons.mjs` turns each `icon.svg` into a
+180 × 180 `apple-touch-icon.png` inside the project's `static/`, and each `app.html` links it with
+`<link rel="apple-touch-icon">`. The PNG is generated at build and install time; it is not
+versioned, so the SVG stays the only source.
 
-El ícono debe ser opaco y llegar a los bordes: iOS le aplica su propia máscara redondeada y pinta de negro lo que esté transparente. Safari también cachea el ícono con ganas; si al probar sigue apareciendo el anterior, cierra la pestaña y vuelve a abrir la página.
+The icon has to be opaque and reach the edges: iOS applies its own rounded mask and paints anything
+transparent black. Safari also caches the icon eagerly; if the old one keeps showing up while
+testing, close the tab and open the page again.
 
-## Inicio
+## Home
 
-Además de las apps publicadas, la pantalla de inicio trae dos íconos propios:
+Besides the published apps, the home screen carries two icons of its own:
 
-- **Recargar**: recarga el sitio, útil cuando corre a pantalla completa y sin controles del navegador.
-- **Ajustes**: cambia el fondo de pantalla. La foto elegida se reduce a 1600 px, se reencoda como JPEG y se guarda en el `localStorage` del navegador con la clave `home:wallpaper`. Sin foto se usa el degradado por omisión, que vuelve al tocar «Quitar».
+- **Recargar**: reloads the site, handy when it runs full screen without browser controls.
+- **Ajustes**: changes the wallpaper. The chosen photo is scaled down to 1600 px, re-encoded as JPEG
+  and stored in the browser's `localStorage` under the key `home:wallpaper`. With no photo, the
+  default gradient is used, which comes back on «Quitar».
 
 ## WillChat
 
-Chat al estilo ChatGPT para crear y editar imágenes con la API de OpenAI y tu propia API key.
+A ChatGPT-style chat for creating and editing images with the OpenAI API and your own API key.
 
-- La API key se guarda en el `localStorage` del navegador y solo se envía a `api.openai.com`.
-- Los modelos de texto y de imagen se eligen tocando el título. La lista sale de `/v1/models`, y también se puede escribir cualquier ID.
-- Las fotos se reducen a 2048 px y se envían como `input_image`. En cada turno se manda la conversación completa, incluidas las imágenes generadas antes, para que el modelo pueda seguir editándolas.
-- Las solicitudes usan `background: true` y se consultan cada 2 s. Generar una imagen puede tardar más de un minuto y Safari en iOS corta las solicitudes que pasan 60 s sin respuesta; así, además, la respuesta se recupera si recargas o cambias de app.
-- La conversación actual se guarda en IndexedDB.
+- The API key is stored in the browser's `localStorage` and is only ever sent to `api.openai.com`.
+- The text and image models are chosen by tapping the title. The list comes from `/v1/models`, and
+  any ID can also be typed in.
+- Photos are scaled down to 2048 px and sent as `input_image`. Every turn sends the whole
+  conversation, generated images included, so the model can keep editing them.
+- Requests use `background: true` and are polled every 2 s. Generating an image can take more than a
+  minute and Safari on iOS cuts off requests that go 60 s without a response; this way the answer is
+  also recovered if you reload or switch apps.
+- The current conversation is stored in IndexedDB.
 
 ## Me deben
 
-Libreta de quién te debe dinero: al abrir se ve cuánto te deben en total, cuánto de eso ya venció, la lista de personas que deben y, abajo, dos botones.
+A ledger of who owes you money: opening it shows how much you are owed in total, how much of that is
+already overdue, the list of people who owe, and two buttons at the bottom.
 
-- **+** («Presté») registra un préstamo nuevo. Primero se elige a quién: aparecen las personas ya registradas y, al escribir un nombre que no está, la opción de agregarlo. Después se captura el monto, cuándo se prestó, cuándo se debe devolver, desde qué banco salió el dinero y a qué banco llegó. La fecha de devolución es opcional: sin ella el préstamo nunca se marca como vencido.
-- El préstamo puede llevar un **acuerdo de pago**, también opcional y con solo dos formas: por semana o por mes. Se captura cuánto se cobra cada semana (o cada mes) y la primera fecha de cobro; de ahí en adelante los cobros caen el mismo día de la semana, o el mismo día del mes recortado al último si ese mes es más corto. El último cobro es lo que sobra del préstamo, así que puede ser menor. Con acuerdo no se pide fecha de devolución: el calendario de cobros la sustituye.
-- **−** («Me pagaron») registra un pago. Solo lista a quienes deben algo y propone el adeudo completo como monto, que se puede editar para un abono parcial.
-- Vencido es lo que pasó de su fecha de devolución y sigue sin pagarse; con acuerdo de pago, lo que suman los cobros que ya quedaron atrás y todavía no se cubren. El cobro del día no cuenta como vencido hasta el día siguiente. Cada fila de la lista muestra cuánto debe esa persona de vencido, o **Al corriente** si no le ha vencido nada; quien tiene vencido aparece primero.
-- Los pagos no se capturan contra un préstamo en concreto, así que se reparten sobre los préstamos que vencen primero: quien abona salda antes lo más atrasado.
-- Al tocar una persona se ve cuánto debe en total y cuánto ya venció, su historial de préstamos y pagos —cada préstamo con su fecha de devolución, o **Sin fecha de devolución** si no se pactó ninguna, o con su acuerdo y el próximo cobro, y lo que le falta por cubrir—, y ahí mismo se le puede prestar de nuevo, registrar un pago, cambiar su nombre o eliminarla.
-- Al tocar un movimiento se abre para corregirlo: monto, fechas, acuerdo de pago, cuentas y nota. De quién es y si fue préstamo o pago no se cambian; para eso está «Editar», que saca el botón rojo de cada renglón para borrar lo capturado por error.
-- Solo se puede eliminar a una persona que ya no debe nada, y antes hay que escribir su nombre para confirmar: se va con todo su historial y no se puede deshacer.
-- La lista de bancos («Cuentas») trae las instituciones mexicanas agrupadas: bancos, fintech y no bancarias, banca de desarrollo, corporativos y extranjeros, y efectivo. Se guarda el nombre del banco, nunca un número de cuenta. El banco propio se recuerda para no elegirlo cada vez.
-- Todo vive en el `localStorage` del navegador con las claves `me-deben:*`; no hay servidor ni cuenta. Los montos se guardan en centavos enteros para que los saldos no acumulen errores de redondeo.
+- **+** («Presté») records a new loan. First comes who: the people already recorded show up, and
+  typing a name that is not there offers to add it. Then the amount, when it was lent, when it is
+  due back, which bank the money left from and which bank it landed in. The due date is optional:
+  without it the loan is never marked overdue.
+- A loan may carry a **payment agreement**, also optional and with only two shapes: weekly or
+  monthly. You enter how much is collected each week (or each month) and the first charge date; from
+  there on the charges fall on the same day of the week, or the same day of the month clamped to the
+  last one if that month is shorter. The last charge is whatever is left of the loan, so it can be
+  smaller. With an agreement no due date is asked for: the schedule of charges replaces it.
+- **−** («Me pagaron») records a payment. It only lists whoever owes something and proposes the
+  whole debt as the amount, which can be edited down for a partial payment.
+- Overdue means past its due date and still unpaid; with a payment agreement, whatever the charges
+  already behind us add up to and are still uncovered. The charge of the day does not count as
+  overdue until the next day. Each row in the list shows how much that person owes overdue, or **Al
+  corriente** when nothing of theirs is overdue; whoever is overdue comes first.
+- Payments are not recorded against a particular loan, so they are spread over the loans that come
+  due first: paying settles the most overdue debt first.
+- Tapping a person shows how much they owe in total and how much is already overdue, their history
+  of loans and payments —each loan with its due date, or **Sin fecha de devolución** when none was
+  agreed, or with its agreement and next charge, and what is left to cover—, and from there you can
+  lend to them again, record a payment, change their name or delete them.
+- Tapping a movement opens it for correcting: amount, dates, payment agreement, accounts and note.
+  Whose it is and whether it was a loan or a payment do not change; that is what «Editar» is for,
+  which brings out the red button on each row to delete what was recorded by mistake.
+- Only a person who no longer owes anything can be deleted, and their name has to be typed first to
+  confirm: they go with their whole history and it cannot be undone.
+- The bank list («Cuentas») carries the Mexican institutions grouped: banks, fintech and
+  non-banking, development banking, corporate and foreign, and cash. The bank's name is stored,
+  never an account number. Your own bank is remembered so it need not be picked every time.
+- Everything lives in the browser's `localStorage` under the `me-deben:*` keys; there is no server
+  and no account. Amounts are stored as whole cents so balances do not accumulate rounding errors.

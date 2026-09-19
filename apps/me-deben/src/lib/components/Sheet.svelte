@@ -4,9 +4,9 @@
 	interface Props {
 		open: boolean;
 		title: string;
-		/** Esquina izquierda del encabezado, normalmente «Cancelar» o «Atrás». */
+		/** Left corner of the header, usually «Cancelar» or «Atrás». */
 		leading?: Snippet;
-		/** Esquina derecha, normalmente «Listo». */
+		/** Right corner, usually «Listo». */
 		trailing?: Snippet;
 		children: Snippet;
 	}
@@ -87,7 +87,7 @@
 		text-align: center;
 	}
 
-	/* Los costados miden lo mismo para que el título quede centrado de verdad. */
+	/* Both sides are the same width so the title is truly centered. */
 	.side {
 		display: flex;
 		width: 76px;

@@ -8,7 +8,7 @@
 
 	let { label, value = $bindable() }: Props = $props();
 
-	/** Un banco guardado que ya salió de la lista sigue siendo una opción válida. */
+	/** A stored bank that has since left the list is still a valid option. */
 	const unlisted = $derived(value && !allBanks.includes(value) ? value : '');
 </script>
 
@@ -34,7 +34,7 @@
 		color: var(--link);
 	}
 
-	/* El menú desplegable se lee mejor alineado a la izquierda que el valor de la fila. */
+	/* The dropdown reads better left-aligned than the row's value does. */
 	option {
 		text-align: left;
 	}

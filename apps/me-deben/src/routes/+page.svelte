@@ -115,7 +115,7 @@
 <style>
 	.screen {
 		max-width: 560px;
-		/* Espacio para que la barra de abajo no tape la última fila. */
+		/* Room so the bottom bar does not cover the last row. */
 		padding: 0 16px calc(120px + env(safe-area-inset-bottom));
 		margin: 0 auto;
 	}
@@ -236,7 +236,7 @@
 		color: var(--muted);
 	}
 
-	/* Barra fija: «menos» a la izquierda para cobrar, «más» a la derecha para prestar. */
+	/* Fixed bar: minus on the left to collect, plus on the right to lend. */
 	.bar {
 		position: fixed;
 		left: 0;

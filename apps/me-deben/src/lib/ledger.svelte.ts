@@ -11,45 +11,45 @@ export type MovementKind = 'loan' | 'payment';
 export interface Movement {
 	id: string;
 	personId: string;
-	/** `loan`: le presté. `payment`: ya me pagó. */
+	/** `loan`: I lent it to them. `payment`: they paid me back. */
 	kind: MovementKind;
-	/** Centavos, siempre positivo. El signo lo da `kind`. */
+	/** Cents, always positive. `kind` is what gives it a sign. */
 	amount: number;
-	/** Cuándo se prestó (o se pagó), en "AAAA-MM-DD". */
+	/** When it was lent (or paid), as "YYYY-MM-DD". */
 	date: string;
-	/** Solo en un préstamo: cuándo se debe devolver. Vacío si no se pactó fecha o si hay acuerdo. */
+	/** Loans only: when it is due back. Empty with no agreed date, or with an agreement. */
 	dueDate: string;
-	/** Acuerdo de pago: cobro por semana o por mes. Vacío si se pactó una sola devolución. */
+	/** Payment agreement: charged weekly or monthly. Empty for a single repayment. */
 	plan: Plan;
-	/** Centavos de cada cobro del acuerdo. 0 si no hay acuerdo. */
+	/** Cents of each charge of the agreement. 0 without an agreement. */
 	planAmount: number;
-	/** Primera fecha de cobro del acuerdo, en "AAAA-MM-DD". Vacío si no hay acuerdo. */
+	/** First charge date of the agreement, as "YYYY-MM-DD". Empty without an agreement. */
 	planStart: string;
-	/** En un préstamo, mi cuenta; en un pago, la suya. Vacío si no se especificó. */
+	/** On a loan, my account; on a payment, theirs. Empty when it was not specified. */
 	fromBank: string;
-	/** En un préstamo, su cuenta; en un pago, la mía. */
+	/** On a loan, their account; on a payment, mine. */
 	toBank: string;
 	note: string;
-	/** Para desempatar movimientos con la misma fecha. */
+	/** Breaks the tie between movements sharing a date. */
 	createdAt: number;
 }
 
 /**
- * Los datos de un movimiento que se pueden corregir después de capturarlo. La persona y el
- * tipo no están: cambiarlos es otro movimiento, no una corrección.
+ * The parts of a movement that can be corrected after it was recorded. The person and the kind
+ * are not here: changing those makes it another movement, not a correction.
  */
 export type MovementEdit = Omit<Movement, 'id' | 'personId' | 'kind' | 'createdAt'>;
 
-/** Una persona con su saldo ya calculado, que es lo que pintan las listas. */
+/** A person with their balance already worked out, which is what the lists render. */
 export interface Balance {
 	person: Person;
-	/** Centavos que me debe. 0 si está al corriente. */
+	/** Cents they owe me. 0 when they are settled up. */
 	owed: number;
-	/** Centavos que me debe y ya pasaron de su fecha de devolución. */
+	/** Cents they owe me that are already past their due date. */
 	overdue: number;
 }
 
-// Todas las apps del sitio comparten el origen: las claves van con prefijo.
+// Every app on the site shares the origin: keys are prefixed.
 const PEOPLE_KEY = 'me-deben:people';
 const MOVEMENTS_KEY = 'me-deben:movements';
 const MY_BANK_KEY = 'me-deben:my-bank';
@@ -59,7 +59,7 @@ function read<T>(key: string, sanitize: (raw: unknown) => T[]): T[] {
 		const raw = localStorage.getItem(key);
 		return raw === null ? [] : sanitize(JSON.parse(raw));
 	} catch {
-		// Sin almacenamiento o con datos corruptos: se empieza vacío en vez de romper la app.
+		// No storage, or corrupt data: start empty instead of breaking the app.
 		return [];
 	}
 }
@@ -76,7 +76,7 @@ function save(key: string, value: unknown) {
 	try {
 		localStorage.setItem(key, JSON.stringify(value));
 	} catch {
-		// Almacenamiento lleno o bloqueado: los cambios viven solo en esta sesión.
+		// Storage full or blocked: the changes live for this session only.
 	}
 }
 
@@ -92,7 +92,7 @@ function isDate(value: unknown): boolean {
 	return /^\d{4}-\d{2}-\d{2}$/.test(text(value));
 }
 
-/** Lo guardado pudo escribirlo una versión anterior: se descarta lo que no cuadre. */
+/** Stored data may come from an earlier version: anything that does not add up is dropped. */
 function parsePeople(raw: unknown): Person[] {
 	if (!Array.isArray(raw)) return [];
 
@@ -111,10 +111,10 @@ function parseMovements(raw: unknown): Movement[] {
 		const personId = text(item.personId);
 		const amount = typeof item.amount === 'number' ? Math.round(item.amount) : 0;
 		const date = isDate(item.date) ? text(item.date) : today();
-		// Lo guardado por versiones anteriores no traía fecha de devolución: se queda sin vencimiento.
+		// What earlier versions stored carried no due date: it stays without one.
 		const dueDate = isDate(item.dueDate) ? text(item.dueDate) : '';
 		const kind = item.kind === 'payment' ? ('payment' as const) : ('loan' as const);
-		// Un acuerdo sin monto o sin primera fecha de cobro no se puede calendarizar: se ignora.
+		// An agreement with no amount or no first charge date cannot be scheduled: it is ignored.
 		const planAmount = typeof item.planAmount === 'number' ? Math.round(item.planAmount) : 0;
 		const plan: Plan =
 			kind === 'loan' && isPlan(item.plan) && planAmount > 0 && isDate(item.planStart)
@@ -129,7 +129,7 @@ function parseMovements(raw: unknown): Movement[] {
 				kind,
 				amount,
 				date,
-				// Con acuerdo de pago mandan los cobros: no hay una sola fecha de devolución.
+				// With an agreement the charges rule: there is no single due date.
 				dueDate: kind === 'payment' || plan !== '' ? '' : dueDate,
 				plan,
 				planAmount: plan === '' ? 0 : planAmount,
@@ -147,19 +147,19 @@ function newId(): string {
 	return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-/** Más reciente primero; a igual fecha, lo capturado después. */
+/** Newest first; at the same date, whatever was recorded later. */
 function byNewest(a: Movement, b: Movement): number {
 	return b.date.localeCompare(a.date) || b.createdAt - a.createdAt;
 }
 
-/** La fecha por la que corre un préstamo: la de devolución, o el primer cobro del acuerdo. */
+/** The date a loan runs by: its due date, or the agreement's first charge. */
 function dueAnchor(movement: Movement): string {
 	return movement.plan === '' ? movement.dueDate : movement.planStart;
 }
 
 /**
- * Lo que vence primero, primero; los préstamos sin fecha de devolución, al final.
- * Es el orden en que se aplican los pagos: quien paga salda antes lo más urgente.
+ * What comes due first goes first; loans with no due date go last. This is the order payments
+ * are applied in: paying settles the most pressing debt first.
  */
 function byDueDate(a: Movement, b: Movement): number {
 	const dueA = dueAnchor(a) || '9999-12-31';
@@ -171,10 +171,10 @@ class Ledger {
 	people = $state<Person[]>([]);
 	movements = $state<Movement[]>([]);
 
-	/** La cuenta desde la que suelo prestar, para no elegirla cada vez. */
+	/** The account I usually lend from, so it need not be picked every time. */
 	#myBank = $state('');
 
-	/** El día de hoy, contra el que se compara cada fecha de devolución. */
+	/** Today, which every due date is compared against. */
 	#today = $state(today());
 
 	constructor() {
@@ -183,7 +183,7 @@ class Ledger {
 		this.#myBank = readString(MY_BANK_KEY);
 	}
 
-	/** La app puede quedar abierta de un día para otro: al volver se recalcula lo vencido. */
+	/** The app may stay open from one day to the next: coming back recomputes what is overdue. */
 	refreshToday() {
 		this.#today = today();
 	}
@@ -197,11 +197,11 @@ class Ledger {
 		try {
 			localStorage.setItem(MY_BANK_KEY, bank);
 		} catch {
-			// Sin almacenamiento: el valor por omisión dura lo que la sesión.
+			// No storage: the default lasts as long as the session.
 		}
 	}
 
-	/** Saldo por persona: préstamos menos pagos, en centavos. */
+	/** Balance per person: loans minus payments, in cents. */
 	#balances = $derived.by(() => {
 		const totals = new Map<string, number>();
 		for (const movement of this.movements) {
@@ -211,7 +211,7 @@ class Ledger {
 		return totals;
 	});
 
-	/** Préstamos de cada persona (los que vencen antes, primero) con lo que ya pagó en total. */
+	/** Each person's loans (soonest due first) with everything they have paid so far. */
 	#byPerson = $derived.by(() => {
 		const entries = new Map<string, { loans: Movement[]; paid: number }>();
 		for (const movement of this.movements) {
@@ -228,8 +228,8 @@ class Ledger {
 	});
 
 	/**
-	 * Centavos que falta cubrir de cada préstamo. Los pagos no se capturan contra un préstamo
-	 * en concreto, así que se reparten sobre los que vencen primero.
+	 * Cents left to cover on each loan. Payments are not recorded against a particular loan, so
+	 * they are spread over the ones that come due first.
 	 */
 	#pending = $derived.by(() => {
 		const pending = new Map<string, number>();
@@ -244,7 +244,7 @@ class Ledger {
 		return pending;
 	});
 
-	/** Lo que ya venció de cada persona, sumando préstamo por préstamo. */
+	/** What is already overdue per person, summed loan by loan. */
 	#overdues = $derived.by(() => {
 		const overdues = new Map<string, number>();
 		for (const [personId, { loans }] of this.#byPerson) {
@@ -256,7 +256,7 @@ class Ledger {
 		return overdues;
 	});
 
-	/** Todas las personas con su saldo: primero quien tiene vencido, luego quien más debe. */
+	/** Everyone with their balance: whoever is overdue first, then whoever owes the most. */
 	balances = $derived.by((): Balance[] =>
 		this.people
 			.map((person) => ({
@@ -272,16 +272,16 @@ class Ledger {
 			)
 	);
 
-	/** Quienes me deben algo ahora mismo. */
+	/** Whoever owes me something right now. */
 	debtors = $derived(this.balances.filter((entry) => entry.owed > 0));
 
-	/** Registrados que no deben nada: ya pagaron, o apenas se agregaron. */
+	/** Recorded people who owe nothing: they paid up, or were just added. */
 	settled = $derived(this.balances.filter((entry) => entry.owed <= 0));
 
-	/** Suma de lo que me deben. Un saldo a favor de alguien no resta al total. */
+	/** Everything I am owed. A balance in someone's favor does not subtract from the total. */
 	total = $derived(this.debtors.reduce((sum, entry) => sum + entry.owed, 0));
 
-	/** Suma de lo vencido de todas las personas. */
+	/** Everything overdue, across all people. */
 	totalOverdue = $derived(this.debtors.reduce((sum, entry) => sum + entry.overdue, 0));
 
 	owedBy(personId: string): number {
@@ -292,14 +292,14 @@ class Ledger {
 		return this.#overdues.get(personId) ?? 0;
 	}
 
-	/** Centavos que faltan por cubrir de un préstamo. Un pago no tiene pendiente: es 0. */
+	/** Cents left to cover on a loan. A payment has nothing pending: it is 0. */
 	pendingOn(movement: Movement): number {
 		return this.#pending.get(movement.id) ?? 0;
 	}
 
 	/**
-	 * Centavos de un préstamo que ya debían estar pagados hoy: todo si pasó su fecha de
-	 * devolución, o lo que suman los cobros del acuerdo que ya quedaron atrás.
+	 * Cents of a loan that should already be paid today: all of it once its due date passed, or
+	 * the sum of the agreement's charges that are behind us.
 	 */
 	#dueSoFar(movement: Movement): number {
 		if (movement.plan !== '') {
@@ -309,7 +309,7 @@ class Ledger {
 		return movement.dueDate !== '' && movement.dueDate < this.#today ? movement.amount : 0;
 	}
 
-	/** Lo vencido de un préstamo: lo que ya debía estar pagado y sigue sin cubrirse. */
+	/** What is overdue on a loan: what should already be paid and is still uncovered. */
 	overdueOn(movement: Movement): number {
 		if (movement.kind !== 'loan') return 0;
 
@@ -317,14 +317,14 @@ class Ledger {
 		return Math.max(0, this.#dueSoFar(movement) - covered);
 	}
 
-	/** Un préstamo con algo vencido: pasó su fecha de devolución, o le falta un cobro del acuerdo. */
+	/** A loan with something overdue: its due date passed, or it is missing a charge. */
 	isOverdue(movement: Movement): boolean {
 		return this.overdueOn(movement) > 0;
 	}
 
 	/**
-	 * La fecha del siguiente cobro de un acuerdo que todavía está por venir. Vacía si el préstamo
-	 * ya se pagó o si todos sus cobros quedaron atrás, que es cuando solo queda lo vencido.
+	 * The date of an agreement's next charge still to come. Empty once the loan is paid off, or
+	 * once every charge is behind us, which is when only the overdue part is left.
 	 */
 	nextChargeOn(movement: Movement): string {
 		if (movement.kind !== 'loan' || movement.plan === '' || this.pendingOn(movement) === 0) {
@@ -340,7 +340,7 @@ class Ledger {
 		return this.movements.filter((movement) => movement.personId === personId).sort(byNewest);
 	}
 
-	/** Busca por nombre sin distinguir mayúsculas ni espacios, para no duplicar personas. */
+	/** Looks up a name ignoring case and surrounding spaces, so people are not duplicated. */
 	findByName(name: string): Person | undefined {
 		const wanted = name.trim().toLocaleLowerCase('es');
 		return this.people.find((person) => person.name.toLocaleLowerCase('es') === wanted);
@@ -349,7 +349,7 @@ class Ledger {
 	addPerson(name: string): Person {
 		this.people.push({ id: newId(), name: name.trim() });
 		save(PEOPLE_KEY, this.people);
-		// El elemento del arreglo, no el objeto suelto: así quien lo reciba ve los cambios de nombre.
+		// The array's element, not the loose object: whoever gets it then sees renames.
 		return this.people[this.people.length - 1];
 	}
 
@@ -361,7 +361,7 @@ class Ledger {
 		save(PEOPLE_KEY, this.people);
 	}
 
-	/** Borra a la persona y todo su historial. */
+	/** Deletes the person and their whole history. */
 	removePerson(id: string) {
 		this.people = this.people.filter((person) => person.id !== id);
 		this.movements = this.movements.filter((movement) => movement.personId !== id);
@@ -374,7 +374,7 @@ class Ledger {
 		save(MOVEMENTS_KEY, this.movements);
 	}
 
-	/** Corrige un movimiento capturado con un dato equivocado. `createdAt` no se toca: es el desempate. */
+	/** Corrects a movement recorded with wrong data. `createdAt` is left alone: it breaks ties. */
 	updateMovement(id: string, changes: MovementEdit) {
 		const movement = this.movements.find((candidate) => candidate.id === id);
 		if (!movement) return;
