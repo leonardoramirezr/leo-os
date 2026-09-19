@@ -10,11 +10,11 @@
 	interface Props {
 		open: boolean;
 		kind: MovementKind;
-		/** Si se abre desde una persona, ya se sabe de quién se trata y se salta elegirla. */
+		/** Opened from a person: who this is about is already known, so picking is skipped. */
 		person?: Person | null;
 		/**
-		 * Un movimiento ya capturado: la hoja lo corrige en vez de registrar uno nuevo. Se edita
-		 * desde la hoja de la persona, así que llega junto con su `person`.
+		 * An already recorded movement: the sheet corrects it instead of recording a new one. It is
+		 * edited from the person's sheet, so it arrives together with its `person`.
 		 */
 		movement?: Movement | null;
 	}
@@ -46,7 +46,7 @@
 
 	const cents = $derived(parseMoney(amount));
 
-	/** Lo que debe sin contar este movimiento: al editar, el saldo guardado ya lo incluye. */
+	/** What they owe without this movement: when editing, the stored balance already counts it. */
 	const owed = $derived.by(() => {
 		if (!selected) return 0;
 
@@ -56,13 +56,13 @@
 	});
 
 	const remaining = $derived(owed - (cents ?? 0));
-	// Un préstamo viejo se captura con las dos fechas en el pasado: ninguna se limita.
-	// Devolver antes de prestar sí es raro, pero solo se avisa; guardar nunca se bloquea por eso.
+	// An old loan is recorded with both dates in the past: neither one is capped.
+	// Paying back before lending is odd, so it is flagged; saving is never blocked over it.
 	const badDueDate = $derived(loan && plan === '' && dueDate !== '' && dueDate < date);
 
 	const planCents = $derived(parseMoney(planAmount));
 
-	/** Los cobros que saldrían del acuerdo, para explicarlo antes de guardar. */
+	/** The charges the agreement would produce, to spell it out before saving. */
 	const schedule = $derived.by(() => {
 		if (!loan || plan === '' || cents === null || planCents === null || planStart === '') {
 			return null;
@@ -72,16 +72,16 @@
 		return {
 			count,
 			each: planCents,
-			// El último cobro es lo que sobra del préstamo, así que puede ser menor.
+			// The last charge is the remainder of the loan, so it can be smaller.
 			last: cents - (count - 1) * planCents,
 			end: chargeDate(planStart, plan, count - 1)
 		};
 	});
 
-	// Un acuerdo a medio capturar no se puede guardar: le falta el monto o el primer cobro.
+	// A half-filled agreement cannot be saved: it is missing the amount or the first charge.
 	const complete = $derived(cents !== null && date !== '' && (plan === '' || schedule !== null));
 
-	// Cada vez que se abre la hoja se parte de cero, o de lo que trae el movimiento que se corrige.
+	// Every time the sheet opens it starts blank, or from the movement being corrected.
 	$effect(() => {
 		if (open) untrack(reset);
 	});
@@ -99,13 +99,13 @@
 		plan = '';
 		planAmount = '';
 		planStart = '';
-		// Mi cuenta de siempre viene precargada; la de la otra persona cambia en cada préstamo.
+		// My usual account comes prefilled; the other person's changes with every loan.
 		fromBank = loan ? ledger.myBank : '';
 		toBank = loan ? '' : ledger.myBank;
 		note = '';
 	}
 
-	/** Un movimiento capturado se edita con sus propios datos, no con los de siempre. */
+	/** A recorded movement is edited with its own data, not with the usual defaults. */
 	function load(existing: Movement) {
 		selected = person;
 		amount = toAmountInput(existing.amount);
@@ -121,7 +121,7 @@
 
 	function pick(picked: Person) {
 		selected = picked;
-		// Lo normal es que paguen todo lo que deben: se propone ese monto y se puede editar.
+		// People usually pay off everything they owe: that amount is proposed, and can be edited.
 		if (!loan) amount = toAmountInput(ledger.owedBy(picked.id));
 	}
 
@@ -131,7 +131,7 @@
 		const fields = {
 			amount: cents,
 			date,
-			// El acuerdo de pago sustituye a la fecha de devolución: nunca se guardan los dos.
+			// The payment agreement replaces the due date: the two are never stored together.
 			dueDate: loan && plan === '' ? dueDate : '',
 			plan: loan ? plan : '',
 			planAmount: loan && plan !== '' ? (planCents ?? 0) : 0,
@@ -144,7 +144,7 @@
 		if (movement) ledger.updateMovement(movement.id, fields);
 		else ledger.addMovement({ personId: selected.id, kind, ...fields });
 
-		// Mi banco casi nunca cambia: se recuerda como valor por omisión del siguiente movimiento.
+		// My bank hardly ever changes: it is remembered as the default for the next movement.
 		const mine = loan ? fromBank : toBank;
 		if (mine) ledger.myBank = mine;
 
@@ -195,7 +195,7 @@
 						{/each}
 					</select>
 				</label>
-				<!-- Con acuerdo de pago no hay una sola devolución, sino cobros: el campo sobra. -->
+				<!-- With an agreement there is no single repayment but charges: the field is pointless. -->
 				{#if plan === ''}
 					<label class="row">
 						<span class="label">Se devuelve</span>
@@ -314,7 +314,7 @@
 		color: var(--link);
 	}
 
-	/* El menú desplegable se lee mejor alineado a la izquierda que el valor de la fila. */
+	/* The dropdown reads better left-aligned than the row's value does. */
 	option {
 		text-align: left;
 	}

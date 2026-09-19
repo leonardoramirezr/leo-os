@@ -1,6 +1,6 @@
 /**
- * Los montos se guardan en centavos enteros: sumar y restar pesos como número flotante
- * acumula errores (0.1 + 0.2 ≠ 0.3) y aquí los saldos se calculan sumando movimientos.
+ * Amounts are stored as whole cents: adding and subtracting pesos as floating point numbers
+ * accumulates errors (0.1 + 0.2 ≠ 0.3), and every balance here is a sum of movements.
  */
 
 const currency = new Intl.NumberFormat('es-MX', {
@@ -14,7 +14,7 @@ export function formatMoney(cents: number): string {
 	return currency.format(cents / 100);
 }
 
-/** Lo que el usuario escribió en el campo de monto, a centavos. `null` si no es un monto válido. */
+/** What the user typed into the amount field, in cents. `null` when it is not a valid amount. */
 export function parseMoney(input: string): number | null {
 	const cleaned = input.replace(/[\s,$]/g, '');
 	if (!/^\d*\.?\d*$/.test(cleaned) || cleaned === '' || cleaned === '.') return null;
@@ -23,7 +23,7 @@ export function parseMoney(input: string): number | null {
 	return Number.isFinite(cents) && cents > 0 ? cents : null;
 }
 
-/** El monto en el formato que espera el campo de texto: "1234.50". */
+/** The amount in the format the text field expects: "1234.50". */
 export function toAmountInput(cents: number): string {
 	return (cents / 100).toFixed(2);
 }
@@ -31,7 +31,7 @@ export function toAmountInput(cents: number): string {
 const longDate = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
 const shortDate = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short' });
 
-/** Las fechas se guardan como "AAAA-MM-DD" y se leen como fecha local, no UTC. */
+/** Dates are stored as "YYYY-MM-DD" and read as local dates, not UTC. */
 export function toDate(iso: string): Date {
 	const [year, month, day] = iso.split('-').map(Number);
 	return new Date(year, month - 1, day);
@@ -41,21 +41,21 @@ export function formatDate(iso: string): string {
 	return longDate.format(toDate(iso));
 }
 
-/** Fechas de este año sin el año: "3 mar". */
+/** Dates in the current year drop the year: "3 mar". */
 export function formatDateShort(iso: string): string {
 	const date = toDate(iso);
 	if (date.getFullYear() !== new Date().getFullYear()) return longDate.format(date);
 	return shortDate.format(date).replace('.', '');
 }
 
-/** Una fecha local de vuelta a "AAAA-MM-DD". */
+/** A local date back to "YYYY-MM-DD". */
 export function toIso(date: Date): string {
 	const month = `${date.getMonth() + 1}`.padStart(2, '0');
 	const day = `${date.getDate()}`.padStart(2, '0');
 	return `${date.getFullYear()}-${month}-${day}`;
 }
 
-/** Hoy en "AAAA-MM-DD", en la zona horaria del navegador. */
+/** Today as "YYYY-MM-DD", in the browser's time zone. */
 export function today(): string {
 	return toIso(new Date());
 }

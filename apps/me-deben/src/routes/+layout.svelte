@@ -5,7 +5,7 @@
 
 	let { children } = $props();
 
-	// La app se queda abierta de un día para otro: al volver a ella se recalcula lo vencido.
+	// The app stays open from one day to the next: coming back to it recomputes what is overdue.
 	$effect(() => {
 		const refresh = () => ledger.refreshToday();
 		document.addEventListener('visibilitychange', refresh);
