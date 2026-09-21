@@ -19,7 +19,8 @@ iPhone home screen: every app is an icon.
 │       └── …
 ├── shared/                  # The account and the database, used by the home screen and every app
 ├── db/
-│   └── schema.sql           # The tables and the row level security policies
+│   ├── schema.ts            # The models: the tables and their row level security policies
+│   └── migrations/          # Generated from the models; the deploy applies them
 ├── scripts/
 │   ├── build.mjs            # Builds the home screen and every app into dist/
 │   ├── icons.mjs            # Turns each icon.svg into the PNG iOS asks for
@@ -65,8 +66,11 @@ pnpm install
 cp .env.example .env           # where Neon is; without it every screen says there is no database
 pnpm --filter willchat dev     # one app
 pnpm --filter home dev         # the home screen
-pnpm check                     # svelte-check across every project
+pnpm check                     # svelte-check across every project, and the models against the migrations
 pnpm icons                     # regenerates the apple-touch-icon.png files after editing an icon.svg
+
+pnpm db:generate               # writes the migration for what changed in db/schema.ts
+pnpm db:migrate                # applies the pending migrations to DATABASE_URL
 ```
 
 To try the whole site the way it is published:
@@ -88,7 +92,7 @@ database and is queried straight from the browser. There is still no backend of 
   with `rememberMe`, which makes the cookie outlive closing the tab; how long it may live is the
   session lifetime configured in the Neon console.
 - **One account, one set of rows.** Every table carries the account a row belongs to, and the
-  policies in `db/schema.sql` only ever let `auth.user_id()` — the account behind the request's
+  policies in `db/schema.ts` only ever let `auth.user_id()` — the account behind the request's
   token — see its own. Signed out there is no token, and the `anonymous` role is granted nothing.
 - **Images stay on the device.** The wallpaper and WillChat's conversation are far too large for
   rows read on every open, so they stay in `localStorage` and IndexedDB. Their keys carry the
@@ -102,6 +106,36 @@ database and is queried straight from the browser. There is still no backend of 
 `shared/` holds all of this — the two clients, the sign-in screen, the account panel — and is a
 workspace package every project depends on.
 
+### Models and migrations
+
+`db/schema.ts` is the models: the one place a table is described. The row types the browser works
+in come from it too, so a column is spelled once and the apps stop typechecking if it moves.
+
+A change to it is a change in two steps:
+
+```sh
+# 1. Edit db/schema.ts, then write the SQL for what changed
+pnpm db:generate
+
+# 2. Read the migration it wrote, commit it next to the models
+git add db/migrations
+```
+
+`pnpm check` fails if you skip the first step — and writes the missing migration while it is at it,
+so the fix is to read what it left in `db/migrations/` and commit that.
+
+Applying them is the deploy's job: `deploy.yml` runs `pnpm db:migrate` on the default branch,
+before building. Each migration runs once, in order, and the database remembers which ones it has
+seen. To apply them by hand, put the connection string in `DATABASE_URL` and run `pnpm db:migrate`.
+
+Only the default branch migrates. The migrations are one line of history, and two branches applying
+their own would tangle it, so **a preview runs against whatever schema `main` last left** — a branch
+that needs a new column has to be merged before its preview works.
+
+Two things drizzle-kit does not track, and `db/migrations/0001_grants.sql` does by hand: which
+roles may reach a table at all, and that a table a later migration creates inherits the same. That
+last part is what keeps a new model from needing anything added there.
+
 ### Setting it up
 
 In the [Neon console](https://console.neon.tech), on the project this site uses:
@@ -110,17 +144,28 @@ In the [Neon console](https://console.neon.tech), on the project this site uses:
    `https://leonardoramirezr.github.io` as a trusted domain — previews live on the same origin, so
    one entry covers them all — and set the session lifetime to a year.
 2. **Data API.** Turn it on and copy its URL (`…/rest/v1`). If it asks which origins may call it,
-   that same one.
-3. **Tables.** Run `db/schema.sql` in the SQL editor. It can be run again later; nothing in it
-   drops anything.
+   that same one. Do this before the first migration: the `authenticated` and `anonymous` roles the
+   policies name are its, and turning it on is what creates them.
+3. **Tables.** They come from the migrations, which the deploy applies on its own. To do it by
+   hand instead: `DATABASE_URL=… pnpm db:migrate`.
 
-Then, in this repository under **Settings → Secrets and variables → Actions → Variables**, add
-`NEON_AUTH_URL` and `NEON_DATA_API_URL` with those two URLs, and push. Neither is a secret: both
-are the public addresses of services that decide for themselves what the caller may see, and both
-end up in the published JavaScript. For `pnpm dev` and `pnpm build` the same two values go in a
-`.env` at the root, as `VITE_NEON_AUTH_URL` and `VITE_NEON_DATA_API_URL`.
+Then, in this repository under **Settings → Secrets and variables → Actions**:
 
-A build with neither of them still builds and runs, and every screen says there is no database.
+| | Name | What |
+| --- | --- | --- |
+| **Variables** | `NEON_AUTH_URL` | The Auth URL from step 1 |
+| **Variables** | `NEON_DATA_API_URL` | The Data API URL from step 2 |
+| **Secrets** | `DATABASE_URL` | The project's connection string, for the migrations |
+
+The two URLs are not secrets: they are the public addresses of services that decide for themselves
+what the caller may see, and they end up in the published JavaScript either way. The connection
+string is: it opens the whole database with none of the policies in the way, which is why only the
+default branch's run is given it.
+
+For `pnpm dev`, `pnpm build` and `pnpm db:migrate`, the same three values go in a `.env` at the
+root — see `.env.example`.
+
+A build with no Neon URLs still builds and runs, and every screen says there is no database.
 
 > **Safari and the cookie.** The site is served from `github.io` and Neon Auth from its own domain,
 > so its session cookie is a third-party one. Safari blocks those by default, which would leave the
@@ -137,8 +182,9 @@ Everything is published to the `gh-pages` branch, which is the only thing GitHub
 | `main`         | the root of `gh-pages` | `…github.io/leo-os/`                 |
 | any other branch | `previews/<branch>/` | `…github.io/leo-os/previews/<branch>/` |
 
-`deploy.yml` runs on every push: it passes `pnpm check`, builds with the base path it is due and
-`scripts/publish-pages.sh` writes the result into `gh-pages`. Publishing the site does not wipe the
+`deploy.yml` runs on every push: it passes `pnpm check`, brings the database up to date if this is
+the default branch, builds with the base path it is due and `scripts/publish-pages.sh` writes the
+result into `gh-pages`. Publishing the site does not wipe the
 previews, and each branch only touches its own folder; if two publish at once, the script reads the
 branch again and retries.
 

@@ -61,7 +61,7 @@ data», including what has to be set up in the Neon console.
 home/            The home screen
 apps/<slug>/     One folder per app; the slug is part of the URL
 shared/          The account and the database; every project depends on it
-db/schema.sql    The tables and the row level security policies
+db/              The models (schema.ts) and the migrations generated from them
 scripts/         build, icons, local preview, and publishing to the gh-pages branch
 .github/workflows/  deploy.yml on every push, preview-cleanup.yml when a branch is deleted
 ```
@@ -75,8 +75,11 @@ pnpm install
 cp .env.example .env           # where Neon is; without it every screen says there is no database
 pnpm --filter me-deben dev     # one app
 pnpm --filter home dev         # the home screen
-pnpm check                     # svelte-check across every project
+pnpm check                     # svelte-check across every project, and the models against the migrations
 pnpm icons                     # regenerates the apple-touch-icon.png files after editing an icon.svg
+
+pnpm db:generate               # writes the migration for what changed in db/schema.ts
+pnpm db:migrate                # applies the pending migrations to DATABASE_URL
 
 BASE_PATH=/leo-os pnpm build   # the whole site, as it gets published
 BASE_PATH=/leo-os pnpm preview # http://localhost:4173/leo-os/
@@ -111,8 +114,13 @@ to register it.
   the device (`local(…)`, IndexedDB), under keys that carry the account too, and every read and
   write of those is wrapped in `try`/`catch`: the browser may have site data blocked. Keys keep
   their app's prefix either way (`home:wallpaper`, `me-deben:*`, `willchat:*`).
-- **A table is declared twice**, in `db/schema.sql` and in `shared/src/database.ts`. Nothing
-  generates one from the other.
+- **A change to the database starts in `db/schema.ts`**, never in the database and never in a
+  migration by hand: edit the models, run `pnpm db:generate`, and commit the migration it writes
+  next to them. The row types the apps use come from the same models. `pnpm check` fails when the
+  two have drifted, and leaves the missing migration behind for you to read.
+- **Only the default branch migrates**, so a branch that needs a new column has to be merged before
+  its preview works. Grants are the one thing the models do not carry: they live in
+  `db/migrations/0001_grants.sql`, which covers the tables of every migration still to come.
 - **Dependencies**: as few as possible. No UI or styling frameworks; CSS is written by hand inside
   each component.
 - **Nothing leaves the browser** but the user's own data, to the user's own database, and what they

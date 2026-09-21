@@ -2,3 +2,13 @@ packages:
   - home
   - apps/*
   - shared
+  - db
+
+# drizzle-kit runs on esbuild, which needs its install script to put the platform binary in place.
+allowBuilds:
+  esbuild: true
+
+# Both were published more recently than pnpm's default quarantine and are wanted anyway.
+minimumReleaseAgeExclude:
+  - drizzle-kit@0.31.11
+  - drizzle-orm@0.45.3

@@ -1,0 +1,21 @@
+{
+	"name": "@leo-os/db",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"exports": {
+		"./schema": "./schema.ts"
+	},
+	"scripts": {
+		"generate": "drizzle-kit generate",
+		"migrate": "node migrate.mjs",
+		"check": "node drift.mjs"
+	},
+	"dependencies": {
+		"drizzle-orm": "^0.45.3"
+	},
+	"devDependencies": {
+		"drizzle-kit": "^0.31.11",
+		"postgres": "^3.4.9"
+	}
+}
