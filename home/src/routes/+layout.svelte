@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Account } from '@leo-os/shared';
 	import icon from '$lib/icon.svg';
 
 	let { children } = $props();
@@ -8,7 +9,9 @@
 	<link rel="icon" href={icon} />
 </svelte:head>
 
-{@render children()}
+<Account>
+	{@render children()}
+</Account>
 
 <style>
 	:global(html, body) {

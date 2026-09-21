@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { AccountPanel } from '@leo-os/shared';
 	import { wallpaper } from '$lib/settings.svelte';
 	import { prepareWallpaper } from '$lib/wallpaper';
 
@@ -27,10 +28,12 @@
 		error = '';
 		try {
 			wallpaper.value = await prepareWallpaper(file);
+			// The photo is on screen either way; it is only the keeping of it that may have failed.
+			if (!wallpaper.stored) {
+				error = 'La imagen se aplicó, pero no se pudo guardar: se perderá al recargar.';
+			}
 		} catch {
-			error = wallpaper.value
-				? 'La imagen se aplicó, pero no se pudo guardar: se perderá al recargar.'
-				: 'No se pudo usar esa imagen.';
+			error = 'No se pudo usar esa imagen.';
 		} finally {
 			busy = false;
 		}
@@ -38,11 +41,7 @@
 
 	function reset() {
 		error = '';
-		try {
-			wallpaper.value = '';
-		} catch {
-			// The default gradient is back; there is nothing left to store.
-		}
+		wallpaper.value = '';
 	}
 </script>
 
@@ -81,6 +80,8 @@
 		<p class="hint" class:error>
 			{error || 'La imagen se guarda en este navegador y se reduce para que quepa.'}
 		</p>
+
+		<AccountPanel />
 	</div>
 </dialog>
 

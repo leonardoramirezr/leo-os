@@ -68,6 +68,11 @@ jobs:
       - run: pnpm build
         env:
           BASE_PATH: ${{ steps.target.outputs.base }}
+          # Where Neon is, from the repository variables. Neither is a secret: both are the public
+          # addresses of services that decide for themselves what the caller may see, and both end
+          # up in the published JavaScript either way.
+          VITE_NEON_AUTH_URL: ${{ vars.NEON_AUTH_URL }}
+          VITE_NEON_DATA_API_URL: ${{ vars.NEON_DATA_API_URL }}
 
       # Read back by scripts/previews-index.mjs to label the preview with its branch.
       - name: Note the branch behind the preview

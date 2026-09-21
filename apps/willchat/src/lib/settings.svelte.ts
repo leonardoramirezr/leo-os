@@ -1,34 +1,13 @@
-/** A value kept in localStorage. Keys are prefixed because every app on the site shares the origin. */
-function persisted<T>(key: string, fallback: T) {
-	let value = $state(read(key, fallback));
+import { local, setting } from '@leo-os/shared';
 
-	return {
-		get value() {
-			return value;
-		},
-		set value(next: T) {
-			value = next;
-			try {
-				localStorage.setItem(key, JSON.stringify(next));
-			} catch {
-				// Storage is unavailable (e.g. blocked site data): keep the value for this session only.
-			}
-		}
-	};
-}
+// What WillChat is told to do lives in the account, so a second device is already set up. It keeps
+// the prefixed keys it had when all of this was in localStorage.
+export const apiKey = setting('willchat:api-key', '');
+export const textModel = setting('willchat:text-model', 'gpt-5');
+export const imageModel = setting('willchat:image-model', 'gpt-image-2.5-sunburst');
 
-function read<T>(key: string, fallback: T): T {
-	try {
-		const raw = localStorage.getItem(key);
-		return raw === null ? fallback : JSON.parse(raw);
-	} catch {
-		return fallback;
-	}
-}
-
-export const apiKey = persisted('willchat:api-key', '');
-export const textModel = persisted('willchat:text-model', 'gpt-5');
-export const imageModel = persisted('willchat:image-model', 'gpt-image-2.5-sunburst');
-
-/** Model IDs available to the API key, newest first. */
-export const availableModels = persisted<string[]>('willchat:models', []);
+/**
+ * Model IDs available to the API key, newest first. This one stays on the device: it is a copy of
+ * what `/v1/models` answers, which is asked for again whenever the key changes.
+ */
+export const availableModels = local<string[]>('willchat:models', []);

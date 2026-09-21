@@ -1,3 +1,4 @@
 packages:
   - home
   - apps/*
+  - shared
