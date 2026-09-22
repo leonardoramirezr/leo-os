@@ -91,6 +91,9 @@ database and is queried straight from the browser. There is still no backend of 
   session in a cookie of its own domain, so signing in once covers the whole site. It is asked for
   with `rememberMe`, which makes the cookie outlive closing the tab; how long it may live is the
   session lifetime configured in the Neon console.
+- **Confirming the email.** When the project verifies emails, signing up opens no session: Neon
+  Auth sends a code to the address and the same screen asks for it. Confirming signs the account
+  in, and an account left unconfirmed is asked for the code again the next time it tries to enter.
 - **One account, one set of rows.** Every table carries the account a row belongs to, and the
   policies in `db/schema.ts` only ever let `auth.user_id()` — the account behind the request's
   token — see its own. Signed out there is no token, and the `anonymous` role is granted nothing.
@@ -142,7 +145,9 @@ In the [Neon console](https://console.neon.tech), on the project this site uses:
 
 1. **Auth.** Turn Neon Auth on and copy its URL (`…/auth`). Under its configuration, add
    `https://leonardoramirezr.github.io` as a trusted domain — previews live on the same origin, so
-   one entry covers them all — and set the session lifetime to a year.
+   one entry covers them all — and set the session lifetime to a year. If email verification is on,
+   it has to be the **verification code** kind: the sign-in screen asks for the code, whereas a
+   verification link lands on Neon Auth's own domain and never comes back here.
 2. **Data API.** Turn it on and copy its URL (`…/rest/v1`). If it asks which origins may call it,
    that same one. Do this before the first migration: the `authenticated` and `anonymous` roles the
    policies name are its, and turning it on is what creates them.

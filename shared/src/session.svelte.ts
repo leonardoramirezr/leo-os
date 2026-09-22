@@ -18,6 +18,12 @@ class Session {
 	error = $state('');
 	busy = $state(false);
 
+	/**
+	 * The email waiting for the code from its confirmation mail, or '' when nothing is. Neon Auth
+	 * is the one that asks for it: an account it has not confirmed gets no session at all.
+	 */
+	confirming = $state('');
+
 	#checking?: Promise<void>;
 
 	/** Asks Neon Auth who this is. Runs once; `Account` waits for it before drawing anything. */
@@ -30,12 +36,78 @@ class Session {
 		this.#adopt(await auth.getSession().catch(() => undefined));
 	}
 
-	signIn(email: string, password: string): Promise<void> {
-		return this.#attempt(() => auth.signIn(email.trim(), password), 'FAILED');
+	async signIn(email: string, password: string) {
+		const address = email.trim();
+		await this.#attempt(() => auth.signIn(address, password), 'FAILED');
+		// Neon Auth refuses an account whose email is not confirmed, and signing in does not always
+		// send a new code: ask for one, so the screen that follows has something to ask for.
+		if (this.errorCode === 'EMAIL_NOT_VERIFIED') await this.#confirm(address, true);
 	}
 
-	signUp(name: string, email: string, password: string): Promise<void> {
-		return this.#attempt(() => auth.signUp(name.trim(), email.trim(), password), 'SIGNED_UP');
+	async signUp(name: string, email: string, password: string) {
+		const address = email.trim();
+		await this.#attempt(() => auth.signUp(name.trim(), address, password), 'SIGNED_UP');
+		// The account was made but no session came with it: Neon Auth wants the email confirmed
+		// first, and has just sent the code there.
+		if (this.errorCode === 'SIGNED_UP') await this.#confirm(address, false);
+	}
+
+	/** The code from the confirmation mail, and the password they typed to get this far. */
+	async confirm(code: string, password: string) {
+		const email = this.confirming;
+		this.busy = true;
+		this.#fail('', '');
+		try {
+			const account = await auth.verifyEmail(email, code.trim());
+			// Confirming does not always open a session either, so sign in right after when it did
+			// not. A password that no longer works is not this screen's problem: the account is
+			// confirmed, and the sign-in screen is where that gets sorted out.
+			this.#adopt(account ?? (await auth.signIn(email, password).catch(() => undefined)));
+			this.confirming = '';
+			if (!this.account) this.#fail('CONFIRMED', '');
+		} catch (thrown) {
+			const failure = thrown instanceof auth.AuthError ? thrown : undefined;
+			this.#fail(failure?.code ?? '', failure?.message ?? '');
+		} finally {
+			this.busy = false;
+		}
+	}
+
+	/** Another code, for one that ran out — they are good for a few minutes only. */
+	async resend() {
+		this.busy = true;
+		this.#fail('', '');
+		try {
+			await auth.sendVerificationCode(this.confirming);
+			this.#fail('CODE_SENT', '');
+		} catch (thrown) {
+			const failure = thrown instanceof auth.AuthError ? thrown : undefined;
+			this.#fail(failure?.code ?? '', failure?.message ?? '');
+		} finally {
+			this.busy = false;
+		}
+	}
+
+	/** Back to the sign-in screen without confirming: the code can be used whenever. */
+	stopConfirming() {
+		this.confirming = '';
+		this.#fail('', '');
+	}
+
+	async #confirm(email: string, send: boolean) {
+		this.confirming = email;
+		// The screen that asks for the code says what is going on: the complaint is no longer one.
+		this.#fail('', '');
+		if (!send) return;
+
+		this.busy = true;
+		try {
+			await auth.sendVerificationCode(email);
+		} catch {
+			// It may refuse for having sent one a moment ago. The screen has a button to ask again.
+		} finally {
+			this.busy = false;
+		}
 	}
 
 	async signOut() {

@@ -14,6 +14,13 @@ const es = {
 	signUp: 'Crear cuenta',
 	toSignUp: '¿No tienes cuenta? Crear una',
 	toSignIn: '¿Ya tienes cuenta? Entrar',
+	confirmTitle: 'Confirma tu correo',
+	/** `{email}` is replaced with the address the code went to. */
+	confirmHint: 'Escribe el código que te enviamos a {email}.',
+	code: 'Código',
+	confirm: 'Confirmar',
+	resend: 'Enviar otro código',
+	back: 'Volver',
 	working: 'Un momento…',
 	loading: 'Cargando tus datos…',
 	account: 'Cuenta',
@@ -22,7 +29,10 @@ const es = {
 	notConfigured:
 		'Esta versión se publicó sin la configuración de Neon, así que no hay dónde guardar nada.',
 
-	/** What Neon Auth answers with, which it says in English. */
+	/**
+	 * What Neon Auth answers with, which it says in English, plus what this screen has to say on
+	 * its own. Not all of it is a complaint: `notices` lists the ones that are good news.
+	 */
 	errors: {
 		INVALID_EMAIL_OR_PASSWORD: 'Correo o contraseña incorrectos.',
 		INVALID_EMAIL: 'Ese correo no es válido.',
@@ -33,6 +43,11 @@ const es = {
 		EMAIL_NOT_VERIFIED: 'Confirma tu correo antes de entrar.',
 		SESSION_EXPIRED: 'La sesión caducó. Vuelve a entrar.',
 		SIGNED_UP: 'Cuenta creada. Si pide confirmación, revisa tu correo y vuelve a entrar.',
+		INVALID_OTP: 'Ese código no es el que enviamos.',
+		OTP_EXPIRED: 'Ese código ya caducó. Pide otro.',
+		TOO_MANY_ATTEMPTS: 'Demasiados intentos. Pide otro código.',
+		CODE_SENT: 'Te enviamos otro código.',
+		CONFIRMED: 'Cuenta confirmada. Ya puedes entrar.',
 		FAILED: 'No se pudo entrar.'
 	} as Record<string, string>
 };
@@ -48,6 +63,12 @@ const en: typeof es = {
 	signUp: 'Create account',
 	toSignUp: "Don't have an account? Create one",
 	toSignIn: 'Already have an account? Sign in',
+	confirmTitle: 'Confirm your email',
+	confirmHint: 'Type the code we sent to {email}.',
+	code: 'Code',
+	confirm: 'Confirm',
+	resend: 'Send another code',
+	back: 'Back',
 	working: 'One moment…',
 	loading: 'Loading your data…',
 	account: 'Account',
@@ -66,8 +87,16 @@ const en: typeof es = {
 		EMAIL_NOT_VERIFIED: 'Confirm your email before signing in.',
 		SESSION_EXPIRED: 'Your session ran out. Sign in again.',
 		SIGNED_UP: 'Account created. If it asks for confirmation, check your email and sign in.',
+		INVALID_OTP: 'That is not the code we sent.',
+		OTP_EXPIRED: 'That code has expired. Ask for another one.',
+		TOO_MANY_ATTEMPTS: 'Too many tries. Ask for another code.',
+		CODE_SENT: 'Another code is on its way.',
+		CONFIRMED: 'Account confirmed. You can sign in now.',
 		FAILED: "Couldn't sign in."
 	}
 };
 
 export const text = { es, en };
+
+/** The two answers above that are not a failure, and are not drawn as one. */
+export const notices = ['CODE_SENT', 'CONFIRMED'];

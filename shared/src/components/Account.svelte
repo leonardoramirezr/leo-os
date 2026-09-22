@@ -9,7 +9,7 @@
 	import { session } from '../session.svelte';
 	import { loadSettings } from '../settings.svelte';
 	import { sync } from '../sync.svelte';
-	import { text, type Lang } from './text';
+	import { notices, text, type Lang } from './text';
 
 	let {
 		children,
@@ -32,10 +32,14 @@
 			: ''
 	);
 
+	// «Te enviamos otro código» is not a complaint and is not drawn in red.
+	const good = $derived(notices.includes(session.errorCode));
+
 	let mode = $state<'in' | 'up'>('in');
 	let name = $state('');
 	let email = $state('');
 	let password = $state('');
+	let code = $state('');
 	let ready = $state(false);
 
 	// Runs once per account: the settings every app shares, then whatever this app keeps of its own.
@@ -65,6 +69,14 @@
 		if (mode === 'in') session.signIn(email, password);
 		else session.signUp(name, email, password);
 	}
+
+	function confirm(event: SubmitEvent) {
+		event.preventDefault();
+		if (session.busy) return;
+
+		// The password from the form above: confirming the account does not always sign you in.
+		session.confirm(code, password);
+	}
 </script>
 
 {#if !configured}
@@ -76,6 +88,45 @@
 	</div>
 {:else if session.status === 'checking'}
 	<div class="gate" aria-busy="true"></div>
+{:else if session.status === 'out' && session.confirming}
+	<div class="gate">
+		<form class="card" onsubmit={confirm}>
+			<h1>{t.confirmTitle}</h1>
+			<p class="hint">{t.confirmHint.replace('{email}', session.confirming)}</p>
+
+			<input
+				bind:value={code}
+				type="text"
+				inputmode="numeric"
+				autocomplete="one-time-code"
+				autocapitalize="none"
+				placeholder={t.code}
+				aria-label={t.code}
+				required
+			/>
+
+			{#if problem}
+				<p class="hint" class:error={!good}>{problem}</p>
+			{/if}
+
+			<button class="primary" type="submit" disabled={session.busy}>
+				{session.busy ? t.working : t.confirm}
+			</button>
+			<button class="switch" type="button" disabled={session.busy} onclick={() => session.resend()}>
+				{t.resend}
+			</button>
+			<button
+				class="switch"
+				type="button"
+				onclick={() => {
+					code = '';
+					session.stopConfirming();
+				}}
+			>
+				{t.back}
+			</button>
+		</form>
+	</div>
 {:else if session.status === 'out'}
 	<div class="gate">
 		<form class="card" onsubmit={submit}>
@@ -112,7 +163,7 @@
 			/>
 
 			{#if problem}
-				<p class="hint error">{problem}</p>
+				<p class="hint" class:error={!good}>{problem}</p>
 			{/if}
 
 			<button class="primary" type="submit" disabled={session.busy}>
@@ -229,6 +280,11 @@
 	.switch {
 		padding: 4px;
 		font-size: 15px;
+	}
+
+	.switch:disabled {
+		color: #98989f;
+		cursor: default;
 	}
 
 	/* Above whatever the app draws: a write that did not make it has to be seen. */

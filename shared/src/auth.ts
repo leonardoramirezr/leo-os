@@ -121,6 +121,24 @@ export async function signUp(
 	return jwt.value ? user : undefined;
 }
 
+/**
+ * Sends the code that confirms an email. Neon Auth sends one on sign-up already: this is for the
+ * one that ran out — they last a few minutes — and for an account that was left unconfirmed.
+ */
+export async function sendVerificationCode(email: string): Promise<void> {
+	await call('/email-otp/send-verification-otp', { email, type: 'email-verification' });
+}
+
+/**
+ * Confirms the account with the code from the email. Like `signUp`, gives the account back only
+ * when the answer opened a session: whether confirming also signs you in is Neon Auth's to decide.
+ */
+export async function verifyEmail(email: string, code: string): Promise<AuthUser | undefined> {
+	jwt = { value: '', expiresAt: 0 };
+	const user = userOf(await call('/email-otp/verify-email', { email, otp: code }));
+	return jwt.value ? user : undefined;
+}
+
 export async function signOut(): Promise<void> {
 	jwt = { value: '', expiresAt: 0 };
 	await call('/sign-out', {});
