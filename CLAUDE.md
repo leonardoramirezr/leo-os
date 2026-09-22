@@ -52,12 +52,16 @@ outcome; a rule earns its place here only by being one that would otherwise be g
 
 Static web apps (SvelteKit + Svelte 5 in runes mode) published together on GitHub Pages at
 `https://leonardoramirezr.github.io/leo-os/`. The home screen mimics an iPhone home screen: every
-app is an icon. Everything renders on the client, **there is no backend**, and data lives in the
-browser's `localStorage` or IndexedDB.
+app is an icon. Everything renders on the client and **there is no backend of ours**: an app signs
+in with Neon Auth and queries its own rows in Neon straight from the browser. Images stay in the
+browser's `localStorage` or IndexedDB. `README.md` explains the whole of it under «Account and
+data», including what has to be set up in the Neon console.
 
 ```
 home/            The home screen
 apps/<slug>/     One folder per app; the slug is part of the URL
+shared/          The account and the database; every project depends on it
+db/              The models (schema.ts) and the migrations generated from them
 scripts/         build, icons, local preview, and publishing to the gh-pages branch
 .github/workflows/  deploy.yml on every push, preview-cleanup.yml when a branch is deleted
 ```
@@ -68,10 +72,14 @@ Node 24+ and pnpm (`packageManager` pins the version).
 
 ```sh
 pnpm install
+cp .env.example .env           # where Neon is; without it every screen says there is no database
 pnpm --filter me-deben dev     # one app
 pnpm --filter home dev         # the home screen
-pnpm check                     # svelte-check across every project
+pnpm check                     # svelte-check across every project, and the models against the migrations
 pnpm icons                     # regenerates the apple-touch-icon.png files after editing an icon.svg
+
+pnpm db:generate               # writes the migration for what changed in db/schema.ts
+pnpm db:migrate                # applies the pending migrations to DATABASE_URL
 
 BASE_PATH=/leo-os pnpm build   # the whole site, as it gets published
 BASE_PATH=/leo-os pnpm preview # http://localhost:4173/leo-os/
@@ -90,6 +98,9 @@ to register it.
   home screen and iOS apply the rounded mask themselves.
 - A `build` script that writes `build/index.html`, with `paths: { base: process.env.BASE_PATH ?? '' }`
   in `vite.config.ts` and `ssr = false` + `prerender = true` in `src/routes/+layout.ts`.
+- `@leo-os/shared` as a `workspace:*` dependency, and a `+layout.svelte` that wraps
+  `{@render children()}` in its `<Account load={…}>`: nothing of the app draws until there is an
+  account and its rows have been read.
 - The folder name is part of the URL: lowercase letters, digits and dashes only.
 
 ## Conventions
@@ -98,13 +109,23 @@ to register it.
   config: match the files around you.
 - **Comments** explain why, not what — especially the iOS and Safari quirks behind several
   decisions here. Read them before "simplifying" something.
-- **Storage**: every app shares the origin, so keys carry their own prefix (`home:wallpaper`,
-  `me-deben:*`, `willchat:*`), and every read and write is wrapped in `try`/`catch`: the browser may
-  have site data blocked.
+- **Storage**: data goes to Neon through `shared/` — `setting(…)` for a preference, a table of its
+  own for anything bigger — and every row carries the account it belongs to. Only images stay on
+  the device (`local(…)`, IndexedDB), under keys that carry the account too, and every read and
+  write of those is wrapped in `try`/`catch`: the browser may have site data blocked. Keys keep
+  their app's prefix either way (`home:wallpaper`, `me-deben:*`, `willchat:*`).
+- **A change to the database starts in `db/schema.ts`**, never in the database and never in a
+  migration by hand: edit the models, run `pnpm db:generate`, and commit the migration it writes
+  next to them. The row types the apps use come from the same models. `pnpm check` fails when the
+  two have drifted, and leaves the missing migration behind for you to read.
+- **Only the default branch migrates**, so a branch that needs a new column has to be merged before
+  its preview works. Grants are the one thing the models do not carry: they live in
+  `db/migrations/0001_grants.sql`, which covers the tables of every migration still to come.
 - **Dependencies**: as few as possible. No UI or styling frameworks; CSS is written by hand inside
   each component.
-- **Nothing leaves the browser** but what the user asked for: no backend, no telemetry (WillChat
-  talks straight to `api.openai.com` with the user's own key).
+- **Nothing leaves the browser** but the user's own data, to the user's own database, and what they
+  asked for: no telemetry, nobody in the middle (WillChat talks straight to `api.openai.com` with
+  the user's own key).
 - The `apple-touch-icon.png` files are generated, never committed. `icon.svg` is the only source.
 
 ## Commits

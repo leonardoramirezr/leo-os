@@ -1,8 +1,11 @@
+import { fileURLToPath } from 'node:url';
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+	// One Neon project for the whole site, so VITE_NEON_* is read from a single .env at the root.
+	envDir: fileURLToPath(new URL('..', import.meta.url)),
 	plugins: [
 		sveltekit({
 			compilerOptions: {

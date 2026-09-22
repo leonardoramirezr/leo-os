@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { t } from '$lib/i18n';
+	import { AccountPanel } from '@leo-os/shared';
+	import { lang, t } from '$lib/i18n';
 	import { fetchModelIds, imageModelOptions, textModelOptions } from '$lib/models';
 	import { apiKey, availableModels, imageModel, textModel } from '$lib/settings.svelte';
 	import ModelSelect from './ModelSelect.svelte';
@@ -74,6 +75,8 @@
 				<button onclick={changeKey}>{t.changeKey}</button>
 			</div>
 		</div>
+
+		<AccountPanel {lang} />
 	</div>
 </dialog>
 

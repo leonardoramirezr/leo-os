@@ -65,9 +65,22 @@ jobs:
             echo "url=$site/previews/$slug/"
           } >> "$GITHUB_OUTPUT"
 
+      # Only from the default branch. The migrations are one line of history, and two branches
+      # applying their own would tangle it — so a preview runs against the schema main last left.
+      - name: Bring the database up to date
+        if: steps.target.outputs.preview != 'true'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: pnpm db:migrate
+
       - run: pnpm build
         env:
           BASE_PATH: ${{ steps.target.outputs.base }}
+          # Where Neon is, from the repository variables. Neither is a secret: both are the public
+          # addresses of services that decide for themselves what the caller may see, and both end
+          # up in the published JavaScript either way.
+          VITE_NEON_AUTH_URL: ${{ vars.NEON_AUTH_URL }}
+          VITE_NEON_DATA_API_URL: ${{ vars.NEON_DATA_API_URL }}
 
       # Read back by scripts/previews-index.mjs to label the preview with its branch.
       - name: Note the branch behind the preview

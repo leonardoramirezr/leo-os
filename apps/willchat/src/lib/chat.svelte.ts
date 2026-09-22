@@ -1,3 +1,4 @@
+import { session } from '@leo-os/shared';
 import { createRequest, type AssistantMessage, type Message } from './conversation';
 import * as db from './db';
 import { t } from './i18n';
@@ -12,6 +13,8 @@ import {
 } from './openai';
 import { apiKey, imageModel, textModel } from './settings.svelte';
 
+// The conversation is full of images, so it stays in this browser's IndexedDB. The key carries
+// the account: two people on the same phone do not read each other's chat.
 const STORAGE_KEY = 'conversation';
 const POLL_INTERVAL = 2_000;
 /** Consecutive connection failures tolerated while polling, e.g. while the phone is locked. */
@@ -24,6 +27,10 @@ class Chat {
 	#controller?: AbortController;
 	#loading?: Promise<void>;
 	#saving: Promise<unknown> = Promise.resolve();
+
+	get #key() {
+		return `${STORAGE_KEY}:${session.account?.id ?? ''}`;
+	}
 
 	/** The last message, while its response is in progress. */
 	get pending() {
@@ -74,7 +81,7 @@ class Chat {
 	}
 
 	async #restore() {
-		const saved = await db.get<Message[]>(STORAGE_KEY).catch(() => undefined);
+		const saved = await db.get<Message[]>(this.#key).catch(() => undefined);
 		if (saved) this.messages = saved;
 		this.loaded = true;
 
@@ -190,7 +197,7 @@ class Chat {
 
 	#save() {
 		const messages = $state.snapshot(this.messages);
-		this.#saving = this.#saving.then(() => db.set(STORAGE_KEY, messages)).catch(() => {});
+		this.#saving = this.#saving.then(() => db.set(this.#key, messages)).catch(() => {});
 	}
 }
 

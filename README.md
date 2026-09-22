@@ -17,6 +17,10 @@ iPhone home screen: every app is an icon.
 │       ├── app.json         # Manifest: { "name": "WillChat" }
 │       ├── icon.svg         # The app's icon
 │       └── …
+├── shared/                  # The account and the database, used by the home screen and every app
+├── db/
+│   ├── schema.ts            # The models: the tables and their row level security policies
+│   └── migrations/          # Generated from the models; the deploy applies them
 ├── scripts/
 │   ├── build.mjs            # Builds the home screen and every app into dist/
 │   ├── icons.mjs            # Turns each icon.svg into the PNG iOS asks for
@@ -44,9 +48,10 @@ On top of that:
 
 - The folder name is part of the URL: lowercase letters, digits and dashes only.
 - The iPhone home screen icon comes from that same `icon.svg`: there is no second drawing to make.
-- Everything renders on the client; no app needs a backend of its own.
-- Every app shares the `leonardoramirezr.github.io` origin, and therefore `localStorage` and
-  IndexedDB too. Use a prefix of your own in the keys (e.g. `willchat:`).
+- Everything renders on the client. There is no backend of ours: an app queries Neon directly, as
+  described in [Account and data](#account-and-data).
+- Every app shares the `leonardoramirezr.github.io` origin, and therefore the session, `localStorage`
+  and IndexedDB too. Use a prefix of your own in the keys (e.g. `willchat:`).
 
 For a new SvelteKit app, start from `pnpm dlx sv create apps/<folder> --template minimal --types ts --add sveltekit-adapter="adapter:static"`
 and copy two details from `apps/willchat`: `paths.base` read from `BASE_PATH` in `vite.config.ts`,
@@ -58,10 +63,14 @@ Requires Node 24+ and pnpm.
 
 ```sh
 pnpm install
+cp .env.example .env           # where Neon is; without it every screen says there is no database
 pnpm --filter willchat dev     # one app
 pnpm --filter home dev         # the home screen
-pnpm check                     # svelte-check across every project
+pnpm check                     # svelte-check across every project, and the models against the migrations
 pnpm icons                     # regenerates the apple-touch-icon.png files after editing an icon.svg
+
+pnpm db:generate               # writes the migration for what changed in db/schema.ts
+pnpm db:migrate                # applies the pending migrations to DATABASE_URL
 ```
 
 To try the whole site the way it is published:
@@ -70,6 +79,99 @@ To try the whole site the way it is published:
 BASE_PATH=/apps pnpm build
 BASE_PATH=/apps pnpm preview   # http://localhost:4173/apps/
 ```
+
+## Account and data
+
+Everything an app records — who owes what, which models WillChat uses — lives in one Neon Postgres
+database and is queried straight from the browser. There is still no backend of ours in between:
+[Neon Auth](https://neon.com/docs/auth/overview) holds the session and the
+[Neon Data API](https://neon.com/docs/data-api/overview) (PostgREST over HTTPS) serves the tables.
+
+- **Signing in.** The home screen and every app open behind the same door. Neon Auth keeps the
+  session in a cookie of its own domain, so signing in once covers the whole site. It is asked for
+  with `rememberMe`, which makes the cookie outlive closing the tab; how long it may live is the
+  session lifetime configured in the Neon console.
+- **One account, one set of rows.** Every table carries the account a row belongs to, and the
+  policies in `db/schema.ts` only ever let `auth.user_id()` — the account behind the request's
+  token — see its own. Signed out there is no token, and the `anonymous` role is granted nothing.
+- **Images stay on the device.** The wallpaper and WillChat's conversation are far too large for
+  rows read on every open, so they stay in `localStorage` and IndexedDB. Their keys carry the
+  account too: two people using the same phone do not see each other's, and signing out drops the
+  lot.
+- **Offline.** Each app keeps a copy of its rows on the device, so it opens with something on
+  screen and still shows it with no connection. The database is what counts: the copy is replaced
+  whole every time a query comes back. A change is applied on screen first and sent right after; if
+  it is refused, the app reads the rows again and a banner says what happened.
+
+`shared/` holds all of this — the two clients, the sign-in screen, the account panel — and is a
+workspace package every project depends on.
+
+### Models and migrations
+
+`db/schema.ts` is the models: the one place a table is described. The row types the browser works
+in come from it too, so a column is spelled once and the apps stop typechecking if it moves.
+
+A change to it is a change in two steps:
+
+```sh
+# 1. Edit db/schema.ts, then write the SQL for what changed
+pnpm db:generate
+
+# 2. Read the migration it wrote, commit it next to the models
+git add db/migrations
+```
+
+`pnpm check` fails if you skip the first step — and writes the missing migration while it is at it,
+so the fix is to read what it left in `db/migrations/` and commit that.
+
+Applying them is the deploy's job: `deploy.yml` runs `pnpm db:migrate` on the default branch,
+before building. Each migration runs once, in order, and the database remembers which ones it has
+seen. To apply them by hand, put the connection string in `DATABASE_URL` and run `pnpm db:migrate`.
+
+Only the default branch migrates. The migrations are one line of history, and two branches applying
+their own would tangle it, so **a preview runs against whatever schema `main` last left** — a branch
+that needs a new column has to be merged before its preview works.
+
+Two things drizzle-kit does not track, and `db/migrations/0001_grants.sql` does by hand: which
+roles may reach a table at all, and that a table a later migration creates inherits the same. That
+last part is what keeps a new model from needing anything added there.
+
+### Setting it up
+
+In the [Neon console](https://console.neon.tech), on the project this site uses:
+
+1. **Auth.** Turn Neon Auth on and copy its URL (`…/auth`). Under its configuration, add
+   `https://leonardoramirezr.github.io` as a trusted domain — previews live on the same origin, so
+   one entry covers them all — and set the session lifetime to a year.
+2. **Data API.** Turn it on and copy its URL (`…/rest/v1`). If it asks which origins may call it,
+   that same one. Do this before the first migration: the `authenticated` and `anonymous` roles the
+   policies name are its, and turning it on is what creates them.
+3. **Tables.** They come from the migrations, which the deploy applies on its own. To do it by
+   hand instead: `DATABASE_URL=… pnpm db:migrate`.
+
+Then, in this repository under **Settings → Secrets and variables → Actions**:
+
+| | Name | What |
+| --- | --- | --- |
+| **Variables** | `NEON_AUTH_URL` | The Auth URL from step 1 |
+| **Variables** | `NEON_DATA_API_URL` | The Data API URL from step 2 |
+| **Secrets** | `DATABASE_URL` | The project's connection string, for the migrations |
+
+The two URLs are not secrets: they are the public addresses of services that decide for themselves
+what the caller may see, and they end up in the published JavaScript either way. The connection
+string is: it opens the whole database with none of the policies in the way, which is why only the
+default branch's run is given it.
+
+For `pnpm dev`, `pnpm build` and `pnpm db:migrate`, the same three values go in a `.env` at the
+root — see `.env.example`.
+
+A build with no Neon URLs still builds and runs, and every screen says there is no database.
+
+> **Safari and the cookie.** The site is served from `github.io` and Neon Auth from its own domain,
+> so its session cookie is a third-party one. Safari blocks those by default, which would leave the
+> iPhone asking to sign in over and over. If that happens, the way out is a custom domain: point
+> GitHub Pages at one you own and Neon Auth at a subdomain of it, and the cookie stops being
+> third-party.
 
 ## Deploy
 
@@ -80,8 +182,9 @@ Everything is published to the `gh-pages` branch, which is the only thing GitHub
 | `main`         | the root of `gh-pages` | `…github.io/leo-os/`                 |
 | any other branch | `previews/<branch>/` | `…github.io/leo-os/previews/<branch>/` |
 
-`deploy.yml` runs on every push: it passes `pnpm check`, builds with the base path it is due and
-`scripts/publish-pages.sh` writes the result into `gh-pages`. Publishing the site does not wipe the
+`deploy.yml` runs on every push: it passes `pnpm check`, brings the database up to date if this is
+the default branch, builds with the base path it is due and `scripts/publish-pages.sh` writes the
+result into `gh-pages`. Publishing the site does not wipe the
 previews, and each branch only touches its own folder; if two publish at once, the script reads the
 branch again and retries.
 
@@ -107,8 +210,9 @@ it is merged.
   the file lands there.
 - GitHub Pages takes about a minute to serve what was just published.
 
-A preview lives on the same origin as the published site, so it shares `localStorage` and IndexedDB
-with it: trying «Me deben» in a preview moves the same data as the real app.
+A preview lives on the same origin as the published site, so it shares the session, `localStorage`
+and IndexedDB with it: it opens already signed in, and trying «Me deben» in a preview moves the
+same data as the real app.
 
 ## Home screen icon
 
@@ -127,15 +231,17 @@ testing, close the tab and open the page again.
 Besides the published apps, the home screen carries two icons of its own:
 
 - **Recargar**: reloads the site, handy when it runs full screen without browser controls.
-- **Ajustes**: changes the wallpaper. The chosen photo is scaled down to 1600 px, re-encoded as JPEG
-  and stored in the browser's `localStorage` under the key `home:wallpaper`. With no photo, the
-  default gradient is used, which comes back on «Quitar».
+- **Ajustes**: changes the wallpaper, and shows which account is signed in with the way out. The
+  chosen photo is scaled down to 1600 px, re-encoded as JPEG and stored in the browser's
+  `localStorage` under `home:wallpaper`, one per account. With no photo, the default gradient is
+  used, which comes back on «Quitar».
 
 ## WillChat
 
 A ChatGPT-style chat for creating and editing images with the OpenAI API and your own API key.
 
-- The API key is stored in the browser's `localStorage` and is only ever sent to `api.openai.com`.
+- The API key is stored in your account, where the policies let no one else read it, and is only
+  ever sent to `api.openai.com`. Keeping it there is what saves entering it again on every device.
 - The text and image models are chosen by tapping the title. The list comes from `/v1/models`, and
   any ID can also be typed in.
 - Photos are scaled down to 2048 px and sent as `input_image`. Every turn sends the whole
@@ -143,7 +249,8 @@ A ChatGPT-style chat for creating and editing images with the OpenAI API and you
 - Requests use `background: true` and are polled every 2 s. Generating an image can take more than a
   minute and Safari on iOS cuts off requests that go 60 s without a response; this way the answer is
   also recovered if you reload or switch apps.
-- The current conversation is stored in IndexedDB.
+- The current conversation is stored in IndexedDB, under a key that carries the account: it is full
+  of images, which is why it does not go to the database.
 
 ## Me deben
 
@@ -179,5 +286,7 @@ already overdue, the list of people who owe, and two buttons at the bottom.
 - The bank list («Cuentas») carries the Mexican institutions grouped: banks, fintech and
   non-banking, development banking, corporate and foreign, and cash. The bank's name is stored,
   never an account number. Your own bank is remembered so it need not be picked every time.
-- Everything lives in the browser's `localStorage` under the `me-deben:*` keys; there is no server
-  and no account. Amounts are stored as whole cents so balances do not accumulate rounding errors.
+- Everything lives in your account, in the `me_deben_people` and `me_deben_movements` tables, with
+  a copy on the device so the app opens without waiting. Amounts are stored as whole cents so
+  balances do not accumulate rounding errors. What an earlier version left under the `me-deben:*`
+  keys of this browser is brought over the first time you sign in, and only into an empty ledger.

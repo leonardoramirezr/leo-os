@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import icon from '../../icon.svg';
+	import { Account } from '@leo-os/shared';
 	import { ledger } from '$lib/ledger.svelte';
 
 	let { children } = $props();
@@ -17,4 +18,6 @@
 	<link rel="icon" type="image/svg+xml" href={icon} />
 </svelte:head>
 
-{@render children()}
+<Account load={(userId) => ledger.load(userId)}>
+	{@render children()}
+</Account>
