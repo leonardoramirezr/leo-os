@@ -103,12 +103,22 @@ export async function signIn(email: string, password: string): Promise<AuthUser 
 	return userOf(await call('/sign-in/email', { email, password, rememberMe: true }));
 }
 
+/**
+ * Gives back the account only when signing up also opened a session. Neon Auth answers with the
+ * user either way, and when the account has to be confirmed first that user has no session behind
+ * it: taking it for a sign-in would put the apps in front of a Data API that refuses them, and the
+ * brand new account would be told its session ran out.
+ */
 export async function signUp(
 	name: string,
 	email: string,
 	password: string
 ): Promise<AuthUser | undefined> {
-	return userOf(await call('/sign-up/email', { name, email, password }));
+	// Whatever token was cached belongs to whoever was here before: forget it, so that the one
+	// this answer may bring is the only thing that says a session was opened.
+	jwt = { value: '', expiresAt: 0 };
+	const user = userOf(await call('/sign-up/email', { name, email, password }));
+	return jwt.value ? user : undefined;
 }
 
 export async function signOut(): Promise<void> {
