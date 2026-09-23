@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="robots" content="noindex" />
+		<title>Diagnóstico de la sesión</title>
+		<style>
+			:root {
+				color-scheme: dark;
+			}
+
+			body {
+				margin: 0;
+				padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+				background: linear-gradient(170deg, #4a2a8a, #1c1446);
+				color: #fff;
+				font-family:
+					-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui,
+					sans-serif;
+				min-height: 100vh;
+				box-sizing: border-box;
+			}
+
+			main {
+				max-width: 640px;
+				margin: 0 auto;
+			}
+
+			h1 {
+				font-size: 22px;
+				margin: 0 0 8px;
+			}
+
+			p {
+				color: #c7c7cc;
+				font-size: 14px;
+				line-height: 1.45;
+			}
+
+			section {
+				background: #1c1c1e;
+				border-radius: 16px;
+				padding: 16px;
+				margin-top: 16px;
+			}
+
+			h2 {
+				font-size: 15px;
+				margin: 0 0 8px;
+				color: #fff;
+			}
+
+			pre {
+				margin: 0;
+				white-space: pre-wrap;
+				word-break: break-all;
+				font-size: 12px;
+				line-height: 1.5;
+				color: #98989f;
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+			}
+
+			.verdict {
+				font-size: 14px;
+				line-height: 1.45;
+				color: #fff;
+			}
+
+			.bad {
+				color: #ff453a;
+			}
+
+			.good {
+				color: #30d158;
+			}
+
+			input,
+			button {
+				box-sizing: border-box;
+				width: 100%;
+				padding: 12px 14px;
+				border: 0;
+				border-radius: 12px;
+				font: inherit;
+				font-size: 16px;
+				margin-top: 8px;
+			}
+
+			input {
+				background: #2c2c2e;
+				color: #fff;
+			}
+
+			button {
+				background: #0a84ff;
+				color: #fff;
+				font-weight: 600;
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<h1>Diagnóstico de la sesión</h1>
+			<p>
+				Compara el token que Neon Auth entrega con las llaves que publica, y le pide una tabla al
+				Data API. Sirve para ver de qué lado está el problema cuando la base de datos dice
+				«jwk not found». No guarda nada ni manda nada a ningún otro sitio.
+			</p>
+
+			<section id="setup" hidden>
+				<h2>¿Dónde está Neon?</h2>
+				<p>No pude leerlo del sitio. Pega las dos URLs del proyecto.</p>
+				<input id="auth" placeholder="https://ep-….neonauth.….aws.neon.tech/<db>/auth" />
+				<input id="data" placeholder="https://ep-….apirest.….aws.neon.tech/<db>/rest/v1" />
+				<button id="go">Comprobar</button>
+			</section>
+
+			<section>
+				<h2>Resultado</h2>
+				<p class="verdict" id="verdict">Un momento…</p>
+			</section>
+
+			<section>
+				<h2>Detalle</h2>
+				<pre id="detail"></pre>
+			</section>
+		</main>
+
+		<script type="module">
+			const verdict = document.getElementById('verdict');
+			const detail = document.getElementById('detail');
+			const lines = [];
+
+			function log(line) {
+				lines.push(line);
+				detail.textContent = lines.join('\n');
+			}
+
+			function say(message, kind) {
+				verdict.textContent = message;
+				verdict.className = 'verdict' + (kind ? ' ' + kind : '');
+			}
+
+			/** The two URLs are baked into the site's JavaScript: read them back out of it. */
+			async function findUrls() {
+				const found = {};
+				const params = new URLSearchParams(location.search);
+				if (params.get('auth')) found.auth = params.get('auth');
+				if (params.get('data')) found.data = params.get('data');
+				if (found.auth && found.data) return found;
+
+				const index = await fetch('./index.html').then((r) => r.text());
+				const chunks = [...new Set(index.match(/_app\/immutable\/[^"'\s)]+\.js/g) ?? [])];
+
+				for (const chunk of chunks.slice(0, 60)) {
+					const source = await fetch('./' + chunk).then(
+						(r) => (r.ok ? r.text() : ''),
+						() => ''
+					);
+					for (const url of source.match(/https:\/\/[^"'`\s]+\.neon\.tech\/[^"'`\s]*/g) ?? []) {
+						if (url.includes('.neonauth.')) found.auth ??= url;
+						if (url.includes('.apirest.')) found.data ??= url;
+					}
+					if (found.auth && found.data) break;
+				}
+				return found;
+			}
+
+			function decode(part) {
+				return JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/')));
+			}
+
+			async function check(authUrl, dataUrl) {
+				const auth = authUrl.replace(/\/+$/, '');
+				const data = dataUrl.replace(/\/+$/, '');
+				log('Auth: ' + auth);
+				log('Data API: ' + data);
+
+				const session = await fetch(auth + '/get-session', { credentials: 'include' });
+				const token = session.headers.get('set-auth-jwt');
+				if (!token) {
+					log('\nNeon Auth no entregó ningún token (get-session: ' + session.status + ').');
+					say('No hay sesión abierta en este navegador. Entra en el sitio y vuelve aquí.', 'bad');
+					return;
+				}
+
+				const header = decode(token.split('.')[0]);
+				const payload = decode(token.split('.')[1]);
+				log('\nToken');
+				log('  kid: ' + header.kid);
+				log('  alg: ' + header.alg);
+				log('  iss: ' + payload.iss);
+				log('  aud: ' + JSON.stringify(payload.aud ?? null));
+				log('  sub: ' + payload.sub);
+				log('  exp: ' + new Date(payload.exp * 1000).toISOString());
+
+				let keys = [];
+				try {
+					const jwks = await fetch(auth + '/jwks').then((r) => r.json());
+					keys = jwks.keys ?? [];
+				} catch (thrown) {
+					log('\nNo se pudo leer ' + auth + '/jwks: ' + thrown.message);
+				}
+				log('\nLlaves publicadas: ' + keys.length);
+				for (const key of keys) {
+					log('  kid: ' + key.kid + '  kty: ' + key.kty + '  alg: ' + (key.alg ?? '—'));
+				}
+
+				const answer = await fetch(data + '/settings?select=key&limit=1', {
+					headers: { authorization: 'Bearer ' + token }
+				});
+				const body = await answer.text();
+				log('\nData API: ' + answer.status + ' ' + body);
+
+				const known = keys.some((key) => key.kid === header.kid);
+				if (answer.ok) {
+					say('La base de datos aceptó el token. Aquí no hay nada roto.', 'good');
+				} else if (!/jwk not found/i.test(body)) {
+					say('La base de datos lo rechazó por otra razón: mira el detalle de abajo.', 'bad');
+				} else if (known) {
+					say(
+						'La llave que firma el token (kid ' +
+							header.kid +
+							') SÍ está publicada por este Neon Auth. Entonces el Data API está validando ' +
+							'contra otro JWKS, o su regla está atada a otra rama o a otro rol: hay que ' +
+							'volver a registrar el proveedor en la consola.',
+						'bad'
+					);
+				} else {
+					say(
+						'El token viene firmado con una llave (kid ' +
+							header.kid +
+							') que este Neon Auth no publica: el token y el JWKS son de dos instancias ' +
+							'distintas.',
+						'bad'
+					);
+				}
+
+				if (keys.some((key) => key.kty === 'OKP' || key.alg === 'EdDSA')) {
+					log('\nOjo: hay llaves EdDSA (Ed25519). El Data API valida ES256 (EC) y RSA.');
+				}
+			}
+
+			async function run(auth, data) {
+				try {
+					await check(auth, data);
+				} catch (thrown) {
+					log('\n' + thrown.stack);
+					say('La comprobación falló: mira el detalle de abajo.', 'bad');
+				}
+			}
+
+			const urls = await findUrls();
+			if (urls.auth && urls.data) {
+				run(urls.auth, urls.data);
+			} else {
+				document.getElementById('setup').hidden = false;
+				say('Faltan las URLs de Neon.', '');
+				document.getElementById('go').onclick = () => {
+					document.getElementById('setup').hidden = true;
+					say('Un momento…', '');
+					run(document.getElementById('auth').value, document.getElementById('data').value);
+				};
+			}
+		</script>
+	</body>
+</html>
