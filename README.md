@@ -168,10 +168,12 @@ root — see `.env.example`.
 A build with no Neon URLs still builds and runs, and every screen says there is no database.
 
 > **Safari and the cookie.** The site is served from `github.io` and Neon Auth from its own domain,
-> so its session cookie is a third-party one. Safari blocks those by default, which would leave the
-> iPhone asking to sign in over and over. If that happens, the way out is a custom domain: point
-> GitHub Pages at one you own and Neon Auth at a subdomain of it, and the cookie stops being
-> third-party.
+> so its session cookie is a third-party one. Safari blocks those by default, and a web app saved
+> to the iPhone home screen always does. That is why the session token is also kept in
+> `localStorage` and sent as a bearer on every call to Neon Auth: signing in works without the
+> cookie. The price is that the token is readable by any script on the origin; a custom domain —
+> GitHub Pages on one you own and Neon Auth on a subdomain of it — would make the cookie
+> first-party and the stored token unnecessary.
 
 ## Deploy
 

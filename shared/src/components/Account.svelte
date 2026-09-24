@@ -5,6 +5,7 @@
 	// The session lives in Neon Auth's cookie, shared by everything on this origin: signing in on
 	// the home screen signs you into every app too.
 	import { configured } from '../config';
+	import { debugLog } from '../debug.svelte';
 	import { bindLocal } from '../local.svelte';
 	import { session } from '../session.svelte';
 	import { loadSettings } from '../settings.svelte';
@@ -129,6 +130,10 @@
 				{mode === 'in' ? t.toSignUp : t.toSignIn}
 			</button>
 		</form>
+		<!-- TEMPORARY: what came back after tapping «Entrar». -->
+		{#if debugLog.length}
+			<pre class="debug">{debugLog.join('\n\n')}</pre>
+		{/if}
 	</div>
 {:else if !ready}
 	<div class="gate" aria-busy="true">
@@ -144,6 +149,9 @@
 <style>
 	.gate {
 		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		overflow: auto;
 		position: fixed;
 		inset: 0;
 		align-items: center;
@@ -224,6 +232,24 @@
 		background: #2c2c2e;
 		color: #98989f;
 		cursor: default;
+	}
+
+	.debug {
+		box-sizing: border-box;
+		width: 100%;
+		max-width: 600px;
+		max-height: 45vh;
+		margin: 0;
+		padding: 10px;
+		overflow: auto;
+		border-radius: 12px;
+		background: #000;
+		color: #7ee787;
+		font-size: 11px;
+		white-space: pre-wrap;
+		word-break: break-all;
+		user-select: text;
+		-webkit-user-select: text;
 	}
 
 	.switch {
