@@ -1,10 +1,15 @@
 // Neon Auth, straight over its REST API — the same endpoints `@neondatabase/neon-js` calls, minus
 // the SDK, which would have pulled React and a hundred other packages into a site that has none.
 //
-// Nothing is kept here. The session is the cookie Neon Auth sets on its own domain, which the
-// browser holds until it expires (a year: it is the console that decides, see README) and sends
-// back on every call because of `credentials: 'include'`. That one cookie is what makes signing in
-// on the home screen enough for every app.
+// The session is the cookie Neon Auth sets on its own domain, which the browser holds until it
+// expires (a year: it is the console that decides, see README) and sends back on every call
+// because of `credentials: 'include'`. That one cookie is what makes signing in on the home screen
+// enough for every app.
+//
+// Except where the cookie never makes it. To a page on github.io it is a third-party cookie, and
+// an iPhone home screen web app drops those whatever Safari's settings say: signing in went
+// through and the very next call found no session. So the session token also goes to
+// localStorage, and every call carries it as a bearer, which Neon Auth takes in place of the cookie.
 //
 // Each answer also carries a short-lived JWT in the `set-auth-jwt` header. That, and not the
 // cookie, is what the Data API is shown: `token()` hands it over and asks for a fresh one when it
@@ -25,6 +30,27 @@ export class AuthError extends Error {
 		super(message);
 		this.name = 'AuthError';
 		this.code = code;
+	}
+}
+
+/** Where the session token is kept, for the browsers that will not send the cookie. */
+const STORED = 'leo-os:session';
+
+function stored(): string {
+	try {
+		return localStorage.getItem(STORED) ?? '';
+	} catch {
+		// Site data blocked: the cookie is all there is.
+		return '';
+	}
+}
+
+function store(token: string) {
+	try {
+		if (token) localStorage.setItem(STORED, token);
+		else localStorage.removeItem(STORED);
+	} catch {
+		// Same as above: without storage this browser has to make do with the cookie.
 	}
 }
 
@@ -52,16 +78,34 @@ function expiryOf(token: string): number {
 function capture(response: Response) {
 	const token = response.headers.get('set-auth-jwt');
 	if (token) jwt = { value: token, expiresAt: expiryOf(token) };
+
+	// A renewed session token, when Neon Auth rolls one over and lets it be read.
+	const session = response.headers.get('set-auth-token');
+	if (session) store(session);
+}
+
+/** Signing in and signing up hand the session token back in the body too, when there is one. */
+function keepSession(answer: unknown): boolean {
+	const token = (answer as { token?: unknown } | null)?.token;
+	if (typeof token !== 'string' || !token) return false;
+
+	store(token);
+	return true;
 }
 
 async function call(path: string, body?: unknown): Promise<unknown> {
+	const bearer = stored();
+
 	let response: Response;
 	try {
 		response = await fetch(`${authUrl}${path}`, {
 			method: body === undefined ? 'GET' : 'POST',
 			// The session cookie belongs to Neon Auth's domain, not ours: it only travels if asked for.
 			credentials: 'include',
-			headers: body === undefined ? undefined : { 'content-type': 'application/json' },
+			headers: {
+				...(body === undefined ? undefined : { 'content-type': 'application/json' }),
+				...(bearer ? { authorization: `Bearer ${bearer}` } : undefined)
+			},
 			body: body === undefined ? undefined : JSON.stringify(body)
 		});
 	} catch {
@@ -92,15 +136,21 @@ function userOf(answer: unknown): AuthUser | undefined {
 
 export async function getSession(): Promise<AuthUser | undefined> {
 	const user = userOf(await call('/get-session'));
-	// No session: whatever token is cached belongs to whoever was signed in before.
-	if (!user) jwt = { value: '', expiresAt: 0 };
+	// No session: whatever token is kept belongs to whoever was signed in before, or is dead.
+	if (!user) {
+		jwt = { value: '', expiresAt: 0 };
+		store('');
+	}
 	return user;
 }
 
 export async function signIn(email: string, password: string): Promise<AuthUser | undefined> {
 	// `rememberMe` is what makes the cookie outlive the browser session; without it the year the
 	// console grants the session would not survive closing the tab.
-	return userOf(await call('/sign-in/email', { email, password, rememberMe: true }));
+	store('');
+	const answer = await call('/sign-in/email', { email, password, rememberMe: true });
+	keepSession(answer);
+	return userOf(answer);
 }
 
 /**
@@ -114,16 +164,23 @@ export async function signUp(
 	email: string,
 	password: string
 ): Promise<AuthUser | undefined> {
-	// Whatever token was cached belongs to whoever was here before: forget it, so that the one
-	// this answer may bring is the only thing that says a session was opened.
+	// Whatever tokens were kept belong to whoever was here before: forget them, so that what this
+	// answer may bring is the only thing that says a session was opened.
 	jwt = { value: '', expiresAt: 0 };
-	const user = userOf(await call('/sign-up/email', { name, email, password }));
-	return jwt.value ? user : undefined;
+	store('');
+	const answer = await call('/sign-up/email', { name, email, password });
+	const opened = keepSession(answer);
+	return opened || jwt.value ? userOf(answer) : undefined;
 }
 
 export async function signOut(): Promise<void> {
 	jwt = { value: '', expiresAt: 0 };
-	await call('/sign-out', {});
+	try {
+		// Still carrying the token: it is what tells Neon Auth which session to close.
+		await call('/sign-out', {});
+	} finally {
+		store('');
+	}
 }
 
 /** The token the Data API is shown. Comes from the session, and is renewed from it too. */
