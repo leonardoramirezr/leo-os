@@ -20,7 +20,8 @@ phone home screen: every app is an icon.
 ├── shared/                  # The account and the database, used by the home screen and every app
 ├── db/
 │   ├── schema.ts            # The models: the tables and their row level security policies
-│   └── migrations/          # Generated from the models; the deploy applies them
+│   ├── migrations/          # Generated from the models; the deploy applies them
+│   └── preview.mjs          # Gives each preview a copy of the database of its own
 ├── scripts/
 │   ├── build.mjs            # Builds the home screen and every app into dist/
 │   ├── icons.mjs            # Turns each icon.svg into the PNG iOS asks for
@@ -71,6 +72,7 @@ pnpm icons                     # regenerates the apple-touch-icon.png files afte
 
 pnpm db:generate               # writes the migration for what changed in db/schema.ts
 pnpm db:migrate                # applies the pending migrations to DATABASE_URL
+pnpm db:preview create <name>  # a preview's own schema: public copied, this branch's migrations on top
 ```
 
 To try the whole site the way it is published:
@@ -128,9 +130,10 @@ Applying them is the deploy's job: `deploy.yml` runs `pnpm db:migrate` on the de
 before building. Each migration runs once, in order, and the database remembers which ones it has
 seen. To apply them by hand, put the connection string in `DATABASE_URL` and run `pnpm db:migrate`.
 
-Only the default branch migrates. The migrations are one line of history, and two branches applying
-their own would tangle it, so **a preview runs against whatever schema `main` last left** — a branch
-that needs a new column has to be merged before its preview works.
+Only the default branch migrates `public`. The migrations are one line of history, and two branches
+applying their own would tangle it. A branch's migrations are tried in its preview instead, on a copy
+of the database of its own ([Previews](#previews)), so a new column works in the preview before the
+branch is merged.
 
 Two things drizzle-kit does not track, and `db/migrations/0001_grants.sql` does by hand: which
 roles may reach a table at all, and that a table a later migration creates inherits the same. That
@@ -155,14 +158,18 @@ Then, in this repository under **Settings → Secrets and variables → Actions*
 | --- | --- | --- |
 | **Variables** | `NEON_AUTH_URL` | The Auth URL from step 1 |
 | **Variables** | `NEON_DATA_API_URL` | The Data API URL from step 2 |
-| **Secrets** | `DATABASE_URL` | The project's connection string, for the migrations |
+| **Variables** | `NEON_PROJECT_ID` | The project's ID, from its settings in the console: for the previews |
+| **Secrets** | `DATABASE_URL` | The project's connection string, for the migrations and the previews |
+| **Secrets** | `NEON_API_KEY` | A Neon API key, for the previews |
 
 The two URLs are not secrets: they are the public addresses of services that decide for themselves
 what the caller may see, and they end up in the published JavaScript either way. The connection
-string is: it opens the whole database with none of the policies in the way, which is why only the
-default branch's run is given it.
+string and the API key are: the first opens the whole database with none of the policies in the way,
+the second whatever the key reaches — a project-scoped key (organization **Settings → API keys**)
+keeps that to this project. The default branch's run uses the connection string to migrate `public`;
+a preview's, both of them to make its own schema, and all it does with `public` is read it.
 
-For `pnpm dev`, `pnpm build` and `pnpm db:migrate`, the same three values go in a `.env` at the
+For `pnpm dev`, `pnpm build` and the `pnpm db:*` commands, the same values go in a `.env` at the
 root — see `.env.example`.
 
 A build with no Neon URLs still builds and runs, and every screen says there is no database.
@@ -183,8 +190,8 @@ Everything is published to the `gh-pages` branch, which is the only thing GitHub
 | any other branch | `previews/<branch>/` | `…github.io/leo-os/previews/<branch>/` |
 
 `deploy.yml` runs on every push: it passes `pnpm check`, brings the database up to date if this is
-the default branch, builds with the base path it is due and `scripts/publish-pages.sh` writes the
-result into `gh-pages`. Publishing the site does not wipe the
+the default branch (or gives a preview its own copy of it), builds with the base path it is due and
+`scripts/publish-pages.sh` writes the result into `gh-pages`. Publishing the site does not wipe the
 previews, and each branch only touches its own folder; if two publish at once, the script reads the
 branch again and retries.
 
@@ -205,14 +212,34 @@ it is merged.
 - If the branch has an open PR, the workflow leaves a comment there with the link and keeps it
   updated. The link also shows up in each run's summary, even before there is a PR.
 - `…/leo-os/previews/` lists the ones that exist, newest to oldest.
-- When the branch is deleted, `preview-cleanup.yml` drops its folder. Once none are left,
-  `previews/` disappears. GitHub runs that workflow from `main`, so the cleanup starts working once
-  the file lands there.
+- When the branch is deleted, `preview-cleanup.yml` drops its folder and its schema. Once none are
+  left, `previews/` disappears. GitHub runs that workflow from `main`, so the cleanup starts working
+  once the file lands there.
 - GitHub Pages takes about a minute to serve what was just published.
 
+Each preview has a database of its own: a schema in the same Neon database, named after it
+(`preview_claude_wizardly_euler`), which `db/preview.mjs` makes anew on every push. It starts as a
+copy of `public` as it is at that moment — tables, rows, policies and grants — and then gets the
+branch's own migrations, the ones `public` has not seen, so a branch that adds a column can be tried
+before it is merged. The Data API serves every preview's schema next to `public`; the preview's
+queries name theirs, and the published site's name none, which keeps them on `public`.
+
+- Nothing done in a preview reaches the published data, and it lasts until the next push, which
+  starts again from a fresh copy.
+- The copy holds every account's rows behind the same policies: each account sees only its own
+  there too.
+- Copying and migrating is one transaction, and `public` is only read: a migration that fails leaves
+  the schema the previous push made, and the run fails with it. A migration may name `public` the
+  way drizzle-kit writes it, which the preview points at its own schema, but not change the
+  `search_path`.
+- It needs `NEON_API_KEY` and `NEON_PROJECT_ID` ([Setting it up](#setting-it-up)): the Data API is
+  told what to serve through the Neon API. Without them the preview uses the published data, as the
+  run summary says.
+
 A preview lives on the same origin as the published site, so it shares the session, `localStorage`
-and IndexedDB with it: it opens already signed in, and trying «Me deben» in a preview moves the
-same data as the real app.
+and IndexedDB with it: it opens already signed in, with the same wallpaper and the same WillChat
+conversation, which never reach the database. The copy of its rows each app keeps on the device is
+the preview's own.
 
 ## Home screen icon
 

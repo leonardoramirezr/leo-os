@@ -118,8 +118,9 @@ to register it.
   migration by hand: edit the models, run `pnpm db:generate`, and commit the migration it writes
   next to them. The row types the apps use come from the same models. `pnpm check` fails when the
   two have drifted, and leaves the missing migration behind for you to read.
-- **Only the default branch migrates**, so a branch that needs a new column has to be merged before
-  its preview works. Grants are the one thing the models do not carry: they live in
+- **Only the default branch migrates `public`.** A branch's migrations run in its preview's own
+  schema (`db/preview.mjs`): a copy of `public` made anew on every push, so what is typed into a
+  preview is gone at the next one. Grants are the one thing the models do not carry: they live in
   `db/migrations/0001_grants.sql`, which covers the tables of every migration still to come.
 - **Dependencies**: as few as possible. No UI or styling frameworks; CSS is written by hand inside
   each component.
