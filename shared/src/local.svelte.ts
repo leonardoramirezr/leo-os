@@ -3,7 +3,7 @@
 //
 // They still belong to one account. The key carries it, so two people using the same phone never
 // see each other's wallpaper or each other's conversation, and signing out drops the lot.
-import { readCache, writeCache } from './cache';
+import { readLocal, writeLocal } from './cache';
 
 class Local<T> {
 	#value: T = $state()!;
@@ -24,7 +24,7 @@ class Local<T> {
 
 	set value(next: T) {
 		this.#value = next;
-		this.#stored = account ? writeCache(this.key, account, next) : false;
+		this.#stored = account ? writeLocal(this.key, account, next) : false;
 	}
 
 	/** Whether the last value written made it. False when storage is full, or blocked. */
@@ -33,7 +33,7 @@ class Local<T> {
 	}
 
 	adopt(userId: string) {
-		this.#value = readCache<T>(this.key, userId) ?? this.#fallback;
+		this.#value = readLocal<T>(this.key, userId) ?? this.#fallback;
 		this.#stored = true;
 	}
 }
