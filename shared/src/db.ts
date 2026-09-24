@@ -33,6 +33,13 @@ export function eq(column: string, value: string): string {
 	return `${column}=eq.${encodeURIComponent(value)}`;
 }
 
+/** Any of several values: `oneOf('id', ids)` is `id=in.(<id>,<id>)`, one request for all of them. */
+export function oneOf(column: string, values: string[]): string {
+	// Quoted, so that a comma or a parenthesis inside a value cannot end the list early.
+	const quoted = values.map((value) => `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`);
+	return `${column}=in.(${quoted.map(encodeURIComponent).join(',')})`;
+}
+
 async function request(method: string, path: string, body?: unknown, prefer?: string) {
 	const bearer = await token();
 

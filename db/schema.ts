@@ -18,9 +18,11 @@ import { sql } from 'drizzle-orm';
 import { authenticatedRole } from 'drizzle-orm/neon';
 import {
 	bigint,
+	boolean,
 	check,
 	date,
 	index,
+	integer,
 	jsonb,
 	pgPolicy,
 	pgTable,
@@ -109,8 +111,26 @@ export const movements = pgTable(
 	]
 ).enableRLS();
 
+/**
+ * «Lista»: the one checklist an account has. Starting a new list empties this one, so every row of
+ * the account is an item of it.
+ */
+export const listItems = pgTable(
+	'lista_items',
+	{
+		id: uuid().primaryKey(),
+		user_id: account(),
+		text: text().notNull(),
+		done: boolean().notNull().default(false),
+		/** Smallest first. Gaps are fine: removing an item leaves the others where they were. */
+		position: integer().notNull()
+	},
+	(table) => [index('lista_items_user').on(table.user_id), ownRows('lista_items_own')]
+).enableRLS();
+
 // What the browser reads and writes. `shared/` re-exports these, so a column is described once:
 // rename one here and the apps stop typechecking until they follow.
 export type SettingRow = typeof settings.$inferSelect;
 export type PersonRow = typeof people.$inferSelect;
 export type MovementRow = typeof movements.$inferSelect;
+export type ListItemRow = typeof listItems.$inferSelect;

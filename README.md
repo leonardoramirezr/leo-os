@@ -6,6 +6,7 @@ phone home screen: every app is an icon.
 - Home: https://leonardoramirezr.github.io/leo-os/
 - WillChat: https://leonardoramirezr.github.io/leo-os/willchat/
 - Me deben: https://leonardoramirezr.github.io/leo-os/me-deben/
+- Lista: https://leonardoramirezr.github.io/leo-os/lista/
 
 ## Layout
 
@@ -290,3 +291,32 @@ already overdue, the list of people who owe, and two buttons at the bottom.
   a copy on the device so the app opens without waiting. Amounts are stored as whole cents so
   balances do not accumulate rounding errors. What an earlier version left under the `me-deben:*`
   keys of this browser is brought over the first time you sign in, and only into an empty ledger.
+
+## Lista
+
+A checklist that is only ever edited by voice: dictate a list and every thing in it becomes an item
+with a box to tick, then say what to change.
+
+- Tapping the microphone starts listening and tapping it again sends what was heard; **Cancelar**
+  throws it away. It also stops and sends on its own after three minutes, or when the app goes to
+  the background. While listening, the screen is kept on and a ring around the button follows the
+  voice.
+- What was said goes to Groq twice: `whisper-large-v3` turns the recording into text, and
+  `openai/gpt-oss-120b` decides what that text does to the list. The model is shown the list
+  numbered as it is on screen and can only answer with actions — add, edit, remove, check, uncheck,
+  clear, undo — that Groq's strict mode holds to a JSON schema. An action pointing at an item that
+  is not there is dropped.
+- «Leche, huevos y pan» adds three items; «quita el pan», «cambia la leche por leche deslactosada»,
+  «ya compré los huevos» or «empieza una lista nueva» change the list. There is only ever one list:
+  a new one replaces it.
+- The bar at the bottom shows what Whisper heard and what the model did. **Deshacer**, or saying
+  «deshaz eso», takes back the last voice command, leaving alone any box ticked since.
+- Boxes can also be ticked by tapping them. Everything else goes through the microphone.
+- Out of silence Whisper makes up phrases such as «Gracias.» or «Subtítulos realizados por la
+  comunidad de Amara.org»; the segments it doubts were speech are dropped before the model sees
+  them.
+- It needs a Groq API key of its own: WillChat's is an OpenAI key, which Groq does not take, and the
+  app refuses a key that looks like one rather than send it there. The key is stored in the account
+  like WillChat's and only ever sent to `api.groq.com`, together with the recordings.
+- The list lives in the `lista_items` table, one row per item, with a copy on the device so the app
+  opens without waiting. Coming back to the app reads it again, in case it changed on another device.
