@@ -1,4 +1,5 @@
-// Applies every migration the database has not seen yet, and says which ones those were.
+// Applies every migration the database has not seen yet, and says which ones those were. Then it
+// has the Data API read the tables again.
 //
 // `deploy.yml` runs this on the default branch, before building the site. It is `drizzle-kit
 // migrate` underneath; the wrapper is here to turn a missing DATABASE_URL into a plain message
@@ -7,6 +8,7 @@
 import { spawnSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { missingForNeon, refreshDataApi } from './neon.mjs';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 
@@ -47,3 +49,24 @@ if (status !== 0) {
 }
 
 console.log('\n✔ The database is up to date\n');
+
+// The Data API answers from what it last read of the tables, and only reads them again when told or
+// once its cache runs out: until then the site would find the new columns missing. It is told on
+// every run, not just one that applied something, so that a run after one that could not tell it
+// puts that right.
+const missing = missingForNeon();
+if (missing.length > 0) {
+	console.log(`▸ Without ${missing.join(', ')}, the Data API sees the change once its cache runs out.\n`);
+	process.exit(0);
+}
+
+try {
+	await refreshDataApi();
+} catch (error) {
+	console.error(`✖ The Data API could not be told to read the tables again: ${error.message}`);
+	console.error('  The migrations are applied. Run this again, or refresh the Data API from the Neon');
+	console.error('  console: until then it answers with the columns it had.\n');
+	process.exit(1);
+}
+
+console.log('✔ The Data API has read the tables again\n');

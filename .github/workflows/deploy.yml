@@ -66,11 +66,16 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       # Only from the default branch. The migrations are one line of history, and two branches
-      # applying their own would tangle it — so `public` only ever gets the ones main has.
+      # applying their own would tangle it — so `public` only ever gets the ones main has. The Neon
+      # API is how the Data API is then told to read the tables again, before the site that needs
+      # them is published.
       - name: Bring the database up to date
         if: steps.target.outputs.preview != 'true'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          VITE_NEON_DATA_API_URL: ${{ vars.NEON_DATA_API_URL }}
         run: pnpm db:migrate
 
       # A branch's migrations are tried in its preview's own schema instead: a copy of `public`, rows

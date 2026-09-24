@@ -23,6 +23,7 @@ import { appendFileSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
 import postgres from 'postgres';
+import { dataApiPath, missingForNeon, neon } from './neon.mjs';
 
 // The same .env at the root that migrate.mjs reads. In GitHub Actions there is no file, and the
 // values come from the repository's secrets and variables.
@@ -50,21 +51,8 @@ const ident = (name) => `"${name.replaceAll('"', '""')}"`;
 /** The migrations the preview's schema has, one row each, like `drizzle.__drizzle_migrations`. */
 const LOG = `drizzle.${ident(schema)}`;
 
-const {
-	DATABASE_URL: databaseUrl,
-	NEON_API_KEY: apiKey,
-	NEON_PROJECT_ID: project,
-	VITE_NEON_DATA_API_URL: dataApiUrl
-} = process.env;
-
-const missing = Object.entries({
-	DATABASE_URL: databaseUrl,
-	NEON_API_KEY: apiKey,
-	NEON_PROJECT_ID: project,
-	NEON_DATA_API_URL: dataApiUrl
-})
-	.filter(([, value]) => !value)
-	.map(([name]) => name);
+const databaseUrl = process.env.DATABASE_URL;
+const missing = [...(databaseUrl ? [] : ['DATABASE_URL']), ...missingForNeon()];
 
 /**
  * Tells the workflow which schema the build asks for (empty for the published one), and the
@@ -461,24 +449,6 @@ async function checkIsolation(tx) {
 	}
 }
 
-/** The Neon API, which is where the Data API is told what to serve. */
-async function neon(method, path, body) {
-	const response = await fetch(`https://console.neon.tech/api/v2${path}`, {
-		method,
-		headers: {
-			authorization: `Bearer ${apiKey}`,
-			accept: 'application/json',
-			...(body && { 'content-type': 'application/json' })
-		},
-		body: body && JSON.stringify(body)
-	});
-	const text = await response.text();
-	if (!response.ok) {
-		throw new Error(`The Neon API answered ${method} ${path} with ${response.status}: ${text}`);
-	}
-	return text ? JSON.parse(text) : {};
-}
-
 /**
  * Tells the Data API which schemas to serve: every preview's that exists right now, after the ones
  * it already served that are not a preview's — `public` first among them, which keeps it the one a
@@ -490,12 +460,7 @@ async function neon(method, path, body) {
  * of it could be let go of on another, and stay held for good.
  */
 async function serve(sql) {
-	// https://ep-xxx.apirest.<region>.aws.neon.tech/<database>/rest/v1
-	const url = new URL(dataApiUrl);
-	const endpointId = url.hostname.split('.')[0];
-	const database = decodeURIComponent(url.pathname.split('/')[1] ?? '');
-	const { endpoint } = await neon('GET', `/projects/${project}/endpoints/${endpointId}`);
-	const path = `/projects/${project}/branches/${endpoint.branch_id}/data-api/${encodeURIComponent(database)}`;
+	const path = await dataApiPath();
 
 	return sql.begin(async (tx) => {
 		await tx`select pg_advisory_xact_lock(hashtext('leo-os previews'))`;

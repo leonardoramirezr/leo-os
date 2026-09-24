@@ -71,7 +71,7 @@ pnpm check                     # svelte-check across every project, and the mode
 pnpm icons                     # regenerates the apple-touch-icon.png files after editing an icon.svg
 
 pnpm db:generate               # writes the migration for what changed in db/schema.ts
-pnpm db:migrate                # applies the pending migrations to DATABASE_URL
+pnpm db:migrate                # applies the pending migrations to DATABASE_URL, and tells the Data API
 pnpm db:preview create <name>  # a preview's own schema: public copied once, then this branch's migrations
 ```
 
@@ -130,6 +130,12 @@ Applying them is the deploy's job: `deploy.yml` runs `pnpm db:migrate` on the de
 before building. Each migration runs once, in order, and the database remembers which ones it has
 seen. To apply them by hand, put the connection string in `DATABASE_URL` and run `pnpm db:migrate`.
 
+Then it tells the Data API to read the tables again. The Data API answers from what it last read of
+them, and only reads them again when told or once its cache runs out: until then, the site would
+find the new columns missing. Telling it takes `NEON_API_KEY` and `NEON_PROJECT_ID` ([Setting it
+up](#setting-it-up)); without them `pnpm db:migrate` says so, and leaves it to the cache. With them,
+a run that cannot tell it fails before the site is published, and the next one tells it again.
+
 Only the default branch migrates `public`. The migrations are one line of history, and two branches
 applying their own would tangle it. A branch's migrations are tried in its preview instead, on a copy
 of the database of its own ([Previews](#previews)), so a new column works in the preview before the
@@ -158,16 +164,16 @@ Then, in this repository under **Settings → Secrets and variables → Actions*
 | --- | --- | --- |
 | **Variables** | `NEON_AUTH_URL` | The Auth URL from step 1 |
 | **Variables** | `NEON_DATA_API_URL` | The Data API URL from step 2 |
-| **Variables** | `NEON_PROJECT_ID` | The project's ID, from its settings in the console: for the previews |
+| **Variables** | `NEON_PROJECT_ID` | The project's ID, from its settings in the console |
 | **Secrets** | `DATABASE_URL` | The project's connection string, for the migrations and the previews |
-| **Secrets** | `NEON_API_KEY` | A Neon API key, for the previews |
+| **Secrets** | `NEON_API_KEY` | A Neon API key, to tell the Data API what to serve and when to look again |
 
 The two URLs are not secrets: they are the public addresses of services that decide for themselves
 what the caller may see, and they end up in the published JavaScript either way. The connection
 string and the API key are: the first opens the whole database with none of the policies in the way,
 the second whatever the key reaches — a project-scoped key (organization **Settings → API keys**)
-keeps that to this project. The default branch's run uses the connection string to migrate `public`;
-a preview's, both of them to make its own schema, and all it does with `public` is read it.
+keeps that to this project. The default branch's run uses both to migrate `public` and have the Data
+API read it again; a preview's, to make its own schema, and all it does with `public` is read it.
 
 For `pnpm dev`, `pnpm build` and the `pnpm db:*` commands, the same values go in a `.env` at the
 root — see `.env.example`.
