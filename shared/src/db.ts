@@ -6,6 +6,7 @@
 // table these apps use is small enough to read in one go.
 import { AuthError, token } from './auth';
 import { dataApiUrl } from './config';
+import { logResponse } from './debug.svelte';
 
 export class DbError extends Error {
 	/** PostgREST's code, e.g. PGRST301 for a token that ran out. Empty when it never answered. */
@@ -50,6 +51,8 @@ async function request(method: string, path: string, body?: unknown, prefer?: st
 	} catch {
 		throw new DbError('Sin conexión con la base de datos.');
 	}
+
+	await logResponse(`data ${method} ${path}`, response, { authorization: `Bearer ${bearer.slice(0, 12)}…` });
 
 	if (!response.ok) {
 		const failure = (await response.json().catch(() => null)) as {

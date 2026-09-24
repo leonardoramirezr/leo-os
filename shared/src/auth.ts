@@ -15,6 +15,7 @@
 // cookie, is what the Data API is shown: `token()` hands it over and asks for a fresh one when it
 // runs out.
 import { authUrl } from './config';
+import { logResponse } from './debug.svelte';
 
 export interface AuthUser {
 	id: string;
@@ -95,6 +96,10 @@ function keepSession(answer: unknown): boolean {
 
 async function call(path: string, body?: unknown): Promise<unknown> {
 	const bearer = stored();
+	const headers: Record<string, string> = {
+		...(body === undefined ? undefined : { 'content-type': 'application/json' }),
+		...(bearer ? { authorization: `Bearer ${bearer}` } : undefined)
+	};
 
 	let response: Response;
 	try {
@@ -102,16 +107,14 @@ async function call(path: string, body?: unknown): Promise<unknown> {
 			method: body === undefined ? 'GET' : 'POST',
 			// The session cookie belongs to Neon Auth's domain, not ours: it only travels if asked for.
 			credentials: 'include',
-			headers: {
-				...(body === undefined ? undefined : { 'content-type': 'application/json' }),
-				...(bearer ? { authorization: `Bearer ${bearer}` } : undefined)
-			},
+			headers,
 			body: body === undefined ? undefined : JSON.stringify(body)
 		});
 	} catch {
 		throw new AuthError('Sin conexión con Neon Auth.');
 	}
 
+	await logResponse(`auth ${path}`, response, headers);
 	capture(response);
 
 	const answer: unknown = await response.json().catch(() => null);
