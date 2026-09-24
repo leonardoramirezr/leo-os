@@ -1,7 +1,9 @@
 import { resolve } from '$app/paths';
+import { session } from '@leo-os/shared';
 import reloadIcon from './reload.svg';
 import { ui } from './settings.svelte';
 import settingsIcon from './settings.svg';
+import signOutIcon from './sign-out.svg';
 
 /**
  * Apps are discovered at build time. Every folder in `apps/<slug>/` must contain:
@@ -37,6 +39,15 @@ const builtIns: App[] = [
 		// Like Cmd+R, for when the site runs full screen without browser controls.
 		// A reload keeps localStorage and IndexedDB.
 		action: () => location.reload()
+	},
+	{
+		slug: 'sign-out',
+		name: 'Cerrar sesión',
+		icon: signOutIcon,
+		// An icon is easy to tap by accident, and signing back in means typing the password again.
+		action: () => {
+			if (!session.busy && confirm('¿Cerrar sesión?')) session.signOut();
+		}
 	}
 ];
 
