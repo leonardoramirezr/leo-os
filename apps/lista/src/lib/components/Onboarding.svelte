@@ -69,8 +69,9 @@
 		</button>
 
 		<p class="hint">
-			Tu key se guarda en tu cuenta, donde solo tú puedes leerla, y solo se envía a api.groq.com, igual
-			que lo que grabes.
+			Esta API key se usa en esta app y en las demás apps de Leo OS que usen Groq: la ingresas una sola
+			vez. Se guarda en tu cuenta, donde solo tú puedes leerla, y solo se envía a api.groq.com, igual que
+			lo que grabes.
 			<a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">
 				Obtener una API key
 			</a>

@@ -317,6 +317,7 @@ with a box to tick, then say what to change.
   them.
 - It needs a Groq API key of its own: WillChat's is an OpenAI key, which Groq does not take, and the
   app refuses a key that looks like one rather than send it there. The key is stored in the account
-  like WillChat's and only ever sent to `api.groq.com`, together with the recordings.
+  like WillChat's and only ever sent to `api.groq.com`, together with the recordings. It is saved as
+  `groq:api-key`, with no app's prefix: every app here that uses Groq reads that same one.
 - The list lives in the `lista_items` table, one row per item, with a copy on the device so the app
   opens without waiting. Coming back to the app reads it again, in case it changed on another device.

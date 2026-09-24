@@ -16,7 +16,10 @@
 	});
 
 	function changeKey() {
-		if (!confirm('¿Quitar la API key de Groq guardada en tu cuenta?')) return;
+		const question =
+			'¿Quitar la API key de Groq guardada en tu cuenta? ' +
+			'También dejará de usarse en las demás apps que usan Groq.';
+		if (!confirm(question)) return;
 		dialog.close();
 		voice.changeKey();
 	}
