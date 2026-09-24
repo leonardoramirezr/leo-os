@@ -1,19 +1,21 @@
 // Gives a preview a database of its own, so that trying a branch never touches the published data.
 //
-//   node preview.mjs create <preview>   Makes the preview's schema anew from what `public` holds now
+//   node preview.mjs create <preview>   Brings the preview's schema up to date, making it if need be
 //   node preview.mjs drop <preview>     Drops it, once its branch is gone
 //
 // <preview> is the preview's folder name, from scripts/preview-slug.sh, and the schema is named
-// after it: `claude-wizardly-euler` gets `preview_claude_wizardly_euler`. `deploy.yml` creates it on
-// every push of a branch, before building the preview; `preview-cleanup.yml` drops it.
+// after it: `claude-wizardly-euler` gets `preview_claude_wizardly_euler`. `deploy.yml` runs `create`
+// on every push of a branch, before building the preview; `preview-cleanup.yml` runs `drop`.
 //
-// The schema starts as a copy of `public`: its tables with their rows, sequences, enums, policies
-// and grants. Then the branch's own migrations — the ones `public` has not seen — are applied inside
-// it, and the Data API is told to serve it next to `public`. The preview is built to ask for it by
-// name (VITE_NEON_DATA_API_SCHEMA); the published site asks for none and keeps getting `public`.
+// The first push makes the schema a copy of `public`: its tables with their rows, sequences, enums,
+// policies and grants. From then on it is kept, rows and all, and each push only applies the
+// migrations it has not seen yet — the branch's own, and whatever the branch brings over from main.
+// Which ones it has seen is its own migrations log, next to `public`'s in the `drizzle` schema. The
+// Data API is told to serve the schema next to `public`; the preview is built to ask for it by name
+// (VITE_NEON_DATA_API_SCHEMA), and the published site asks for none and keeps getting `public`.
 //
-// Copying and migrating is one transaction: a migration that fails leaves the schema as the last
-// publish made it. `public` is only ever read.
+// Each push is one transaction: a migration that fails leaves the schema as the push before left
+// it. `public` is only ever read.
 
 import { appendFileSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -41,6 +43,11 @@ if (!['create', 'drop'].includes(action) || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(pre
 const schema = `preview_${preview.replaceAll('-', '_')}`.slice(0, 63).replace(/_+$/, '');
 const isPreview = (name) => /^preview_[a-z0-9_]+$/.test(name);
 
+const ident = (name) => `"${name.replaceAll('"', '""')}"`;
+
+/** The migrations the preview's schema has, one row each, like `drizzle.__drizzle_migrations`. */
+const LOG = `drizzle.${ident(schema)}`;
+
 const {
 	DATABASE_URL: databaseUrl,
 	NEON_API_KEY: apiKey,
@@ -57,12 +64,15 @@ const missing = Object.entries({
 	.filter(([, value]) => !value)
 	.map(([name]) => name);
 
-/** Tells the workflow which schema the build asks for; empty means the published one. */
-function output(value) {
-	if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `schema=${value}\n`);
+/**
+ * Tells the workflow which schema the build asks for (empty for the published one), and the
+ * sentence about the preview's data that its summary and its pull request comment carry.
+ */
+function output(values) {
+	if (!process.env.GITHUB_OUTPUT) return;
+	const lines = Object.entries(values).map(([name, value]) => `${name}=${value}\n`);
+	appendFileSync(process.env.GITHUB_OUTPUT, lines.join(''));
 }
-
-const ident = (name) => `"${name.replaceAll('"', '""')}"`;
 
 /** What a statement is made of, as far as `redirect` cares. */
 const TOKEN = [
@@ -348,39 +358,63 @@ async function copyPublic(tx) {
 }
 
 /**
- * Applies the migrations `public` has not seen, which are the branch's own. It is drizzle's rule,
- * the one `pnpm db:migrate` will follow once the branch is merged: whatever is newer than the last
- * migration the database recorded. Gives back the names of the ones it applied.
+ * The migrations of this checkout, in the journal's order. Each is known by `when`, the moment
+ * drizzle-kit wrote it, which is also what a database's log keeps of it (as `created_at`); the hash
+ * is of its SQL.
  */
-async function applyBranchMigrations(tx) {
-	const [{ found }] = await tx`select to_regclass('drizzle.__drizzle_migrations') is not null as found`;
-	const [last] = found
-		? await tx`select created_at from drizzle.__drizzle_migrations order by created_at desc limit 1`
-		: [];
-
+function migrationsOnDisk() {
 	const folder = fileURLToPath(new URL('migrations', import.meta.url));
 	const journal = JSON.parse(readFileSync(`${folder}/meta/_journal.json`, 'utf8'));
 	const names = new Map(journal.entries.map((entry) => [entry.when, entry.tag]));
-	const pending = readMigrationFiles({ migrationsFolder: folder }).filter(
-		(migration) => !last || Number(last.created_at) < migration.folderMillis
-	);
+	return readMigrationFiles({ migrationsFolder: folder }).map(({ sql, hash, folderMillis }) => ({
+		sql,
+		hash,
+		when: folderMillis,
+		name: names.get(folderMillis)
+	}));
+}
 
+/** A migrations log, or `undefined` when there is none yet. Only a preview's keeps names. */
+async function readLog(tx, table) {
+	const [{ found }] = await tx`select to_regclass(${table}) is not null as found`;
+	if (!found) return undefined;
+	const rows = await tx.unsafe(`select * from ${table}`);
+	return rows.map((row) => ({ when: Number(row.created_at), hash: row.hash, name: row.name }));
+}
+
+/** Starts the preview's log with what `public`'s says: the copy has all of that already. */
+async function startLog(tx) {
+	await tx.unsafe('create schema if not exists drizzle');
+	await tx.unsafe(`drop table if exists ${LOG}`);
+	await tx.unsafe(`create table ${LOG} (created_at bigint primary key, hash text not null, name text)`);
+	const [{ found }] = await tx`select to_regclass('drizzle.__drizzle_migrations') is not null as found`;
+	if (found) {
+		await tx.unsafe(`insert into ${LOG} (created_at, hash)
+			select created_at, hash from drizzle.__drizzle_migrations on conflict do nothing`);
+	}
+}
+
+/** Applies these migrations inside the preview's schema, and writes each down in its log. */
+async function applyMigrations(tx, migrations) {
 	// The preview's schema alone: a name the migration leaves unqualified cannot fall through to
 	// `public`.
 	await tx.unsafe(`set local search_path = ${ident(schema)}`);
 
-	for (const migration of pending) {
-		const name = names.get(migration.folderMillis);
+	for (const migration of migrations) {
 		for (const statement of migration.sql) {
 			if (!statement.trim()) continue;
 			try {
 				await tx.unsafe(redirect(statement));
 			} catch (error) {
-				throw new Error(`Migration ${name}: ${error.message}\n\n${statement.trim()}\n`);
+				throw new Error(`Migration ${migration.name}: ${error.message}\n\n${statement.trim()}\n`);
 			}
 		}
+		await tx.unsafe(`insert into ${LOG} (created_at, hash, name) values ($1, $2, $3)`, [
+			migration.when,
+			migration.hash,
+			migration.name
+		]);
 	}
-	return pending.map((migration) => names.get(migration.folderMillis));
 }
 
 /**
@@ -479,27 +513,95 @@ async function serve(sql) {
 	});
 }
 
+/**
+ * Brings the preview's schema up to date: a copy of `public` the first time, and from then on only
+ * the migrations it has not seen. A migration is known by `when`, not by being newer than the last
+ * one: after main is merged into the branch, main's migrations can be older than the branch's own,
+ * and the preview still lacks them.
+ */
 async function create(sql) {
-	console.log(`\n▸ Making ${schema}: a copy of public, and this branch's migrations on top\n`);
+	console.log(`\n▸ ${schema}\n`);
 
-	const { tables, migrations } = await sql.begin('isolation level repeatable read', async (tx) => {
-		// Read in one snapshot, so that the rows of one table agree with the rows of the next.
-		const tables = await copyPublic(tx);
-		const migrations = await applyBranchMigrations(tx);
+	const done = await sql.begin('isolation level repeatable read', async (tx) => {
+		const disk = migrationsOnDisk();
+		const published = (await readLog(tx, 'drizzle.__drizzle_migrations')) ?? [];
+		const publishedWhen = new Set(published.map((row) => row.when));
+		const last = Math.max(0, ...publishedWhen);
+
+		// drizzle only applies what is newer than the last migration a database has: one of the
+		// branch's that is older would be skipped on main for good, and the preview would hide it.
+		const late = disk.filter(
+			(migration) => !publishedWhen.has(migration.when) && migration.when <= last
+		);
+		if (late.length > 0) {
+			const names = late.map((migration) => migration.name).join(', ');
+			throw new Error(
+				`${names}: public already has a newer migration, so \`pnpm db:migrate\` would never ` +
+					'apply this one on main. Generate it again with `pnpm db:generate`, after bringing ' +
+					'main into the branch, so that it comes last.'
+			);
+		}
+
+		const [{ exists }] = await tx`select to_regnamespace(${schema}) is not null as exists`;
+		const log = exists ? await readLog(tx, LOG) : undefined;
+
+		// A migration this schema applied that the branch has since changed or dropped: the schema
+		// can no longer follow the branch, so it starts over. What `public` has too is not the
+		// branch's to change.
+		const onDisk = new Map(disk.map((migration) => [migration.when, migration]));
+		const changed = (log ?? []).filter(
+			(row) => !publishedWhen.has(row.when) && onDisk.get(row.when)?.hash !== row.hash
+		);
+
+		const fresh = !log || changed.length > 0;
+		let tables = 0;
+		if (fresh) {
+			// One snapshot for the whole copy, so the rows of one table agree with those of the next.
+			tables = await copyPublic(tx);
+			await startLog(tx);
+		}
+
+		// A fresh copy has what `public` has; a schema kept from before, what its log says.
+		const seen = new Set((fresh ? published : log).map((row) => row.when));
+		const pending = disk.filter((migration) => !seen.has(migration.when));
+		await applyMigrations(tx, pending);
 		await checkIsolation(tx);
-		return { tables, migrations };
+
+		return {
+			copied: !log ? 'first' : fresh ? 'again' : '',
+			tables,
+			changed: changed.map((row) => row.name ?? new Date(row.when).toISOString()),
+			applied: pending.map((migration) => migration.name)
+		};
 	});
 
-	console.log(`  ✔ ${tables} table(s) copied from public, rows included`);
-	console.log(
-		migrations.length > 0
-			? `  ✔ This branch's migrations applied: ${migrations.join(', ')}`
-			: '  ✔ No migrations of its own: the schema is public as it is'
-	);
+	const list = (names) => names.map((name) => `\`${name}\``).join(', ');
+	const onTop = done.applied.length > 0 ? `; applied on top: ${list(done.applied)}` : '';
+	let data;
+	if (done.copied === 'first') {
+		console.log(`  ✔ First push: ${done.tables} table(s) copied from public, rows included`);
+		data = `a copy of the published data made at this push, the branch's first${onTop}.`;
+		data += ' Later pushes keep it, and only apply the migrations they bring.';
+	} else if (done.copied === 'again') {
+		console.log(`  ✔ Copied from public again: the branch changed ${done.changed.join(', ')}`);
+		data = 'copied again from the published data at this push, since the branch changed migrations';
+		data += ` the preview had already applied (${list(done.changed)})${onTop}.`;
+	} else {
+		console.log('  ✔ Kept from earlier pushes, rows included');
+		data = 'kept from earlier pushes; ';
+		data += done.applied.length > 0
+			? `this one applied ${list(done.applied)}.`
+			: 'this one brought no migrations.';
+	}
+	const applied = done.applied.join(', ');
+	console.log(applied ? `  ✔ Applied ${applied}` : '  ✔ Nothing to apply');
 
 	const served = await serve(sql);
 	console.log(`  ✔ The Data API serves ${served.join(', ')}\n`);
-	output(schema);
+	output({
+		schema,
+		data: `Its data: schema \`${schema}\`, ${data} Nothing done in the preview reaches the published site.`
+	});
 }
 
 async function drop(sql) {
@@ -507,8 +609,11 @@ async function drop(sql) {
 
 	// Checked again right where it matters: only ever a preview's.
 	if (!isPreview(schema)) throw new Error(`${schema} is not a preview's schema`);
-	await sql.unsafe(`drop schema if exists ${ident(schema)} cascade`);
-	console.log('  ✔ Dropped');
+	await sql.begin(async (tx) => {
+		await tx.unsafe(`drop schema if exists ${ident(schema)} cascade`);
+		await tx.unsafe(`drop table if exists ${LOG}`);
+	});
+	console.log('  ✔ Dropped, with its migrations log');
 
 	if (missing.length > 0) {
 		console.log(`  ▸ Without ${missing.join(', ')}, the Data API still lists it until the next preview.\n`);
@@ -521,7 +626,11 @@ async function drop(sql) {
 if (action === 'create' && missing.length > 0) {
 	console.log(`\n▸ Without ${missing.join(', ')}, this preview uses the published data.\n`);
 	console.log('  «Previews» in README.md says what each one is and where it goes.\n');
-	output('');
+	output({
+		schema: '',
+		data: "Its data: the published site's own. The preview database is not set up (see «Previews»" +
+			' in README.md).'
+	});
 	process.exit(0);
 }
 

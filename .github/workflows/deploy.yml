@@ -74,8 +74,9 @@ jobs:
         run: pnpm db:migrate
 
       # A branch's migrations are tried in its preview's own schema instead: a copy of `public`, rows
-      # included, made anew on every push. `public` is only read. Until NEON_API_KEY and
-      # NEON_PROJECT_ID are set, it says so and the preview uses the published data.
+      # included, made at the branch's first push and kept after that, each push applying only the
+      # migrations it brings. `public` is only read. Until NEON_API_KEY and NEON_PROJECT_ID are set,
+      # it says so and the preview uses the published data.
       - id: database
         name: Give the preview a schema of its own
         if: steps.target.outputs.preview == 'true'
@@ -131,7 +132,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PREVIEW: ${{ steps.target.outputs.preview }}
           URL: ${{ steps.target.outputs.url }}
-          SCHEMA: ${{ steps.database.outputs.schema }}
+          # What the preview's data is, in a sentence: db/preview.mjs knows what this push did to it.
+          DATA: ${{ steps.database.outputs.data }}
         run: |
           if [ "$PREVIEW" != 'true' ]; then
             printf '### Published site\n\n%s\n\nCommit `%s`.\n' \
@@ -139,23 +141,15 @@ jobs:
             exit 0
           fi
 
-          if [ -n "$SCHEMA" ]; then
-            data="Its data: schema \`$SCHEMA\`, a copy of the published data made at this push, with the"
-            data="$data migrations of this branch applied. Nothing done in the preview reaches the site."
-          else
-            data="Its data: the published site's own. The preview database is not set up (see «Previews»"
-            data="$data in README.md)."
-          fi
-
           printf '### Preview\n\n%s\n\nBranch `%s`, commit `%s`.\n\n%s\n' \
-            "$URL" "$GITHUB_REF_NAME" "$GITHUB_SHA" "$data" >> "$GITHUB_STEP_SUMMARY"
+            "$URL" "$GITHUB_REF_NAME" "$GITHUB_SHA" "$DATA" >> "$GITHUB_STEP_SUMMARY"
 
           # Sticky comment on the pull request of this branch, if it has one open.
           pr=$(gh pr list --head "$GITHUB_REF_NAME" --state open --json number --jq '.[0].number // empty')
           [ -n "$pr" ] || exit 0
 
           body=$(printf '**Preview of this PR:** %s\n\nUpdated with `%s`. GitHub Pages takes a minute to serve the change. It is republished on every push and removed when the branch is deleted.\n\n%s' \
-            "$URL" "${GITHUB_SHA:0:7}" "$data")
+            "$URL" "${GITHUB_SHA:0:7}" "$DATA")
           gh pr comment "$pr" --body "$body" --edit-last --create-if-none ||
             gh pr comment "$pr" --body "$body" ||
             echo "▸ Published, but could not comment on the pull request." >&2

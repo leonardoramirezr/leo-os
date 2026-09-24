@@ -72,7 +72,7 @@ pnpm icons                     # regenerates the apple-touch-icon.png files afte
 
 pnpm db:generate               # writes the migration for what changed in db/schema.ts
 pnpm db:migrate                # applies the pending migrations to DATABASE_URL
-pnpm db:preview create <name>  # a preview's own schema: public copied, this branch's migrations on top
+pnpm db:preview create <name>  # a preview's own schema: public copied once, then this branch's migrations
 ```
 
 To try the whole site the way it is published:
@@ -218,19 +218,30 @@ it is merged.
 - GitHub Pages takes about a minute to serve what was just published.
 
 Each preview has a database of its own: a schema in the same Neon database, named after it
-(`preview_claude_wizardly_euler`), which `db/preview.mjs` makes anew on every push. It starts as a
-copy of `public` as it is at that moment — tables, rows, policies and grants — and then gets the
-branch's own migrations, the ones `public` has not seen, so a branch that adds a column can be tried
-before it is merged. The Data API serves every preview's schema next to `public`; the preview's
-queries name theirs, and the published site's name none, which keeps them on `public`.
+(`preview_claude_wizardly_euler`), which `db/preview.mjs` keeps up to date. The branch's first push
+makes it a copy of `public` as it is at that moment — tables, rows, policies and grants — with the
+branch's own migrations applied on top. Every push after that keeps it, rows included, and only
+applies the migrations it brings: a branch that adds a column can be tried before it is merged,
+with whatever was typed into the preview still there. The Data API serves every preview's schema
+next to `public`; the preview's queries name theirs, and the published site's name none, which keeps
+them on `public`.
 
-- Nothing done in a preview reaches the published data, and it lasts until the next push, which
-  starts again from a fresh copy.
+- Nothing done in a preview reaches the published data.
+- Which migrations a preview's schema has is its own log, `drizzle.<schema>`, next to `public`'s.
+  A migration counts as new until the schema has it, whatever its date: the ones main brings over
+  when it is merged into the branch are applied too.
+- A migration the preview has applied and the branch then changes or drops leaves the schema with
+  nothing to follow: that push copies `public` again, and the run summary says why.
+- A migration of the branch older than the last one `public` has is refused: drizzle only applies
+  what is newer, so `pnpm db:migrate` would skip it on main for good. Generating it again, once
+  main is merged into the branch, puts it last.
+- To start a preview's data over, drop its schema — `pnpm db:preview drop <name>`, or from the Neon
+  console — and push: the next push copies `public` again.
 - The copy holds every account's rows behind the same policies: each account sees only its own
   there too.
-- Copying and migrating is one transaction, and `public` is only read: a migration that fails leaves
-  the schema the previous push made, and the run fails with it. A migration may name `public` the
-  way drizzle-kit writes it, which the preview points at its own schema, but not change the
+- Each push is one transaction, and `public` is only read: a migration that fails leaves the schema
+  as the push before left it, and the run fails with it. A migration may name `public` the way
+  drizzle-kit writes it, which the preview points at its own schema, but not change the
   `search_path`.
 - It needs `NEON_API_KEY` and `NEON_PROJECT_ID` ([Setting it up](#setting-it-up)): the Data API is
   told what to serve through the Neon API. Without them the preview uses the published data, as the
