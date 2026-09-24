@@ -119,11 +119,11 @@ to register it.
   next to them. The row types the apps use come from the same models. `pnpm check` fails when the
   two have drifted, and leaves the missing migration behind for you to read.
 - **Only the default branch migrates `public`.** A branch's migrations run in its preview's own
-  schema (`db/preview.mjs`): a copy of `public` made at the branch's first push, which later pushes
-  keep and only migrate. Changing a migration the preview already applied makes it copy `public`
-  again, and a migration older than `public`'s last is refused. Grants are the one thing the models
-  do not carry: they live in `db/migrations/0001_grants.sql`, which covers the tables of every
-  migration still to come.
+  schema (`db/preview.mjs`): a copy of `public` made by the first push that finds none, which later
+  pushes keep and only migrate. Changing a migration the preview already applied makes it copy
+  `public` again, and a migration older than `public`'s last is refused. Grants are the one thing
+  the models do not carry: they live in `db/migrations/0001_grants.sql`, which covers the tables of
+  every migration still to come.
 - **Dependencies**: as few as possible. No UI or styling frameworks; CSS is written by hand inside
   each component.
 - **Nothing leaves the browser** but the user's own data, to the user's own database, and what they

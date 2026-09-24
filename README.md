@@ -218,9 +218,10 @@ it is merged.
 - GitHub Pages takes about a minute to serve what was just published.
 
 Each preview has a database of its own: a schema in the same Neon database, named after it
-(`preview_claude_wizardly_euler`), which `db/preview.mjs` keeps up to date. The branch's first push
-makes it a copy of `public` as it is at that moment — tables, rows, policies and grants — with the
-branch's own migrations applied on top. Every push after that keeps it, rows included, and only
+(`preview_claude_wizardly_euler`), which `db/preview.mjs` keeps up to date. A push that finds none
+— the branch's first, or the next one after a run that did not get to finish — makes it a copy of
+`public` as it is at that moment (tables, rows, policies and grants), with the branch's own
+migrations applied on top. Every push after that keeps it, rows included, and only
 applies the migrations it brings: a branch that adds a column can be tried before it is merged,
 with whatever was typed into the preview still there. The Data API serves every preview's schema
 next to `public`; the preview's queries name theirs, and the published site's name none, which keeps

@@ -7,12 +7,14 @@
 // after it: `claude-wizardly-euler` gets `preview_claude_wizardly_euler`. `deploy.yml` runs `create`
 // on every push of a branch, before building the preview; `preview-cleanup.yml` runs `drop`.
 //
-// The first push makes the schema a copy of `public`: its tables with their rows, sequences, enums,
-// policies and grants. From then on it is kept, rows and all, and each push only applies the
-// migrations it has not seen yet — the branch's own, and whatever the branch brings over from main.
-// Which ones it has seen is its own migrations log, next to `public`'s in the `drizzle` schema. The
-// Data API is told to serve the schema next to `public`; the preview is built to ask for it by name
-// (VITE_NEON_DATA_API_SCHEMA), and the published site asks for none and keeps getting `public`.
+// A push that finds no schema — the branch's first, or the next one after a run that never got to
+// commit, or after the schema was dropped — makes it a copy of `public`: its tables with their rows,
+// sequences, enums, policies and grants. From then on it is kept, rows and all, and each push only
+// applies the migrations it has not seen yet: the branch's own, and whatever the branch brings over
+// from main. Which ones it has seen is its own migrations log, next to `public`'s in the `drizzle`
+// schema. The Data API is told to serve the schema next to `public`; the preview is built to ask for
+// it by name (VITE_NEON_DATA_API_SCHEMA), and the published site asks for none and keeps getting
+// `public`.
 //
 // Each push is one transaction: a migration that fails leaves the schema as the push before left
 // it. `public` is only ever read.
@@ -514,10 +516,10 @@ async function serve(sql) {
 }
 
 /**
- * Brings the preview's schema up to date: a copy of `public` the first time, and from then on only
- * the migrations it has not seen. A migration is known by `when`, not by being newer than the last
- * one: after main is merged into the branch, main's migrations can be older than the branch's own,
- * and the preview still lacks them.
+ * Brings the preview's schema up to date: a copy of `public` when there is none yet, and from then
+ * on only the migrations it has not seen. A migration is known by `when`, not by being newer than
+ * the last one: after main is merged into the branch, main's migrations can be older than the
+ * branch's own, and the preview still lacks them.
  */
 async function create(sql) {
 	console.log(`\n▸ ${schema}\n`);
@@ -568,7 +570,7 @@ async function create(sql) {
 		await checkIsolation(tx);
 
 		return {
-			copied: !log ? 'first' : fresh ? 'again' : '',
+			copied: !log ? 'new' : fresh ? 'again' : '',
 			tables,
 			changed: changed.map((row) => row.name ?? new Date(row.when).toISOString()),
 			applied: pending.map((migration) => migration.name)
@@ -578,9 +580,9 @@ async function create(sql) {
 	const list = (names) => names.map((name) => `\`${name}\``).join(', ');
 	const onTop = done.applied.length > 0 ? `; applied on top: ${list(done.applied)}` : '';
 	let data;
-	if (done.copied === 'first') {
-		console.log(`  ✔ First push: ${done.tables} table(s) copied from public, rows included`);
-		data = `a copy of the published data made at this push, the branch's first${onTop}.`;
+	if (done.copied === 'new') {
+		console.log(`  ✔ No schema yet: ${done.tables} table(s) copied from public, rows included`);
+		data = `a copy of the published data made at this push, as the preview had none yet${onTop}.`;
 		data += ' Later pushes keep it, and only apply the migrations they bring.';
 	} else if (done.copied === 'again') {
 		console.log(`  ✔ Copied from public again: the branch changed ${done.changed.join(', ')}`);

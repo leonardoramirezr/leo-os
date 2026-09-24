@@ -74,9 +74,9 @@ jobs:
         run: pnpm db:migrate
 
       # A branch's migrations are tried in its preview's own schema instead: a copy of `public`, rows
-      # included, made at the branch's first push and kept after that, each push applying only the
-      # migrations it brings. `public` is only read. Until NEON_API_KEY and NEON_PROJECT_ID are set,
-      # it says so and the preview uses the published data.
+      # included, made by the first push that finds none and kept after that, each push applying
+      # only the migrations it brings. `public` is only read. Until NEON_API_KEY and
+      # NEON_PROJECT_ID are set, it says so and the preview uses the published data.
       - id: database
         name: Give the preview a schema of its own
         if: steps.target.outputs.preview == 'true'
