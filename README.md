@@ -1,7 +1,7 @@
 # Leo OS
 
 A collection of static web apps published together on GitHub Pages. The home screen mimics an
-iPhone home screen: every app is an icon.
+phone home screen: every app is an icon.
 
 - Home: https://leonardoramirezr.github.io/leo-os/
 - WillChat: https://leonardoramirezr.github.io/leo-os/willchat/
