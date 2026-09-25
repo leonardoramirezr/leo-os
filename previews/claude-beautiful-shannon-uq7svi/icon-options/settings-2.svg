@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="settings-bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#ffffff" />
+			<stop offset="1" stop-color="#ebebf0" />
+		</linearGradient>
+		<linearGradient id="settings-on" x1="0" y1="220" x2="0" y2="480" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#4cd964" />
+			<stop offset="1" stop-color="#28b84a" />
+		</linearGradient>
+		<linearGradient id="settings-off" x1="0" y1="544" x2="0" y2="804" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#dcdce1" />
+			<stop offset="1" stop-color="#e9e9ee" />
+		</linearGradient>
+		<filter id="settings-track" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#1f7a35" flood-opacity="0.22" />
+		</filter>
+		<filter id="settings-knob" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity="0.25" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#settings-bg)" />
+	<!-- On -->
+	<rect x="206" y="220" width="612" height="260" rx="130" fill="url(#settings-on)" filter="url(#settings-track)" />
+	<circle cx="688" cy="350" r="108" fill="#fff" filter="url(#settings-knob)" />
+	<!-- Off -->
+	<rect x="206" y="544" width="612" height="260" rx="130" fill="url(#settings-off)" />
+	<circle cx="336" cy="674" r="108" fill="#fff" filter="url(#settings-knob)" />
+</svg>

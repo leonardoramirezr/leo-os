@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="sign-out-bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#ffffff" />
+			<stop offset="1" stop-color="#ececf1" />
+		</linearGradient>
+		<linearGradient id="sign-out-light" x1="0" y1="200" x2="0" y2="820" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#fff6d1" />
+			<stop offset="1" stop-color="#ffc062" />
+		</linearGradient>
+		<linearGradient id="sign-out-spill" x1="0" y1="820" x2="0" y2="920" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#ffc062" stop-opacity="0.75" />
+			<stop offset="1" stop-color="#ffc062" stop-opacity="0" />
+		</linearGradient>
+		<linearGradient id="sign-out-door" x1="0" y1="200" x2="0" y2="830" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#ff6a61" />
+			<stop offset="1" stop-color="#cc0019" />
+		</linearGradient>
+		<filter id="sign-out-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="14" stdDeviation="20" flood-color="#5a0010" flood-opacity="0.25" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#sign-out-bg)" />
+	<!-- The light that comes in across the floor -->
+	<path d="M308 820h408l118 100H190z" fill="url(#sign-out-spill)" />
+	<g filter="url(#sign-out-shadow)">
+		<!-- The doorway, and the light beyond it -->
+		<path d="M262 820V214a44 44 0 0 1 44-44h412a44 44 0 0 1 44 44v606h-46V216H308v604z" fill="#3a3a3f" />
+		<rect x="308" y="216" width="408" height="604" fill="url(#sign-out-light)" />
+		<!-- The door, swung open away from us -->
+		<path
+			d="M308 216 574 286v464l-266 70z"
+			fill="url(#sign-out-door)"
+			stroke="url(#sign-out-door)"
+			stroke-width="12"
+			stroke-linejoin="round"
+		/>
+	</g>
+	<circle cx="530" cy="532" r="24" fill="#fff" />
+</svg>

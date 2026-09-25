@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="reload-bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#3a3a40" />
+			<stop offset="1" stop-color="#101013" />
+		</linearGradient>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#reload-bg)" />
+	<!-- The activity indicator iOS shows while something loads, its brightest bar leading -->
+	<g stroke="#fff" stroke-width="64" stroke-linecap="round">
+		<path d="M512 362L512 212" stroke-opacity="0.2" />
+		<path d="M587 382.1L662 252.2" stroke-opacity="0.3" />
+		<path d="M641.9 437L771.8 362" stroke-opacity="0.4" />
+		<path d="M662 512L812 512" stroke-opacity="0.4" />
+		<path d="M641.9 587L771.8 662" stroke-opacity="0.5" />
+		<path d="M587 641.9L662 771.8" stroke-opacity="0.6" />
+		<path d="M512 662L512 812" stroke-opacity="0.6" />
+		<path d="M437 641.9L362 771.8" stroke-opacity="0.7" />
+		<path d="M382.1 587L252.2 662" stroke-opacity="0.8" />
+		<path d="M362 512L212 512" stroke-opacity="0.9" />
+		<path d="M382.1 437L252.2 362" stroke-opacity="0.9" />
+		<path d="M437 382.1L362 252.2" stroke-opacity="1" />
+	</g>
+</svg>

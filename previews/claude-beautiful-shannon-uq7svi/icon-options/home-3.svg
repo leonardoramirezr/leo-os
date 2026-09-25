@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="home-base" x1="0.41" y1="0" x2="0.59" y2="1">
+			<stop offset="0" stop-color="#4a2a8a" />
+			<stop offset="1" stop-color="#1c1446" />
+		</linearGradient>
+		<radialGradient id="home-orange" cx="0" cy="0" r="0.8">
+			<stop offset="0" stop-color="#ff965a" stop-opacity="0.95" />
+			<stop offset="0.7" stop-color="#ff965a" stop-opacity="0" />
+		</radialGradient>
+		<radialGradient id="home-pink" cx="1" cy="0.18" r="0.72">
+			<stop offset="0" stop-color="#f046a0" stop-opacity="0.9" />
+			<stop offset="0.7" stop-color="#f046a0" stop-opacity="0" />
+		</radialGradient>
+		<radialGradient id="home-blue" cx="0" cy="1" r="0.85">
+			<stop offset="0" stop-color="#2878ff" stop-opacity="0.9" />
+			<stop offset="0.7" stop-color="#2878ff" stop-opacity="0" />
+		</radialGradient>
+		<radialGradient id="home-purple" cx="1" cy="0.85" r="0.8">
+			<stop offset="0" stop-color="#8246f0" stop-opacity="0.95" />
+			<stop offset="0.7" stop-color="#8246f0" stop-opacity="0" />
+		</radialGradient>
+		<linearGradient id="home-glass" x1="0" y1="244" x2="0" y2="780" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#fff" stop-opacity="0.95" />
+			<stop offset="1" stop-color="#fff" stop-opacity="0.78" />
+		</linearGradient>
+		<filter id="home-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#140c33" flood-opacity="0.35" />
+		</filter>
+	</defs>
+	<!-- The home screen's own wallpaper... -->
+	<rect width="1024" height="1024" fill="url(#home-base)" />
+	<rect width="1024" height="1024" fill="url(#home-purple)" />
+	<rect width="1024" height="1024" fill="url(#home-blue)" />
+	<rect width="1024" height="1024" fill="url(#home-pink)" />
+	<rect width="1024" height="1024" fill="url(#home-orange)" />
+	<!-- ...and its apps, of frosted glass -->
+	<g fill="url(#home-glass)" stroke="#fff" stroke-opacity="0.9" stroke-width="4" filter="url(#home-shadow)">
+		<rect x="244" y="244" width="236" height="236" rx="66" />
+		<rect x="544" y="244" width="236" height="236" rx="66" />
+		<rect x="244" y="544" width="236" height="236" rx="66" />
+		<rect x="544" y="544" width="236" height="236" rx="66" />
+	</g>
+</svg>

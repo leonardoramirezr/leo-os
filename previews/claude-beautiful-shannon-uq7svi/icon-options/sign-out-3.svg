@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="sign-out-bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#303036" />
+			<stop offset="1" stop-color="#0e0e11" />
+		</linearGradient>
+		<linearGradient id="sign-out-red" x1="0" y1="200" x2="0" y2="820" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#ff7a70" />
+			<stop offset="1" stop-color="#e3001c" />
+		</linearGradient>
+		<filter id="sign-out-glow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feGaussianBlur in="SourceGraphic" stdDeviation="30" result="blur" />
+			<feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.6 0" result="glow" />
+			<feMerge>
+				<feMergeNode in="glow" />
+				<feMergeNode in="SourceGraphic" />
+			</feMerge>
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#sign-out-bg)" />
+	<!-- The power button -->
+	<g fill="none" stroke="url(#sign-out-red)" stroke-width="86" stroke-linecap="round" filter="url(#sign-out-glow)">
+		<path d="M645.1 350.7A238 238 0 1 1 378.9 350.7" />
+		<path d="M512 236v268" />
+	</g>
+</svg>

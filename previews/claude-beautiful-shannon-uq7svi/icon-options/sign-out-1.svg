@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="sign-out-bg" x1="0" y1="0" x2="0.25" y2="1">
+			<stop offset="0" stop-color="#ff7169" />
+			<stop offset="1" stop-color="#d4001b" />
+		</linearGradient>
+		<radialGradient id="sign-out-glow" cx="0.3" cy="0.05" r="0.8">
+			<stop offset="0" stop-color="#fff" stop-opacity="0.3" />
+			<stop offset="1" stop-color="#fff" stop-opacity="0" />
+		</radialGradient>
+		<linearGradient id="sign-out-white" x1="0" y1="220" x2="0" y2="810" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#fff" />
+			<stop offset="1" stop-color="#ffeceb" />
+		</linearGradient>
+		<filter id="sign-out-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#7a0010" flood-opacity="0.35" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#sign-out-bg)" />
+	<rect width="1024" height="1024" fill="url(#sign-out-glow)" />
+	<g
+		fill="none"
+		stroke="url(#sign-out-white)"
+		stroke-width="80"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+		filter="url(#sign-out-shadow)"
+	>
+		<!-- The door... -->
+		<path d="M478 258H320a62 62 0 0 0-62 62v384a62 62 0 0 0 62 62h158" />
+		<!-- ...and the way out -->
+		<path d="M446 512h330M650 386l126 126-126 126" />
+	</g>
+</svg>

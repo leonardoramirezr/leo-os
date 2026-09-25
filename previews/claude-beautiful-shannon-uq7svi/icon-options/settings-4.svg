@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="settings-bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#2e2e33" />
+			<stop offset="1" stop-color="#0d0d10" />
+		</linearGradient>
+		<filter id="settings-knob" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.45" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#settings-bg)" />
+	<!-- Three sliders, in the wallpaper's colours -->
+	<g stroke-width="44" stroke-linecap="round">
+		<path d="M236 332h552" stroke="#fff" stroke-opacity="0.2" />
+		<path d="M236 512h552" stroke="#fff" stroke-opacity="0.2" />
+		<path d="M236 692h552" stroke="#fff" stroke-opacity="0.2" />
+		<path d="M236 332H628" stroke="#ff9f0a" />
+		<path d="M236 512H412" stroke="#ff4f8b" />
+		<path d="M236 692H700" stroke="#3d8bff" />
+	</g>
+	<g fill="#fff" filter="url(#settings-knob)">
+		<circle cx="628" cy="332" r="60" />
+		<circle cx="412" cy="512" r="60" />
+		<circle cx="700" cy="692" r="60" />
+	</g>
+</svg>
