@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<!-- No viewport-fit=cover: iOS 26 draws home-screen web apps a status bar's height short of the
+		     screen. With cover the empty band is left at the bottom; without it, it sits under the status bar. -->
+		<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
+		<meta name="text-scale" content="scale" />
+		<meta name="color-scheme" content="light dark" />
+		<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f2f7" />
+		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1c1c1e" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-title" content="Lista" />
+		<!-- Safari ignores an SVG here, so scripts/icons.mjs rasterizes icon.svg into this PNG. -->
+		<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+		<title>Lista</title>
+		<style>
+			html {
+				background: #f2f2f7;
+			}
+			@media (prefers-color-scheme: dark) {
+				html {
+					background: #1c1c1e;
+				}
+			}
+		</style>
+		<link href="./_app/immutable/entry/start.Df9jL6Cy.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/BPvt7W5h.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/CmT25_Wc.js" rel="modulepreload">
+		<link href="./_app/immutable/entry/app.B188Bpxu.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/xihTtKlq.js" rel="modulepreload">
+		<link href="./_app/immutable/nodes/0.q6YFpDGL.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/C2yANOp5.js" rel="modulepreload">
+		<link href="./_app/immutable/nodes/2.DZwnGaSj.js" rel="modulepreload">
+		
+		<link href="./_app/immutable/assets/list.CAH7VtO9.css" rel="stylesheet">
+		<link href="./_app/immutable/assets/0.CSsMffWJ.css" rel="stylesheet">
+		<link href="./_app/immutable/assets/2.9zLo5hBu.css" rel="stylesheet">
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">
+			<script>
+				{
+					__sveltekit_1fqrh7a = {
+						base: new URL(".", location).pathname.slice(0, -1),
+						assets: "/leo-os/previews/claude-beautiful-shannon-uq7svi/lista"
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("./_app/immutable/entry/start.Df9jL6Cy.js"),
+						import("./_app/immutable/entry/app.B188Bpxu.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element);
+					});
+				}
+			</script>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="me-deben-bg" x1="0" y1="0" x2="0.2" y2="1">
+			<stop offset="0" stop-color="#169a62" />
+			<stop offset="1" stop-color="#054a31" />
+		</linearGradient>
+		<radialGradient id="me-deben-light" cx="0.5" cy="0.64" r="0.5">
+			<stop offset="0" stop-color="#5dffb0" stop-opacity="0.35" />
+			<stop offset="1" stop-color="#5dffb0" stop-opacity="0" />
+		</radialGradient>
+		<linearGradient id="me-deben-side" x1="282" y1="0" x2="742" y2="0" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#c77f00" />
+			<stop offset="0.35" stop-color="#f6b21c" />
+			<stop offset="0.7" stop-color="#e39a00" />
+			<stop offset="1" stop-color="#b56d00" />
+		</linearGradient>
+		<linearGradient id="me-deben-face" x1="0" y1="488" x2="0" y2="656" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#ffe98a" />
+			<stop offset="1" stop-color="#ffc21a" />
+		</linearGradient>
+		<linearGradient id="me-deben-arrow" x1="0" y1="170" x2="0" y2="450" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#fff" stop-opacity="0.75" />
+			<stop offset="1" stop-color="#fff" />
+		</linearGradient>
+		<filter id="me-deben-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="24" stdDeviation="26" flood-color="#012b1c" flood-opacity="0.5" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#me-deben-bg)" />
+	<rect width="1024" height="1024" fill="url(#me-deben-light)" />
+	<!-- The money coming in... -->
+	<g fill="none" stroke="url(#me-deben-arrow)" stroke-width="64" stroke-linecap="round" stroke-linejoin="round">
+		<path d="M512 192v230M424 342l88 88 88-88" />
+	</g>
+	<!-- ...to the pile -->
+	<g filter="url(#me-deben-shadow)">
+		<path d="M282 688v58a230 84 0 0 0 460 0v-58z" fill="url(#me-deben-side)" />
+		<path d="M282 630v58a230 84 0 0 0 460 0v-58z" fill="url(#me-deben-side)" />
+		<path d="M282 572v58a230 84 0 0 0 460 0v-58z" fill="url(#me-deben-side)" />
+		<ellipse cx="512" cy="572" rx="230" ry="84" fill="url(#me-deben-face)" />
+	</g>
+	<g fill="none" stroke-linecap="round">
+		<path d="M282 630a230 84 0 0 0 460 0M282 688a230 84 0 0 0 460 0" stroke="#8a5200" stroke-opacity="0.35" stroke-width="6" />
+		<ellipse cx="512" cy="572" rx="174" ry="62" stroke="#e0a000" stroke-width="12" />
+	</g>
+</svg>

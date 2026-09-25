@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+	<defs>
+		<linearGradient id="settings-bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#d1d1d6" />
+			<stop offset="1" stop-color="#8e8e93" />
+		</linearGradient>
+	</defs>
+	<rect width="120" height="120" fill="url(#settings-bg)" />
+	<g fill="#fff">
+		<rect x="52" y="12" width="16" height="22" rx="4" transform="rotate(0 60 60)" />
+		<rect x="52" y="12" width="16" height="22" rx="4" transform="rotate(45 60 60)" />
+		<rect x="52" y="12" width="16" height="22" rx="4" transform="rotate(90 60 60)" />
+		<rect x="52" y="12" width="16" height="22" rx="4" transform="rotate(135 60 60)" />
+		<rect x="52" y="12" width="16" height="22" rx="4" transform="rotate(180 60 60)" />
+		<rect x="52" y="12" width="16" height="22" rx="4" transform="rotate(225 60 60)" />
+		<rect x="52" y="12" width="16" height="22" rx="4" transform="rotate(270 60 60)" />
+		<rect x="52" y="12" width="16" height="22" rx="4" transform="rotate(315 60 60)" />
+		<circle cx="60" cy="60" r="27" fill="none" stroke="#fff" stroke-width="19" />
+	</g>
+</svg>

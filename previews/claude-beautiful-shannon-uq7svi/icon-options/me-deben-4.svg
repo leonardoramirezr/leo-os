@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="me-deben-bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#ffffff" />
+			<stop offset="1" stop-color="#e9f1ec" />
+		</linearGradient>
+		<linearGradient id="me-deben-avatar" x1="0" y1="210" x2="0" y2="750" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#42de8a" />
+			<stop offset="1" stop-color="#0f9d60" />
+		</linearGradient>
+		<linearGradient id="me-deben-gold" x1="0" y1="574" x2="0" y2="834" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#ffe070" />
+			<stop offset="1" stop-color="#f5a800" />
+		</linearGradient>
+		<clipPath id="me-deben-circle">
+			<circle cx="492" cy="480" r="270" />
+		</clipPath>
+		<filter id="me-deben-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#0b6b40" flood-opacity="0.25" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#me-deben-bg)" />
+	<!-- Who owes -->
+	<g filter="url(#me-deben-shadow)">
+		<circle cx="492" cy="480" r="270" fill="url(#me-deben-avatar)" />
+	</g>
+	<g clip-path="url(#me-deben-circle)" fill="#fff">
+		<circle cx="492" cy="400" r="100" />
+		<ellipse cx="492" cy="720" rx="200" ry="170" />
+	</g>
+	<!-- What they owe -->
+	<circle cx="716" cy="704" r="150" fill="#fff" />
+	<circle cx="716" cy="704" r="124" fill="url(#me-deben-gold)" />
+	<g fill="none" stroke="#a86600" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
+		<path
+			d="M758 667C755.5 651.1 738.7 641 716 641C690.8 641 674 652.8 674 672.1C674 691.4 690.8 698.1 716 704C741.2 709.9 758 716.6 758 735.9C758 755.2 741.2 767 716 767C693.3 767 676.5 756.9 674 741"
+		/>
+		<path d="M716 616v25M716 767v25" />
+	</g>
+</svg>

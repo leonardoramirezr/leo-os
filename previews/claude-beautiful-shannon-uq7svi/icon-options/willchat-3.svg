@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="willchat-bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#211742" />
+			<stop offset="1" stop-color="#08060f" />
+		</linearGradient>
+		<radialGradient id="willchat-aura" cx="0.45" cy="0.55" r="0.5">
+			<stop offset="0" stop-color="#a64dff" stop-opacity="0.55" />
+			<stop offset="1" stop-color="#a64dff" stop-opacity="0" />
+		</radialGradient>
+		<linearGradient id="willchat-spark" x1="200" y1="260" x2="720" y2="820" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#ff9ad5" />
+			<stop offset="0.5" stop-color="#a98bff" />
+			<stop offset="1" stop-color="#4fd1ff" />
+		</linearGradient>
+		<linearGradient id="willchat-spark-small" x1="640" y1="190" x2="840" y2="410" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#ffe29a" />
+			<stop offset="1" stop-color="#ff8ad0" />
+		</linearGradient>
+		<filter id="willchat-glow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feGaussianBlur in="SourceGraphic" stdDeviation="34" result="blur" />
+			<feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.7 0" result="glow" />
+			<feMerge>
+				<feMergeNode in="glow" />
+				<feMergeNode in="SourceGraphic" />
+			</feMerge>
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#willchat-bg)" />
+	<rect width="1024" height="1024" fill="url(#willchat-aura)" />
+	<g filter="url(#willchat-glow)">
+		<!-- Sparks: the images it dreams up -->
+		<path d="M452 280c22 170 84 232 254 254-170 22-232 84-254 254-22-170-84-232-254-254 170-22 232-84 254-254z" fill="url(#willchat-spark)" />
+		<path d="M742 188c9 70 35 96 105 105-70 9-96 35-105 105-9-70-35-96-105-105 70-9 96-35 105-105z" fill="url(#willchat-spark-small)" />
+		<path d="M760 648c5 38 19 52 57 57-38 5-52 19-57 57-5-38-19-52-57-57 38-5 52-19 57-57z" fill="#9fe7ff" />
+	</g>
+</svg>

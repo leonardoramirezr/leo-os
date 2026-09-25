@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="me-deben-bg" x1="0" y1="0" x2="0.25" y2="1">
+			<stop offset="0" stop-color="#3ad87f" />
+			<stop offset="0.55" stop-color="#17b86a" />
+			<stop offset="1" stop-color="#0a906b" />
+		</linearGradient>
+		<radialGradient id="me-deben-glow" cx="0.3" cy="0.05" r="0.8">
+			<stop offset="0" stop-color="#fff" stop-opacity="0.3" />
+			<stop offset="1" stop-color="#fff" stop-opacity="0" />
+		</radialGradient>
+		<linearGradient id="me-deben-white" x1="0" y1="180" x2="0" y2="850" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#fff" />
+			<stop offset="1" stop-color="#eefcf4" />
+		</linearGradient>
+		<filter id="me-deben-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#04563f" flood-opacity="0.35" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#me-deben-bg)" />
+	<rect width="1024" height="1024" fill="url(#me-deben-glow)" />
+	<g
+		fill="none"
+		stroke="url(#me-deben-white)"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+		filter="url(#me-deben-shadow)"
+	>
+		<!-- The money that comes back -->
+		<path d="M226.4 570.4A290 290 0 1 0 306.9 314.9" stroke-width="56" />
+		<path d="M401 324.8L297 324.8L297 220.8" stroke-width="56" />
+		<!-- Peso sign -->
+		<path
+			d="M602 440.8C596.6 406.6 560.6 385 512 385C458 385 422 410.2 422 451.6C422 493 458 507.4 512 520C566 532.6 602 547 602 588.4C602 629.8 566 655 512 655C463.4 655 427.4 633.4 422 599.2"
+			stroke-width="60"
+		/>
+		<path d="M512 332v53M512 655v53" stroke-width="60" />
+	</g>
+</svg>

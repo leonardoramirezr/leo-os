@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="willchat-bg" x1="0" y1="0" x2="0.4" y2="1">
+			<stop offset="0" stop-color="#5a4bff" />
+			<stop offset="1" stop-color="#2a1d86" />
+		</linearGradient>
+		<radialGradient id="willchat-glow" cx="0.8" cy="0.05" r="0.7">
+			<stop offset="0" stop-color="#ff7ad9" stop-opacity="0.55" />
+			<stop offset="1" stop-color="#ff7ad9" stop-opacity="0" />
+		</radialGradient>
+		<linearGradient id="willchat-sky" x1="0" y1="220" x2="0" y2="732" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#ffcf8f" />
+			<stop offset="1" stop-color="#ff80b8" />
+		</linearGradient>
+		<linearGradient id="willchat-sun" x1="0" y1="330" x2="0" y2="470" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#fffbe6" />
+			<stop offset="1" stop-color="#ffe27d" />
+		</linearGradient>
+		<linearGradient id="willchat-far" x1="0" y1="440" x2="0" y2="732" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#bb70f2" />
+			<stop offset="1" stop-color="#8d52e3" />
+		</linearGradient>
+		<linearGradient id="willchat-near" x1="0" y1="500" x2="0" y2="732" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#6f46dc" />
+			<stop offset="1" stop-color="#45279f" />
+		</linearGradient>
+		<clipPath id="willchat-picture">
+			<rect x="160" y="220" width="704" height="512" rx="172" />
+		</clipPath>
+		<filter id="willchat-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="24" stdDeviation="30" flood-color="#12083d" flood-opacity="0.45" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#willchat-bg)" />
+	<rect width="1024" height="1024" fill="url(#willchat-glow)" />
+	<!-- A message that is a picture -->
+	<path
+		d="M692 220H332a172 172 0 0 0-172 172v168a172 172 0 0 0 172 172h264c50 46 132 86 240 94-46-36-76-80-86-126 68-30 114-94 114-166V392a172 172 0 0 0-172-172z"
+		fill="#fff"
+		stroke="#fff"
+		stroke-width="48"
+		stroke-linejoin="round"
+		filter="url(#willchat-shadow)"
+	/>
+	<g clip-path="url(#willchat-picture)">
+		<rect x="160" y="220" width="704" height="512" fill="url(#willchat-sky)" />
+		<circle cx="652" cy="400" r="70" fill="url(#willchat-sun)" />
+		<path d="M160 732V610l176-150 140 116 118-86 230 170v72z" fill="url(#willchat-far)" />
+		<path d="M160 732v-64l160-104 196 118 118-56 230 106z" fill="url(#willchat-near)" />
+	</g>
+</svg>

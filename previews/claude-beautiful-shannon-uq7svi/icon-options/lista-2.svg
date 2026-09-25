@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="lista-bg" x1="0" y1="0" x2="0.55" y2="1">
+			<stop offset="0" stop-color="#ffb62e" />
+			<stop offset="0.5" stop-color="#ff7438" />
+			<stop offset="1" stop-color="#f23b6b" />
+		</linearGradient>
+		<radialGradient id="lista-light" cx="0.2" cy="0.08" r="0.6">
+			<stop offset="0" stop-color="#ffd84d" stop-opacity="0.8" />
+			<stop offset="1" stop-color="#ffd84d" stop-opacity="0" />
+		</radialGradient>
+		<linearGradient id="lista-bubble" x1="0" y1="220" x2="0" y2="840" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#fff" />
+			<stop offset="1" stop-color="#ffeee6" />
+		</linearGradient>
+		<linearGradient id="lista-ink" x1="0" y1="300" x2="0" y2="640" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#ff9a2a" />
+			<stop offset="1" stop-color="#f2502a" />
+		</linearGradient>
+		<filter id="lista-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="24" stdDeviation="32" flood-color="#9e1f3c" flood-opacity="0.34" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#lista-bg)" />
+	<rect width="1024" height="1024" fill="url(#lista-light)" />
+	<!-- A speech bubble: what is said becomes the list -->
+	<path
+		d="M332 220h360a172 172 0 0 1 172 172v168a172 172 0 0 1-172 172H428c-50 46-132 86-240 94 46-36 76-80 86-126-68-30-114-94-114-166V392a172 172 0 0 1 172-172z"
+		fill="url(#lista-bubble)"
+		filter="url(#lista-shadow)"
+	/>
+	<!-- One item ticked, one to go -->
+	<rect x="252" y="304" width="104" height="104" rx="30" fill="url(#lista-ink)" />
+	<path
+		d="M278 358l22 22 38-44"
+		fill="none"
+		stroke="#fff"
+		stroke-width="24"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+	/>
+	<g fill="none" stroke-linecap="round" stroke-linejoin="round">
+		<rect x="264" y="500" width="80" height="80" rx="22" stroke="#ff8a3d" stroke-opacity="0.55" stroke-width="22" />
+		<path d="M436 356h328" stroke="#ffc3a3" stroke-width="44" />
+		<path d="M436 540h240" stroke="#ffc3a3" stroke-width="44" />
+	</g>
+</svg>

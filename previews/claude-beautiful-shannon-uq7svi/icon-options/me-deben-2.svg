@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="me-deben-bg" x1="0" y1="0" x2="0.3" y2="1">
+			<stop offset="0" stop-color="#5fe39a" />
+			<stop offset="0.6" stop-color="#22bf72" />
+			<stop offset="1" stop-color="#0f9a62" />
+		</linearGradient>
+		<linearGradient id="me-deben-paper" x1="0" y1="180" x2="0" y2="870" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#fff" />
+			<stop offset="1" stop-color="#f1f6f3" />
+		</linearGradient>
+		<linearGradient id="me-deben-coin" x1="0" y1="252" x2="0" y2="460" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#3ddc84" />
+			<stop offset="1" stop-color="#11a05f" />
+		</linearGradient>
+		<filter id="me-deben-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="22" stdDeviation="28" flood-color="#05502f" flood-opacity="0.35" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#me-deben-bg)" />
+	<!-- A receipt: who owes what -->
+	<path
+		d="M316 172h392a44 44 0 0 1 44 44v616l-30 36-30-36-30 36-30-36-30 36-30-36-30 36-30-36-30 36-30-36-30 36-30-36-30 36-30-36-30 36-30-36-30 36V216a44 44 0 0 1 44-44z"
+		fill="url(#me-deben-paper)"
+		stroke="url(#me-deben-paper)"
+		stroke-width="8"
+		stroke-linejoin="round"
+		filter="url(#me-deben-shadow)"
+	/>
+	<circle cx="512" cy="356" r="104" fill="url(#me-deben-coin)" />
+	<g fill="none" stroke="#fff" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+		<path
+			d="M558 315.5C555.2 298 536.8 287 512 287C484.4 287 466 299.9 466 321C466 342.2 484.4 349.6 512 356C539.6 362.4 558 369.8 558 391C558 412.1 539.6 425 512 425C487.2 425 468.8 414 466 396.5"
+		/>
+		<path d="M512 262v25M512 425v25" />
+	</g>
+	<g fill="none" stroke-linecap="round">
+		<path d="M346 540h332M346 614h250" stroke="#d9e4de" stroke-width="32" />
+		<path d="M346 686h332" stroke="#c9d6cf" stroke-width="8" stroke-dasharray="4 20" />
+		<path d="M346 758h140M598 758h80" stroke="#16a862" stroke-width="40" />
+	</g>
+</svg>
