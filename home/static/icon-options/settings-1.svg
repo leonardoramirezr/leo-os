@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="settings-bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#dcdce1" />
+			<stop offset="1" stop-color="#85858b" />
+		</linearGradient>
+		<radialGradient id="settings-glow" cx="0.3" cy="0.05" r="0.8">
+			<stop offset="0" stop-color="#fff" stop-opacity="0.3" />
+			<stop offset="1" stop-color="#fff" stop-opacity="0" />
+		</radialGradient>
+		<linearGradient id="settings-metal" x1="0" y1="140" x2="0" y2="880" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#fff" />
+			<stop offset="1" stop-color="#ececf0" />
+		</linearGradient>
+		<filter id="settings-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#3a3a3e" flood-opacity="0.35" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#settings-bg)" />
+	<rect width="1024" height="1024" fill="url(#settings-glow)" />
+	<!-- The gear -->
+	<path
+		d="M443.8 228.1L451.9 151A366 366 0 0 1 572.1 151L580.2 228.1A292 292 0 0 1 664.6 263L724.8 214.2A366 366 0 0 1 809.8 299.2L761 359.4A292 292 0 0 1 795.9 443.8L873 451.9A366 366 0 0 1 873 572.1L795.9 580.2A292 292 0 0 1 761 664.6L809.8 724.8A366 366 0 0 1 724.8 809.8L664.6 761A292 292 0 0 1 580.2 795.9L572.1 873A366 366 0 0 1 451.9 873L443.8 795.9A292 292 0 0 1 359.4 761L299.2 809.8A366 366 0 0 1 214.2 724.8L263 664.6A292 292 0 0 1 228.1 580.2L151 572.1A366 366 0 0 1 151 451.9L228.1 443.8A292 292 0 0 1 263 359.4L214.2 299.2A366 366 0 0 1 299.2 214.2L359.4 263A292 292 0 0 1 443.8 228.1ZM672 512A160 160 0 1 0 352 512A160 160 0 1 0 672 512Z"
+		fill="url(#settings-metal)"
+		fill-rule="evenodd"
+		stroke="url(#settings-metal)"
+		stroke-width="28"
+		stroke-linejoin="round"
+		filter="url(#settings-shadow)"
+	/>
+</svg>

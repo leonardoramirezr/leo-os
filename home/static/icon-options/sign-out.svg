@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+	<defs>
+		<linearGradient id="sign-out-bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#ff6961" />
+			<stop offset="1" stop-color="#d70015" />
+		</linearGradient>
+	</defs>
+	<rect width="120" height="120" fill="url(#sign-out-bg)" />
+	<g fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+		<path d="M58 30H38a6 6 0 0 0-6 6v48a6 6 0 0 0 6 6h20" />
+		<path d="M54 60h38" />
+		<path d="M78 45 93 60 78 75" />
+	</g>
+</svg>

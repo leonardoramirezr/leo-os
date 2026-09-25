@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="reload-bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#ffffff" />
+			<stop offset="1" stop-color="#ececf1" />
+		</linearGradient>
+		<linearGradient id="reload-ink" x1="200" y1="160" x2="824" y2="860" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#ff965a" />
+			<stop offset="0.5" stop-color="#f046a0" />
+			<stop offset="1" stop-color="#8246f0" />
+		</linearGradient>
+		<filter id="reload-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#5a2a8a" flood-opacity="0.22" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#reload-bg)" />
+	<!-- The home screen's apps... -->
+	<g filter="url(#reload-shadow)">
+		<rect x="353" y="353" width="150" height="150" rx="42" fill="#ff965a" />
+		<rect x="521" y="353" width="150" height="150" rx="42" fill="#f046a0" />
+		<rect x="353" y="521" width="150" height="150" rx="42" fill="#2878ff" />
+		<rect x="521" y="521" width="150" height="150" rx="42" fill="#8246f0" />
+	</g>
+	<!-- ...loaded again -->
+	<g fill="url(#reload-ink)" stroke="url(#reload-ink)" stroke-linecap="round" stroke-linejoin="round">
+		<path d="M781.7 343.5A318 318 0 1 1 512 194" fill="none" stroke-width="66" />
+		<path d="M598.8 194L458.8 284L458.8 104Z" stroke-width="22" />
+	</g>
+</svg>

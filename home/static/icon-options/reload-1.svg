@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="reload-bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#a1a1a7" />
+			<stop offset="1" stop-color="#4b4b50" />
+		</linearGradient>
+		<radialGradient id="reload-glow" cx="0.3" cy="0.05" r="0.8">
+			<stop offset="0" stop-color="#fff" stop-opacity="0.3" />
+			<stop offset="1" stop-color="#fff" stop-opacity="0" />
+		</radialGradient>
+		<linearGradient id="reload-white" x1="0" y1="180" x2="0" y2="820" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#fff" />
+			<stop offset="1" stop-color="#ececf0" />
+		</linearGradient>
+		<filter id="reload-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#1c1c1e" flood-opacity="0.4" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#reload-bg)" />
+	<rect width="1024" height="1024" fill="url(#reload-glow)" />
+	<!-- Today's arrow: clockwise, with its head at the top -->
+	<g filter="url(#reload-shadow)">
+		<path d="M748.6 418.2A268 268 0 1 1 512 276" fill="none" stroke="url(#reload-white)" stroke-width="90" stroke-linecap="round" />
+		<path
+			d="M626.1 276L442.1 401L442.1 151Z"
+			fill="url(#reload-white)"
+			stroke="url(#reload-white)"
+			stroke-width="28"
+			stroke-linejoin="round"
+		/>
+	</g>
+</svg>

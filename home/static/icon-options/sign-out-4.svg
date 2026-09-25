@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="sign-out-bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#bdbdc3" />
+			<stop offset="1" stop-color="#7d7d83" />
+		</linearGradient>
+		<linearGradient id="sign-out-person" x1="0" y1="240" x2="0" y2="1024" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#fff" />
+			<stop offset="1" stop-color="#e6e6eb" />
+		</linearGradient>
+		<linearGradient id="sign-out-red" x1="0" y1="590" x2="0" y2="930" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#ff6c63" />
+			<stop offset="1" stop-color="#d9001c" />
+		</linearGradient>
+		<filter id="sign-out-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#3a3a3e" flood-opacity="0.3" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#sign-out-bg)" />
+	<!-- Who is signed in -->
+	<g fill="url(#sign-out-person)">
+		<circle cx="470" cy="392" r="152" />
+		<ellipse cx="470" cy="930" rx="340" ry="300" />
+	</g>
+	<!-- The way out -->
+	<circle cx="742" cy="742" r="176" fill="url(#sign-out-bg)" />
+	<circle cx="742" cy="742" r="150" fill="url(#sign-out-red)" filter="url(#sign-out-shadow)" />
+	<path
+		d="M670 742h140M760 690l52 52-52 52"
+		fill="none"
+		stroke="#fff"
+		stroke-width="36"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+	/>
+</svg>

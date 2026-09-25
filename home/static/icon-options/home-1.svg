@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="home-bg" x1="0" y1="0" x2="0.4" y2="1">
+			<stop offset="0" stop-color="#3d2b80" />
+			<stop offset="1" stop-color="#1a1244" />
+		</linearGradient>
+		<radialGradient id="home-warmth" cx="0.12" cy="0.06" r="0.75">
+			<stop offset="0" stop-color="#ff965a" stop-opacity="0.22" />
+			<stop offset="1" stop-color="#ff965a" stop-opacity="0" />
+		</radialGradient>
+		<linearGradient id="home-accent" x1="0" y1="0" x2="1" y2="1">
+			<stop offset="0" stop-color="#ffa95a" />
+			<stop offset="1" stop-color="#e94fa1" />
+		</linearGradient>
+		<linearGradient id="home-white" x1="0" y1="208" x2="0" y2="816" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#fff" />
+			<stop offset="1" stop-color="#ebe6ff" />
+		</linearGradient>
+		<filter id="home-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#0b0726" flood-opacity="0.45" />
+		</filter>
+		<filter id="home-bloom" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feGaussianBlur stdDeviation="40" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#home-bg)" />
+	<rect width="1024" height="1024" fill="url(#home-warmth)" />
+	<!-- 3 × 3 apps, fading towards the bottom right so the grid reads with some depth -->
+	<rect x="426" y="426" width="172" height="172" rx="48" fill="url(#home-accent)" opacity="0.8" filter="url(#home-bloom)" />
+	<g filter="url(#home-shadow)">
+		<rect x="208" y="208" width="172" height="172" rx="48" fill="url(#home-white)" />
+		<rect x="426" y="208" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.94" />
+		<rect x="644" y="208" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.88" />
+		<rect x="208" y="426" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.94" />
+		<rect x="426" y="426" width="172" height="172" rx="48" fill="url(#home-accent)" />
+		<rect x="644" y="426" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.82" />
+		<rect x="208" y="644" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.88" />
+		<rect x="426" y="644" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.82" />
+		<rect x="644" y="644" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.76" />
+	</g>
+</svg>

@@ -2,8 +2,8 @@
 <html lang="es">
 	<head>
 		<meta charset="utf-8" />
-		<!-- Temporary: the icon options side by side, until one per app is picked. Once the chosen ones are
-		     copied over each apps/<slug>/icon.svg, this folder goes. -->
+		<!-- Temporary: the icon options side by side, until one per icon is picked. Once the chosen ones are
+		     copied over apps/<slug>/icon.svg and home/src/lib/*.svg, this folder goes. -->
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="color-scheme" content="light dark" />
 		<meta name="theme-color" content="#2a1a5e" />
@@ -50,8 +50,8 @@
 				-webkit-tap-highlight-color: transparent;
 			}
 
-			/* A slice of the home screen, kept in sight while the options scroll by. The gradient is the
-			   home screen's own, sized for a phone so this band shows what sits behind its first row. */
+			/* The home screen, kept in sight while the options scroll by. The gradient is the home screen's
+			   own, sized for a phone so this band shows what sits behind its first two rows. */
 			.home {
 				position: sticky;
 				top: 0;
@@ -75,9 +75,10 @@
 				background-size: 100% auto;
 			}
 
-			.row {
+			.screen {
 				display: grid;
 				grid-template-columns: repeat(4, 1fr);
+				row-gap: 14px;
 				max-width: 390px;
 				margin: 0 auto;
 				padding: 0 18px;
@@ -173,11 +174,27 @@
 				color: #fff;
 			}
 
+			.group {
+				margin: 40px 0 0;
+				padding-bottom: 8px;
+				border-bottom: 1px solid color-mix(in srgb, var(--muted) 30%, transparent);
+				font-size: 26px;
+				font-weight: 700;
+				letter-spacing: -0.02em;
+			}
+
+			.group-about {
+				margin: 8px 0 0;
+				color: var(--muted);
+				font-size: 15px;
+				line-height: 1.4;
+			}
+
 			section {
 				margin-top: 28px;
 			}
 
-			h2 {
+			h3 {
 				margin: 0;
 				font-size: 22px;
 				font-weight: 700;
@@ -311,16 +328,28 @@
 			}
 
 			.choice {
+				margin-top: 40px;
 				padding: 18px 16px;
 				border-radius: 16px;
 				background: var(--group);
 				box-shadow: var(--shadow);
 			}
 
-			.choice p {
-				margin: 8px 0 14px;
+			.choice h2 {
+				margin: 0;
+				font-size: 22px;
+			}
+
+			.choice ul {
+				margin: 10px 0 14px;
+				padding: 0;
+				list-style: none;
 				font-size: 16px;
-				line-height: 1.5;
+				line-height: 1.6;
+			}
+
+			.choice li span {
+				color: var(--muted);
 			}
 
 			.choice button {
@@ -345,28 +374,14 @@
 	</head>
 	<body>
 		<header class="home">
-			<div class="row" aria-hidden="true">
-				<span class="app"><img class="icon" src="settings.svg" alt="" /><span class="label">Ajustes</span></span>
-				<span class="app">
-					<img class="icon" data-app="lista" src="../lista/apple-touch-icon.png" alt="" />
-					<span class="label">Lista</span>
-				</span>
-				<span class="app">
-					<img class="icon" data-app="me-deben" src="../me-deben/apple-touch-icon.png" alt="" />
-					<span class="label">Me deben</span>
-				</span>
-				<span class="app">
-					<img class="icon" data-app="willchat" src="../willchat/apple-touch-icon.png" alt="" />
-					<span class="label">WillChat</span>
-				</span>
-			</div>
+			<div class="screen" aria-hidden="true"></div>
 		</header>
 
 		<main>
 			<a class="back" href="../">‹ Inicio</a>
 			<h1>Íconos nuevos</h1>
 			<p class="lead">
-				Cuatro opciones para cada app. La <b>1</b> es el ícono de hoy, renovado; la <b>2</b>, la <b>3</b> y la
+				Cuatro opciones para cada ícono. La <b>1</b> es el de hoy, renovado; la <b>2</b>, la <b>3</b> y la
 				<b>4</b> son ideas distintas. Toca una y la ves arriba, en la pantalla de inicio.
 			</p>
 			<p class="wallpaper" hidden>
@@ -375,191 +390,208 @@
 				<button type="button" data-wallpaper="default" aria-pressed="false">Predeterminado</button>
 			</p>
 
-			<section aria-labelledby="lista">
-				<h2 id="lista">Lista</h2>
-				<p class="about">La lista que se edita con la voz.</p>
-				<fieldset class="options">
-					<label class="option current">
-						<input type="radio" name="lista" value="0" checked />
-						<img src="../lista/apple-touch-icon.png" alt="" />
-						<span class="text">
-							<span class="title">Actual</span>
-							<span class="description">El ícono de hoy, para comparar.</span>
-						</span>
-					</label>
-					<label class="option">
-						<input type="radio" name="lista" value="1" />
-						<img src="lista-1.svg" alt="" />
-						<span class="text">
-							<span class="title">1 · Renovado</span>
-							<span class="description">El de hoy, pulido: más profundidad y el micrófono encima de la lista.</span>
-						</span>
-					</label>
-					<label class="option">
-						<input type="radio" name="lista" value="2" />
-						<img src="lista-2.svg" alt="" />
-						<span class="text">
-							<span class="title">2 · Burbuja</span>
-							<span class="description">Lo que dices se vuelve lista: un mensaje con casillas.</span>
-						</span>
-					</label>
-					<label class="option">
-						<input type="radio" name="lista" value="3" />
-						<img src="lista-3.svg" alt="" />
-						<span class="text">
-							<span class="title">3 · Onda</span>
-							<span class="description">Tu voz termina en una palomita. Oscuro, como Notas de Voz.</span>
-						</span>
-					</label>
-					<label class="option">
-						<input type="radio" name="lista" value="4" />
-						<img src="lista-4.svg" alt="" />
-						<span class="text">
-							<span class="title">4 · Micrófono</span>
-							<span class="description">Blanco y sencillo: un micrófono naranja con palomita.</span>
-						</span>
-					</label>
-				</fieldset>
-			</section>
-
-			<section aria-labelledby="me-deben">
-				<h2 id="me-deben">Me deben</h2>
-				<p class="about">Quién te debe y cuánto.</p>
-				<fieldset class="options">
-					<label class="option current">
-						<input type="radio" name="me-deben" value="0" checked />
-						<img src="../me-deben/apple-touch-icon.png" alt="" />
-						<span class="text">
-							<span class="title">Actual</span>
-							<span class="description">El ícono de hoy, para comparar.</span>
-						</span>
-					</label>
-					<label class="option">
-						<input type="radio" name="me-deben" value="1" />
-						<img src="me-deben-1.svg" alt="" />
-						<span class="text">
-							<span class="title">1 · Renovado</span>
-							<span class="description">El signo de pesos, ahora con una flecha que da la vuelta: el dinero regresa.</span>
-						</span>
-					</label>
-					<label class="option">
-						<input type="radio" name="me-deben" value="2" />
-						<img src="me-deben-2.svg" alt="" />
-						<span class="text">
-							<span class="title">2 · Recibo</span>
-							<span class="description">Un ticket con su monto: el registro de quién debe qué.</span>
-						</span>
-					</label>
-					<label class="option">
-						<input type="radio" name="me-deben" value="3" />
-						<img src="me-deben-3.svg" alt="" />
-						<span class="text">
-							<span class="title">3 · Monedas</span>
-							<span class="description">Una pila de monedas de oro y una flecha que entra: dinero por cobrar.</span>
-						</span>
-					</label>
-					<label class="option">
-						<input type="radio" name="me-deben" value="4" />
-						<img src="me-deben-4.svg" alt="" />
-						<span class="text">
-							<span class="title">4 · Contacto</span>
-							<span class="description">Una persona con una moneda: quién te debe. Fondo blanco.</span>
-						</span>
-					</label>
-				</fieldset>
-			</section>
-
-			<section aria-labelledby="willchat">
-				<h2 id="willchat">WillChat</h2>
-				<p class="about">Crea y edita imágenes con OpenAI.</p>
-				<fieldset class="options">
-					<label class="option current">
-						<input type="radio" name="willchat" value="0" checked />
-						<img src="../willchat/apple-touch-icon.png" alt="" />
-						<span class="text">
-							<span class="title">Actual</span>
-							<span class="description">El ícono de hoy, para comparar.</span>
-						</span>
-					</label>
-					<label class="option">
-						<input type="radio" name="willchat" value="1" />
-						<img src="willchat-1.svg" alt="" />
-						<span class="text">
-							<span class="title">1 · Renovado</span>
-							<span class="description">La W de siempre, más cuidada, con un destello por las imágenes.</span>
-						</span>
-					</label>
-					<label class="option">
-						<input type="radio" name="willchat" value="2" />
-						<img src="willchat-2.svg" alt="" />
-						<span class="text">
-							<span class="title">2 · Imagen</span>
-							<span class="description">Un mensaje que es una foto: el chat que crea imágenes.</span>
-						</span>
-					</label>
-					<label class="option">
-						<input type="radio" name="willchat" value="3" />
-						<img src="willchat-3.svg" alt="" />
-						<span class="text">
-							<span class="title">3 · Destellos</span>
-							<span class="description">Destellos de colores sobre fondo oscuro: la magia de crear.</span>
-						</span>
-					</label>
-					<label class="option">
-						<input type="radio" name="willchat" value="4" />
-						<img src="willchat-4.svg" alt="" />
-						<span class="text">
-							<span class="title">4 · Burbuja W</span>
-							<span class="description">Una burbuja blanca con la W sobre negro, como la app por dentro.</span>
-						</span>
-					</label>
-				</fieldset>
-			</section>
+			<div class="groups"></div>
 
 			<section class="choice" aria-labelledby="choice">
 				<h2 id="choice">Tu elección</h2>
-				<p class="summary" aria-live="polite"></p>
+				<ul class="summary" aria-live="polite"></ul>
 				<button class="copy" type="button">Copiar elección</button>
 				<p class="hint">Pégala en el chat para aplicarla.</p>
 			</section>
 		</main>
 
 		<script>
-			const apps = {
-				lista: { name: 'Lista', options: ['Actual', 'Renovado', 'Burbuja', 'Onda', 'Micrófono'] },
-				'me-deben': { name: 'Me deben', options: ['Actual', 'Renovado', 'Recibo', 'Monedas', 'Contacto'] },
-				willchat: { name: 'WillChat', options: ['Actual', 'Renovado', 'Imagen', 'Destellos', 'Burbuja W'] }
-			};
+			// Every icon with its four options, drawn in <slug>-<option>.svg next to this page. `current` is
+			// the icon as it is today; `home` says whether it sits on the home screen above.
+			const groups = [
+				{
+					title: 'Apps',
+					icons: [
+						{
+							slug: 'lista',
+							name: 'Lista',
+							about: 'La lista que se edita con la voz.',
+							current: '../lista/apple-touch-icon.png',
+							home: true,
+							options: [
+								['Renovado', 'El de hoy, pulido: más profundidad y el micrófono encima de la lista.'],
+								['Burbuja', 'Lo que dices se vuelve lista: un mensaje con casillas.'],
+								['Onda', 'Tu voz termina en una palomita. Oscuro, como Notas de Voz.'],
+								['Micrófono', 'Blanco y sencillo: un micrófono naranja con palomita.']
+							]
+						},
+						{
+							slug: 'me-deben',
+							name: 'Me deben',
+							about: 'Quién te debe y cuánto.',
+							current: '../me-deben/apple-touch-icon.png',
+							home: true,
+							options: [
+								['Renovado', 'El signo de pesos, ahora con una flecha que da la vuelta: el dinero regresa.'],
+								['Recibo', 'Un ticket con su monto: el registro de quién debe qué.'],
+								['Monedas', 'Una pila de monedas de oro y una flecha que entra: dinero por cobrar.'],
+								['Contacto', 'Una persona con una moneda: quién te debe. Fondo blanco.']
+							]
+						},
+						{
+							slug: 'willchat',
+							name: 'WillChat',
+							about: 'Crea y edita imágenes con OpenAI.',
+							current: '../willchat/apple-touch-icon.png',
+							home: true,
+							options: [
+								['Renovado', 'La W de siempre, más cuidada, con un destello por las imágenes.'],
+								['Imagen', 'Un mensaje que es una foto: el chat que crea imágenes.'],
+								['Destellos', 'Destellos de colores sobre fondo oscuro: la magia de crear.'],
+								['Burbuja W', 'Una burbuja blanca con la W sobre negro, como la app por dentro.']
+							]
+						}
+					]
+				},
+				{
+					title: 'Pantalla de inicio',
+					about: 'Los íconos propios de la pantalla de inicio, y el de Leo OS.',
+					icons: [
+						{
+							slug: 'settings',
+							name: 'Ajustes',
+							about: 'Cambia el fondo de pantalla y muestra la cuenta.',
+							current: 'settings.svg',
+							home: true,
+							options: [
+								['Renovado', 'El engrane de hoy, más grande y de una sola pieza.'],
+								['Interruptores', 'Dos interruptores, como los de Ajustes de iOS.'],
+								['Fondo', 'El engrane sobre el fondo de pantalla, que es lo que se cambia ahí.'],
+								['Controles', 'Tres controles deslizantes en los colores del fondo, sobre negro.']
+							]
+						},
+						{
+							slug: 'reload',
+							name: 'Recargar',
+							about: 'Vuelve a cargar el sitio.',
+							current: 'reload.svg',
+							home: true,
+							options: [
+								['Renovado', 'La flecha de hoy, más grande y con volumen.'],
+								['Sincronizar', 'Dos flechas que se persiguen, en azul.'],
+								['Inicio', 'Las apps de la pantalla de inicio, dentro de una flecha de colores.'],
+								['Cargando', 'El indicador de carga de iOS, sobre negro.']
+							]
+						},
+						{
+							slug: 'sign-out',
+							name: 'Cerrar sesión',
+							about: 'Sale de la cuenta.',
+							current: 'sign-out.svg',
+							home: true,
+							options: [
+								['Renovado', 'La puerta y la flecha de hoy, con más profundidad.'],
+								['Puerta', 'Una puerta abierta a la luz de afuera.'],
+								['Apagar', 'El botón de encendido en rojo, sobre negro.'],
+								['Cuenta', 'La silueta de la cuenta, con una flecha de salida.']
+							]
+						},
+						{
+							slug: 'home',
+							name: 'Leo OS',
+							about: 'El ícono del sitio cuando lo agregas a la pantalla de inicio del iPhone.',
+							current: '../apple-touch-icon.png',
+							home: false,
+							options: [
+								['Renovado', 'La cuadrícula de apps de hoy, que ahora llena el ícono entero, como pide iOS.'],
+								['L', 'Una L de Leo hecha con apps de colores.'],
+								['Pantalla', 'El fondo de la pantalla de inicio con apps de vidrio.'],
+								['Constelación', 'Leo en el cielo de noche.']
+							]
+						}
+					]
+				}
+			];
+
+			const icons = groups.flatMap((group) => group.icons);
+			const escape = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+			const source = (icon, option) => (option ? `${icon.slug}-${option}.svg` : icon.current);
+
+			function card(icon, option) {
+				const [title, description] = option
+					? [`${option} · ${icon.options[option - 1][0]}`, icon.options[option - 1][1]]
+					: ['Actual', 'El ícono de hoy, para comparar.'];
+				return `
+					<label class="option${option ? '' : ' current'}">
+						<input type="radio" name="${icon.slug}" value="${option}"${option ? '' : ' checked'} />
+						<img src="${source(icon, option)}" alt="" />
+						<span class="text">
+							<span class="title">${escape(title)}</span>
+							<span class="description">${escape(description)}</span>
+						</span>
+					</label>`;
+			}
+
+			document.querySelector('.groups').innerHTML = groups
+				.map(
+					(group) => `
+					<h2 class="group">${escape(group.title)}</h2>
+					${group.about ? `<p class="group-about">${escape(group.about)}</p>` : ''}
+					${group.icons
+						.map(
+							(icon) => `
+							<section aria-labelledby="${icon.slug}">
+								<h3 id="${icon.slug}">${escape(icon.name)}</h3>
+								<p class="about">${escape(icon.about)}</p>
+								<fieldset class="options">${[0, 1, 2, 3, 4].map((option) => card(icon, option)).join('')}</fieldset>
+							</section>`
+						)
+						.join('')}`
+				)
+				.join('');
+
+			// The home screen orders its icons by name, the same way.
+			document.querySelector('.screen').innerHTML = icons
+				.filter((icon) => icon.home)
+				.sort((a, b) => a.name.localeCompare(b.name))
+				.map(
+					(icon) => `
+					<span class="app">
+						<img class="icon" data-slug="${icon.slug}" src="${icon.current}" alt="" />
+						<span class="label">${escape(icon.name)}</span>
+					</span>`
+				)
+				.join('');
 
 			const summary = document.querySelector('.summary');
 			const copy = document.querySelector('.copy');
 
-			/** The option picked for each app; 0 is the icon as it is today. */
+			/** The option picked for each icon; 0 is the icon as it is today. */
 			function choice() {
-				return Object.keys(apps).map((slug) => [
-					slug,
-					Number(document.querySelector(`input[name="${slug}"]:checked`)?.value ?? 0)
+				return icons.map((icon) => [
+					icon,
+					Number(document.querySelector(`input[name="${icon.slug}"]:checked`)?.value ?? 0)
 				]);
 			}
 
-			function describe(slug, option) {
-				const { name, options } = apps[slug];
-				return option ? `${name} ${option} (${options[option]})` : `${name} actual`;
+			function describe(icon, option) {
+				return option ? `${icon.name} ${option} (${icon.options[option - 1][0]})` : `${icon.name} actual`;
 			}
 
 			function show() {
-				for (const [slug, option] of choice()) {
-					document.querySelector(`.home [data-app="${slug}"]`).src = option
-						? `${slug}-${option}.svg`
-						: `../${slug}/apple-touch-icon.png`;
+				for (const [icon, option] of choice()) {
+					const image = document.querySelector(`.home [data-slug="${icon.slug}"]`);
+					if (image) image.src = source(icon, option);
 				}
-				summary.textContent = choice()
-					.map(([slug, option]) => describe(slug, option))
-					.join(' · ');
+				summary.innerHTML = choice()
+					.map(
+						([icon, option]) =>
+							`<li>${escape(icon.name)}: ${
+								option ? escape(`${option} · ${icon.options[option - 1][0]}`) : '<span>actual</span>'
+							}</li>`
+					)
+					.join('');
 
 				// The pick lives in the address, so a reload or a shared link opens with it.
-				const picked = choice().filter(([, option]) => option);
-				const hash = picked.map(([slug, option]) => `${slug}=${option}`).join('&');
+				const hash = choice()
+					.filter(([, option]) => option)
+					.map(([icon, option]) => `${icon.slug}=${option}`)
+					.join('&');
 				history.replaceState(null, '', hash ? `#${hash}` : location.pathname + location.search);
 			}
 
@@ -573,7 +605,7 @@
 
 			copy.addEventListener('click', async () => {
 				const text = `Íconos: ${choice()
-					.map(([slug, option]) => describe(slug, option))
+					.map(([icon, option]) => describe(icon, option))
 					.join(', ')}`;
 				try {
 					await navigator.clipboard.writeText(text);
