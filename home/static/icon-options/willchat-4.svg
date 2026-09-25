@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="willchat-bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#2c2c30" />
+			<stop offset="1" stop-color="#0c0c0e" />
+		</linearGradient>
+		<linearGradient id="willchat-bubble" x1="0" y1="220" x2="0" y2="830" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#fff" />
+			<stop offset="1" stop-color="#e9e9ee" />
+		</linearGradient>
+		<linearGradient id="willchat-ink" x1="330" y1="0" x2="694" y2="0" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#6b5cff" />
+			<stop offset="0.5" stop-color="#a855f0" />
+			<stop offset="1" stop-color="#f0519c" />
+		</linearGradient>
+		<filter id="willchat-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="20" stdDeviation="28" flood-color="#000" flood-opacity="0.5" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#willchat-bg)" />
+	<!-- The app's own black and white, with the W in the colours of the icon it replaces -->
+	<path
+		d="M348 224h328a172 172 0 0 1 172 172v144a172 172 0 0 1-172 172H436c-50 46-132 86-240 94 46-36 76-80 86-126-64-28-106-88-106-160V396a172 172 0 0 1 172-172z"
+		fill="url(#willchat-bubble)"
+		filter="url(#willchat-shadow)"
+	/>
+	<path
+		d="M340 384 426 574 512 444 598 574 684 384"
+		fill="none"
+		stroke="url(#willchat-ink)"
+		stroke-width="64"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+	/>
+</svg>

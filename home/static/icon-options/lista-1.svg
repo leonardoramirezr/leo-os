@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="lista-bg" x1="0" y1="0" x2="0.25" y2="1">
+			<stop offset="0" stop-color="#ffb33d" />
+			<stop offset="0.55" stop-color="#ff8a1c" />
+			<stop offset="1" stop-color="#f2560c" />
+		</linearGradient>
+		<radialGradient id="lista-glow" cx="0.3" cy="0.05" r="0.8">
+			<stop offset="0" stop-color="#fff" stop-opacity="0.3" />
+			<stop offset="1" stop-color="#fff" stop-opacity="0" />
+		</radialGradient>
+		<linearGradient id="lista-white" x1="0" y1="200" x2="0" y2="920" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#fff" />
+			<stop offset="1" stop-color="#fff5ec" />
+		</linearGradient>
+		<linearGradient id="lista-ink" x1="0" y1="560" x2="0" y2="900" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#ff9d26" />
+			<stop offset="1" stop-color="#f2560c" />
+		</linearGradient>
+		<!-- The badge cuts a gap into the list, so the lines can run under it -->
+		<mask id="lista-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+			<rect width="1024" height="1024" fill="#fff" />
+			<circle cx="740" cy="750" r="192" fill="#000" />
+		</mask>
+		<filter id="lista-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#a33a00" flood-opacity="0.3" />
+		</filter>
+		<filter id="lista-lift" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="20" stdDeviation="26" flood-color="#8f2f00" flood-opacity="0.38" />
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#lista-bg)" />
+	<rect width="1024" height="1024" fill="url(#lista-glow)" />
+	<!-- The list: one item ticked, two to go -->
+	<g filter="url(#lista-shadow)">
+		<g mask="url(#lista-cut)">
+			<rect x="180" y="226" width="136" height="136" rx="40" fill="url(#lista-white)" />
+			<g fill="none" stroke="url(#lista-white)" stroke-linecap="round" stroke-linejoin="round">
+				<rect x="196" y="458" width="104" height="104" rx="26" stroke-width="32" />
+				<rect x="196" y="674" width="104" height="104" rx="26" stroke-width="32" />
+				<path d="M396 294h448M396 510h448M396 726h448" stroke-width="64" />
+			</g>
+		</g>
+	</g>
+	<path
+		d="M212 296l30 30 50-58"
+		fill="none"
+		stroke="url(#lista-ink)"
+		stroke-width="32"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+	/>
+	<!-- The microphone that fills it -->
+	<circle cx="740" cy="750" r="168" fill="url(#lista-white)" filter="url(#lista-lift)" />
+	<g fill="none" stroke="url(#lista-ink)" stroke-width="30" stroke-linecap="round" stroke-linejoin="round">
+		<rect x="694" y="630" width="92" height="156" rx="46" fill="url(#lista-ink)" stroke="none" />
+		<path d="M660 736a80 80 0 0 0 160 0" />
+		<path d="M740 818v38M702 856h76" />
+	</g>
+</svg>
