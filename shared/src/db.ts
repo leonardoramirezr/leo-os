@@ -1,11 +1,11 @@
 // The Neon Data API: PostgREST over HTTPS, queried straight from the browser. There is still no
 // backend of ours in between — what stands between one account and another's rows are the row
-// level security policies in `db/schema.sql`. The token says who is asking; Postgres decides.
+// level security policies in `db/schema.ts`. The token says who is asking; Postgres decides.
 //
 // Only what the apps need is here: read a table whole, add rows, change them, drop them. Every
 // table these apps use is small enough to read in one go.
 import { AuthError, token } from './auth';
-import { dataApiUrl } from './config';
+import { dataApiSchema, dataApiUrl } from './config';
 
 export class DbError extends Error {
 	/** PostgREST's code, e.g. PGRST301 for a token that ran out. Empty when it never answered. */
@@ -49,6 +49,8 @@ async function request(method: string, path: string, body?: unknown, prefer?: st
 			method,
 			headers: {
 				authorization: `Bearer ${bearer}`,
+				// PostgREST's way of naming a schema: a read asks for it, a write says it is sending to it.
+				...(dataApiSchema && { [method === 'GET' ? 'accept-profile' : 'content-profile']: dataApiSchema }),
 				...(body === undefined ? undefined : { 'content-type': 'application/json' }),
 				...(prefer === undefined ? undefined : { prefer })
 			},
