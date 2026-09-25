@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="lista-bg" x1="0" y1="0" x2="1" y2="1">
+			<stop offset="0" stop-color="#ffae1f" />
+			<stop offset="1" stop-color="#f4511e" />
+		</linearGradient>
+		<radialGradient id="lista-glow" cx="0.28" cy="0.18" r="0.9">
+			<stop offset="0" stop-color="#fff" stop-opacity="0.3" />
+			<stop offset="1" stop-color="#fff" stop-opacity="0" />
+		</radialGradient>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#lista-bg)" />
+	<rect width="1024" height="1024" fill="url(#lista-glow)" />
+	<!-- The list: one item checked, two to go -->
+	<rect x="178" y="228" width="128" height="128" rx="34" fill="#fff" />
+	<path
+		d="M210 293l30 30 50-58"
+		fill="none"
+		stroke="#f47a1e"
+		stroke-width="30"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+	/>
+	<g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">
+		<rect x="196" y="446" width="92" height="92" rx="24" stroke-width="36" />
+		<rect x="196" y="646" width="92" height="92" rx="24" stroke-width="36" />
+		<path d="M396 292h440M396 492h440M396 692h120" stroke-width="60" />
+	</g>
+	<!-- The microphone that fills it -->
+	<circle cx="724" cy="724" r="172" fill="#fff" />
+	<g fill="none" stroke="#f4611e" stroke-width="30" stroke-linecap="round" stroke-linejoin="round">
+		<rect x="682" y="598" width="84" height="148" rx="42" fill="#f4611e" />
+		<path d="M640 708a84 84 0 0 0 168 0" />
+		<path d="M724 792v42M684 834h80" />
+	</g>
+</svg>

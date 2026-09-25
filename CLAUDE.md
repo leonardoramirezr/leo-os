@@ -113,7 +113,8 @@ to register it.
   own for anything bigger — and every row carries the account it belongs to. Only images stay on
   the device (`local(…)`, IndexedDB), under keys that carry the account too, and every read and
   write of those is wrapped in `try`/`catch`: the browser may have site data blocked. Keys keep
-  their app's prefix either way (`home:wallpaper`, `me-deben:*`, `willchat:*`).
+  their app's prefix either way (`home:wallpaper`, `me-deben:*`, `willchat:*`), except what several
+  apps share: the Groq API key is `groq:api-key`, and any app that talks to Groq reads that one.
 - **A change to the database starts in `db/schema.ts`**, never in the database and never in a
   migration by hand: edit the models, run `pnpm db:generate`, and commit the migration it writes
   next to them. The row types the apps use come from the same models. `pnpm check` fails when the
