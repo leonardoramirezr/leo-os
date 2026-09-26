@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { chat } from '$lib/chat.svelte';
+	import { Dictation } from '$lib/dictation.svelte';
 	import { t } from '$lib/i18n';
 	import { prepareImage } from '$lib/images';
+	import { groqKey } from '$lib/settings.svelte';
 	import Icon from './Icon.svelte';
 
-	let { onsend }: { onsend: () => void } = $props();
+	let { onsend, onneedgroqkey }: { onsend: () => void; onneedgroqkey: () => void } = $props();
 
 	interface Attachment {
 		id: number;
@@ -22,10 +24,50 @@
 	let nextId = 0;
 	let problemTimer: ReturnType<typeof setTimeout> | undefined;
 
+	const dictation = new Dictation({ onheard: insert, onproblem: showProblem });
+	/** The box shows the microphone instead of the text: it is listening, or writing down what it heard. */
+	const dictating = $derived(dictation.phase === 'recording' || dictation.phase === 'transcribing');
+	const clock = $derived(
+		`${Math.floor(dictation.seconds / 60)}:${String(dictation.seconds % 60).padStart(2, '0')}`
+	);
+
 	const ready = $derived(attachments.every((attachment) => attachment.url));
 	const canSend = $derived(
-		chat.loaded && !chat.pending && ready && (text.trim() !== '' || attachments.length > 0)
+		chat.loaded &&
+			!chat.pending &&
+			ready &&
+			dictation.phase === 'idle' &&
+			(text.trim() !== '' || attachments.length > 0)
 	);
+
+	$effect(() => {
+		const onhide = () => {
+			if (document.visibilityState === 'hidden') dictation.interrupt();
+		};
+		document.addEventListener('visibilitychange', onhide);
+		return () => {
+			document.removeEventListener('visibilitychange', onhide);
+			// Leaving the chat, to change the API key for instance, closes the microphone.
+			dictation.cancel();
+		};
+	});
+
+	function dictate() {
+		// With no Groq key there is nothing to transcribe with: the settings are where it goes.
+		if (dictation.phase === 'idle' && !groqKey.value) onneedgroqkey();
+		else dictation.toggle();
+	}
+
+	/** Puts what was dictated after whatever was already written, to be read over before sending. */
+	function insert(heard: string) {
+		text = !text || /\s$/.test(text) ? text + heard : `${text} ${heard}`;
+		tick().then(() => {
+			resize();
+			// On a computer the cursor waits after it, to go on typing or send with Enter. A touch
+			// keyboard is left down: it would cover what was just dictated.
+			if (!isTouch()) textarea.focus();
+		});
+	}
 
 	async function addPhotos(files: File[]) {
 		const ids = files.map(() => nextId++);
@@ -128,25 +170,74 @@
 		{/if}
 
 		<div class="row">
-			<button
-				type="button"
-				class="round"
-				onclick={() => fileInput.click()}
-				aria-label={t.addPhotos}
-				title={t.addPhotos}
-			>
-				<Icon name="plus" size={22} />
-			</button>
+			{#if dictating}
+				<button
+					type="button"
+					class="round"
+					onclick={() => dictation.cancel()}
+					aria-label={t.cancel}
+					title={t.cancel}
+				>
+					<Icon name="close" />
+				</button>
+			{:else}
+				<button
+					type="button"
+					class="round"
+					onclick={() => fileInput.click()}
+					aria-label={t.addPhotos}
+					title={t.addPhotos}
+				>
+					<Icon name="plus" size={22} />
+				</button>
+			{/if}
 
+			<!-- Hidden rather than removed while dictating: it stays bound, to be sized and focused as
+			     soon as the transcription lands after what was already written. -->
 			<textarea
 				bind:this={textarea}
 				bind:value={text}
+				hidden={dictating}
 				rows="1"
 				placeholder={t.placeholder}
 				oninput={resize}
 				{onkeydown}
 				{onpaste}
 			></textarea>
+
+			{#if dictation.phase === 'recording'}
+				<div class="dictation">
+					<span class="clock">{clock}</span>
+					<span class="wave" aria-hidden="true">
+						{#each dictation.levels as level, index (index)}
+							<span style:--level={level}></span>
+						{/each}
+					</span>
+				</div>
+			{:else if dictation.phase === 'transcribing'}
+				<div class="dictation">
+					<span class="shimmer">{t.transcribing}</span>
+				</div>
+			{/if}
+
+			<button
+				type="button"
+				class="round"
+				class:finish={dictation.phase === 'recording'}
+				disabled={dictation.phase === 'starting' || dictation.phase === 'transcribing'}
+				aria-busy={dictation.phase === 'starting' || dictation.phase === 'transcribing'}
+				onclick={dictate}
+				aria-label={dictation.phase === 'recording' ? t.transcribe : t.dictate}
+				title={dictation.phase === 'recording' ? t.transcribe : t.dictate}
+			>
+				{#if dictation.phase === 'starting' || dictation.phase === 'transcribing'}
+					<span class="spinner"></span>
+				{:else if dictation.phase === 'recording'}
+					<Icon name="check" />
+				{:else}
+					<Icon name="mic" />
+				{/if}
+			</button>
 
 			{#if chat.pending}
 				<button type="button" class="round send" onclick={() => chat.stop()} aria-label={t.stop} title={t.stop}>
@@ -267,6 +358,65 @@
 		color: var(--muted);
 	}
 
+	.dictation {
+		display: flex;
+		flex: 1;
+		align-items: center;
+		gap: 10px;
+		min-width: 0;
+		height: 40px;
+		padding: 0 4px;
+	}
+
+	.clock {
+		display: flex;
+		flex: none;
+		align-items: center;
+		gap: 6px;
+		font-size: 15px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.clock::before {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: var(--live);
+		content: '';
+	}
+
+	/* The newest bar on the right; the oldest ones run off the left edge. */
+	.wave {
+		display: flex;
+		flex: 1;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 2px;
+		min-width: 0;
+		height: 24px;
+		overflow: hidden;
+	}
+
+	/* Silence is a faint dotted line, and the voice stands out of it. */
+	.wave span {
+		flex: none;
+		width: 3px;
+		height: calc(3px + var(--level) * 21px);
+		border-radius: 1.5px;
+		background: var(--text);
+		opacity: calc(0.25 + var(--level) * 1.5);
+	}
+
+	.shimmer {
+		background: linear-gradient(90deg, var(--muted) 30%, var(--text) 50%, var(--muted) 70%);
+		background-size: 200% 100%;
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		font-weight: 500;
+		animation: shimmer 2s linear infinite;
+	}
+
 	.round {
 		display: grid;
 		flex: none;
@@ -280,7 +430,8 @@
 		color: var(--text);
 	}
 
-	.send {
+	.send,
+	.finish {
 		background: var(--accent);
 		color: var(--accent-text);
 	}

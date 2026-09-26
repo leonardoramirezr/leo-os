@@ -19,6 +19,18 @@ const en = {
 	unreadablePhoto: "Couldn't read that photo.",
 	send: 'Send',
 	stop: 'Stop',
+	dictate: 'Dictate',
+	transcribe: 'Transcribe',
+	cancel: 'Cancel',
+	transcribing: 'Transcribing',
+	nothingHeard: 'Nothing was heard.',
+	cantRecord: "This browser can't record audio.",
+	microphoneDenied: 'No permission to use the microphone. Allow it in the browser settings.',
+	microphoneFailed: "Couldn't open the microphone.",
+	groqNetworkError: "Couldn't reach Groq. Check your connection and try again.",
+	groqKeyRejected: 'Groq rejected the API key. Change it in Settings.',
+	groqRateLimited: 'Groq asks you to wait: your API key has reached its usage limit for now.',
+	recordingTooLong: 'The recording is too long.',
 	thinking: 'Thinking',
 	creatingImage: 'Creating image',
 	stopped: 'Stopped',
@@ -39,8 +51,17 @@ const en = {
 	imageModel: 'Image model',
 	customModel: 'Custom…',
 	modelId: 'Model ID',
+	speechToText: 'Speech to text',
 	changeKey: 'Change API key',
-	confirmChangeKey: 'Remove the saved API key from this browser?'
+	confirmChangeKey: 'Remove the OpenAI API key saved in your account?',
+	groqApiKey: 'Groq API key',
+	groqKeyHint:
+		'Used to dictate messages, and shared with the other Leo OS apps that use Groq. It is kept in your ' +
+		'account, where only you can read it, and only sent to api.groq.com, along with your recordings.',
+	notAGroqKey: 'That looks like an OpenAI API key. Groq uses its own, which start with gsk_.',
+	invalidGroqKey: 'Groq rejected this API key.',
+	confirmChangeGroqKey:
+		'Remove the Groq API key saved in your account? The other apps that use Groq will stop using it too.'
 };
 
 export type Messages = typeof en;
@@ -66,6 +87,18 @@ const es: Messages = {
 	unreadablePhoto: 'No se pudo leer esa foto.',
 	send: 'Enviar',
 	stop: 'Detener',
+	dictate: 'Dictar',
+	transcribe: 'Transcribir',
+	cancel: 'Cancelar',
+	transcribing: 'Transcribiendo',
+	nothingHeard: 'No se oyó nada.',
+	cantRecord: 'Este navegador no puede grabar audio.',
+	microphoneDenied: 'No hay permiso para usar el micrófono. Actívalo en los ajustes del navegador.',
+	microphoneFailed: 'No se pudo abrir el micrófono.',
+	groqNetworkError: 'No se pudo conectar con Groq. Revisa tu conexión e inténtalo de nuevo.',
+	groqKeyRejected: 'Groq rechazó la API key. Cámbiala en Ajustes.',
+	groqRateLimited: 'Groq pide esperar: tu API key llegó a su límite de uso por ahora.',
+	recordingTooLong: 'La grabación es demasiado larga.',
 	thinking: 'Pensando',
 	creatingImage: 'Creando imagen',
 	stopped: 'Detenido',
@@ -86,8 +119,19 @@ const es: Messages = {
 	imageModel: 'Modelo de imagen',
 	customModel: 'Otro…',
 	modelId: 'ID del modelo',
+	speechToText: 'Voz a texto',
 	changeKey: 'Cambiar API key',
-	confirmChangeKey: '¿Quitar la API key guardada en este navegador?'
+	confirmChangeKey: '¿Quitar la API key de OpenAI guardada en tu cuenta?',
+	groqApiKey: 'API key de Groq',
+	groqKeyHint:
+		'Se usa para dictar mensajes y la comparten las demás apps de Leo OS que usan Groq. ' +
+		'Se guarda en tu cuenta, donde solo tú puedes leerla, y solo se envía a api.groq.com, ' +
+		'junto con lo que grabes.',
+	notAGroqKey: 'Esa parece una API key de OpenAI. Groq usa las suyas, que empiezan con gsk_.',
+	invalidGroqKey: 'Groq rechazó esta API key.',
+	confirmChangeGroqKey:
+		'¿Quitar la API key de Groq guardada en tu cuenta? ' +
+		'También dejará de usarse en las demás apps que usan Groq.'
 };
 
 export const lang = globalThis.navigator?.language?.toLowerCase().startsWith('es') ? 'es' : 'en';
