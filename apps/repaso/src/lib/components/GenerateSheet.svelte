@@ -2,15 +2,16 @@
 	import { untrack } from 'svelte';
 	import { collection, type Deck, type Draft } from '$lib/collection.svelte';
 	import { plural } from '$lib/format';
-	import { writeCards } from '$lib/generate';
+	import { LANGUAGES, writeCards, type Language } from '$lib/generate';
 	import { chatModels, GroqError } from '$lib/groq';
-	import { apiKey, model, models } from '$lib/settings.svelte';
+	import { apiKey, language, model, models } from '$lib/settings.svelte';
 	import Icon from './Icon.svelte';
 	import Sheet from './Sheet.svelte';
 
 	let { open = $bindable(), deck }: { open: boolean; deck: Deck } = $props();
 
 	const COUNTS = [5, 10, 20];
+	const LANGUAGE_NAMES: Record<Language, string> = { es: 'Español', en: 'Inglés' };
 	const OFFLINE = 'No se pudo conectar con Groq. Revisa tu conexión e inténtalo de nuevo.';
 	const EXAMPLE =
 		'Un tema, una lista o tus apuntes. Por ejemplo: «verbos irregulares en inglés» o «los huesos de la mano».';
@@ -101,6 +102,7 @@
 				deck: deck.name,
 				topic: wanted,
 				count,
+				language: language.value,
 				existing: collection.cardsOf(deck.id).map((card) => card.front)
 			});
 			if (!written.length) {
@@ -232,6 +234,15 @@
 						{/each}
 					</div>
 				</div>
+
+				<label class="field inline">
+					<span>Idioma</span>
+					<select bind:value={language.value}>
+						{#each Object.keys(LANGUAGES) as Language[] as option (option)}
+							<option value={option}>{LANGUAGE_NAMES[option]}</option>
+						{/each}
+					</select>
+				</label>
 
 				<label class="field inline">
 					<span>Modelo</span>

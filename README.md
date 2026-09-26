@@ -401,9 +401,10 @@ again just before it would be forgotten.
 - **Generar con IA** asks Groq for 5, 10 or 20 cards about whatever is written in: a topic, a list
   or notes pasted in. The model is picked there, among the chat models the key can use (Groq's
   `/models`, without speech, voices, safety classifiers or agent systems), and remembered in the
-  account; until another is picked it is `openai/gpt-oss-120b`. The model is shown the deck's name
-  and its cards, so that it writes in the right language and does not repeat them, and whatever it
-  writes that the deck already has is dropped anyway. Before anything is added, any card can be
+  account; until another is picked it is `openai/gpt-oss-120b`. Next to it, **Idioma** says whether
+  the cards are written in Spanish or English, whatever the topic or the notes are in; it is
+  remembered too. The model is shown the deck's name and its cards, so that it does not repeat
+  them, and whatever it writes that the deck already has is dropped anyway. Before anything is added, any card can be
   left out with a tap; the cards written stay there until added or discarded, even if the sheet is
   closed.
 - Groq holds some models to the cards' JSON schema token by token (strict mode) and not others, and

@@ -5,6 +5,10 @@
 import type { Draft } from './collection.svelte';
 import { complete, GroqError, type ChatRequest } from './groq';
 
+/** The languages cards can be written in, as the model is told them. */
+export const LANGUAGES = { es: 'Spanish', en: 'English' } as const;
+export type Language = keyof typeof LANGUAGES;
+
 export interface CardRequest {
 	/** The deck's name: a hint at what the cards are for, e.g. a language. */
 	deck: string;
@@ -13,6 +17,8 @@ export interface CardRequest {
 	count: number;
 	/** The fronts of the cards the deck already has, newest first. */
 	existing: string[];
+	/** What the cards are written in, whatever the topic or the notes are written in. */
+	language: Language;
 }
 
 const INSTRUCTIONS = [
@@ -28,9 +34,10 @@ const INSTRUCTIONS = [
 		'never repeats the front.',
 	'- With notes, take the facts from the notes. Otherwise, only what is well established: leave ' +
 		'out anything you are not sure is true.',
-	'- Write in the language the user wrote in. When the deck is for learning another language, the ' +
-		'word or phrase in that language goes on the front and its meaning on the back, unless the ' +
-		'user asks for something else.',
+	'- Write the cards in the language you are told, even when the topic or the notes are in ' +
+		'another. When the deck is for learning another language, the word or phrase in that language ' +
+		'goes on the front and its meaning, in the language you are told, on the back, unless the user ' +
+		'asks for something else.',
 	'- Plain text: no Markdown, no numbering, no labels such as "Q:" or "A:".',
 	'- Do not repeat a card the deck already has, even worded differently.',
 	'- Write as many cards as asked for; fewer only if the material runs out.',
@@ -111,12 +118,13 @@ export async function writeCards(apiKey: string, model: string, request: CardReq
 	return unseen(parse(content), request.existing).slice(0, request.count);
 }
 
-function describe({ deck, topic, count, existing }: CardRequest): string {
+function describe({ deck, topic, count, existing, language }: CardRequest): string {
 	const shown = existing
 		.slice(0, SHOWN_EXISTING)
 		.map((front) => `- ${front.replace(/\s+/g, ' ').slice(0, 120)}`);
 	return [
 		`Deck: ${deck}`,
+		`Language of the cards: ${LANGUAGES[language]}`,
 		'',
 		'Cards it already has:',
 		shown.join('\n') || '(none)',
