@@ -273,6 +273,12 @@ The icon has to be opaque and reach the edges: iOS applies its own rounded mask 
 transparent black. Safari also caches the icon eagerly; if the old one keeps showing up while
 testing, close the tab and open the page again.
 
+The home screen, and every page that shows an icon, draws the SVG itself in an `<img>`. There,
+Safari renders whatever goes through an SVG `filter` or `mask` at low resolution, which comes out
+blurry on an iPhone's 3x screen. So nothing in an icon that should look sharp goes through either:
+a drop shadow or a glow is a blurred copy of the shape, drawn underneath it, and a cut-out is a
+`clipPath`.
+
 ## Home
 
 Besides the published apps, the home screen carries two icons of its own:
