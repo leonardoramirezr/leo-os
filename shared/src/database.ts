@@ -5,4 +5,12 @@
 // apps stop typechecking until they follow.
 //
 // This is a type-only re-export, so `drizzle-orm` never reaches the browser.
-export type { Json, ListItemRow, MovementRow, PersonRow, SettingRow } from '@leo-os/db/schema';
+export type {
+	CardRow,
+	DeckRow,
+	Json,
+	ListItemRow,
+	MovementRow,
+	PersonRow,
+	SettingRow
+} from '@leo-os/db/schema';

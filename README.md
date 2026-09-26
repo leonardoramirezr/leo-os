@@ -7,6 +7,7 @@ phone home screen: every app is an icon.
 - WillChat: https://leonardoramirezr.github.io/leo-os/willchat/
 - Me deben: https://leonardoramirezr.github.io/leo-os/me-deben/
 - Lista: https://leonardoramirezr.github.io/leo-os/lista/
+- Repaso: https://leonardoramirezr.github.io/leo-os/repaso/
 
 ## Layout
 
@@ -375,3 +376,56 @@ with a box to tick, then say what to change.
   `groq:api-key`, with no app's prefix: every app here that uses Groq reads that same one.
 - The list lives in the `lista_items` table, one row per item, with a copy on the device so the app
   opens without waiting. Coming back to the app reads it again, in case it changed on another device.
+
+## Repaso
+
+Flashcards studied with spaced repetition, the way Anki does it: decks of cards, each card shown
+again just before it would be forgotten.
+
+- The first screen lists the decks, in alphabetical order, with how many cards each has waiting
+  today; **Nuevo mazo** adds one. A deck shows how many of its cards are new, how many are due again
+  and how many there are in all, the button to study them, and every card, newest first, with when
+  it comes up next. Tapping a card corrects or deletes it; **Editar** renames the deck, or deletes
+  it with all its cards.
+- The back button and the back gesture walk back through the screens. Which one is showing lives in
+  the history entry rather than in the URL, so a reload lands on the list of decks.
+- Cards are added by hand — **Añadir tarjeta**, a front and a back; the sheet stays open for the
+  next one, and ⌘/Ctrl + Enter adds it from the keyboard — or written by AI with **Generar con IA**.
+- Studying shows the front; **Mostrar respuesta**, or tapping the card, turns it over. The answer is
+  one of four buttons, each saying when the card will come back: **Otra vez**, **Difícil**,
+  **Bien** and **Fácil**. On a keyboard, Space turns the card and then counts as «Bien», 1 to 4 are
+  the four answers and Esc ends the session. The pencil corrects the card being studied, which is
+  where a mistake in one the AI wrote shows up.
+- The schedule is Anki's classic one (SM-2) with its default settings, in `src/lib/schedule.ts`. A
+  new card is learned in steps of one and ten minutes and comes back the next day, or in four days
+  with «Fácil». From then on «Bien» multiplies the interval by the card's ease, which starts at
+  2.5; «Difícil» lowers the ease and «Fácil» raises it. A forgotten card is relearned in ten minutes
+  and starts over at a day. The day turns over at 4 a.m., so a session past midnight still belongs
+  to the day before.
+- A session goes through what is due in this order: the cards being learned whose time has come,
+  the reviews, the new cards in the order they were added, and last the cards being learned that
+  come due within twenty minutes, shown early rather than waited for. It ends when nothing is left,
+  which leaves every card it touched learned. There is no daily limit of new cards: a card is
+  studied the day it is added.
+- **Generar con IA** asks Groq for 5, 10 or 20 cards about whatever is written in: a topic, a list
+  or notes pasted in. The model is picked there, among the chat models the key can use (Groq's
+  `/models`, without speech, voices, safety classifiers or agent systems), and remembered in the
+  account; until another is picked it is `openai/gpt-oss-120b`. Next to it, **Idioma** says whether
+  the cards are written in Spanish or English, whatever the topic or the notes are in; it is
+  remembered too. The model is shown the deck's name and its cards, so that it does not repeat
+  them, and whatever it writes that the deck already has is dropped anyway. Before anything is added, any card can be
+  left out with a tap; the cards written stay there until added or discarded, even if the sheet is
+  closed.
+- Groq holds some models to the cards' JSON schema token by token (strict mode) and not others, and
+  which ones changes as models come and go. So every model is asked for strict mode first, and one
+  that turns it down is asked from then on for a plain JSON object, with the prompt spelling out its
+  shape. Nothing model-specific is sent, not even reasoning settings, so the app need not know a
+  model to use it.
+- It uses Lista's Groq API key, `groq:api-key`: entered once, in whichever of the two apps comes
+  first, and asked for here the first time cards are generated. Only the key and what is asked for
+  — the topic or notes, the deck's name and the front of its cards — are ever sent to
+  `api.groq.com`.
+- Decks and cards live in the account, in the `repaso_decks` and `repaso_cards` tables, each card
+  with its place in the schedule in plain columns, and with a copy on the device so the app opens
+  without waiting. Coming back to the app reads them again, in case they were studied on another
+  device.
