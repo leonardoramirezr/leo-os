@@ -131,6 +131,15 @@
 		onsend();
 	}
 
+	/** Empties the text. The photos stay: each has its own button to remove it. */
+	function clear() {
+		text = '';
+		tick().then(() => {
+			resize();
+			if (!isTouch()) textarea.focus();
+		});
+	}
+
 	function resize() {
 		textarea.style.height = 'auto';
 		textarea.style.height = `${textarea.scrollHeight}px`;
@@ -218,6 +227,12 @@
 				<div class="dictation">
 					<span class="shimmer">{t.transcribing}</span>
 				</div>
+			{/if}
+
+			{#if !dictating && text}
+				<button type="button" class="round clear" onclick={clear} aria-label={t.clear} title={t.clear}>
+					<Icon name="clear" />
+				</button>
 			{/if}
 
 			<button
@@ -428,6 +443,10 @@
 		border-radius: 50%;
 		background: transparent;
 		color: var(--text);
+	}
+
+	.clear {
+		color: var(--muted);
 	}
 
 	.send,

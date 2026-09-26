@@ -10,7 +10,8 @@
 		stop: '<rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor" stroke="none"/>',
 		close: '<path d="M18 6 6 18M6 6l12 12"/>',
 		chevron: '<path d="m7 10 5 5 5-5"/>',
-		download: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>'
+		download: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>',
+		clear: '<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/>'
 	};
 
 	export type IconName = keyof typeof icons;
