@@ -292,6 +292,15 @@ A ChatGPT-style chat for creating and editing images with the OpenAI API and you
   any ID can also be typed in.
 - Photos are scaled down to 2048 px and sent as `input_image`. Every turn sends the whole
   conversation, generated images included, so the model can keep editing them.
+- The microphone to the left of the send button dictates. Tapping it starts listening; tapping it
+  again, now a ✓, turns what was said into text and adds it to the message, to be read over before
+  sending, and ✕ throws it away. It also stops and transcribes on its own after three minutes, or
+  when the app goes to the background.
+- Dictation goes to Groq's `whisper-large-v3`, the same model as Lista, with the same Groq API key:
+  the one saved as `groq:api-key`, which every app here that uses Groq reads, so a key entered in
+  Lista already works here. Without one, the microphone opens the settings to enter it. Whisper is
+  told to expect the app's own language, Spanish or English, and the segments it doubts were speech
+  are dropped, as in Lista. The key and the recordings are only ever sent to `api.groq.com`.
 - Requests use `background: true` and are polled every 2 s. Generating an image can take more than a
   minute and Safari on iOS cuts off requests that go 60 s without a response; this way the answer is
   also recovered if you reload or switch apps.
