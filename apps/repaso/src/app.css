@@ -1,0 +1,264 @@
+:root {
+	color-scheme: light dark;
+
+	--bg: #f2f2f7;
+	--text: #0d0d0d;
+	--muted: #6b6b76;
+	--faint: #8e8e93;
+	--border: #e3e3e6;
+	--group: #ffffff;
+	--hover: #f0f0f2;
+	--sheet: #f2f2f7;
+	/* Deep enough for white text on it, like the «Estudiar» button. */
+	--accent: #5856d6;
+	/* The accent as text or a glyph on a surface; in the dark it has to be lighter to be read. */
+	--tint: #5856d6;
+	--link: #0a84ff;
+	--danger: #d4382c;
+	/* The four answers, from «Otra vez» to «Fácil»: dark enough to read on their own tint. */
+	--again: #c0262d;
+	--hard: #9a5200;
+	--good: #117a37;
+	--easy: #2160d6;
+	--shadow: 0 2px 12px rgb(0 0 0 / 0.07);
+	/* The card being studied floats a little higher than everything else. */
+	--lift: 0 18px 48px rgb(40 40 90 / 0.14), 0 2px 8px rgb(40 40 90 / 0.06);
+
+	--font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	--mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #1c1c1e;
+		--text: #ececec;
+		--muted: #a3a3ab;
+		--faint: #8e8e93;
+		--border: #3a3a3d;
+		--group: #2c2c2e;
+		--hover: #3a3a3c;
+		--sheet: #1c1c1e;
+		--accent: #5e5ce6;
+		--tint: #8e8cff;
+		--danger: #ff6b5f;
+		--again: #ff8a8a;
+		--hard: #f5b041;
+		--good: #4ade80;
+		--easy: #8fb6ff;
+		--shadow: 0 2px 12px rgb(0 0 0 / 0.25);
+		--lift: 0 18px 48px rgb(0 0 0 / 0.45), 0 2px 8px rgb(0 0 0 / 0.3);
+	}
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	min-height: 100%;
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--font);
+	font-size: 16px;
+	-webkit-font-smoothing: antialiased;
+	-webkit-text-size-adjust: 100%;
+	-webkit-tap-highlight-color: transparent;
+	overscroll-behavior: none;
+}
+
+button,
+input,
+select,
+textarea {
+	font: inherit;
+	color: inherit;
+}
+
+button {
+	cursor: pointer;
+}
+
+button:disabled {
+	cursor: default;
+}
+
+:focus-visible {
+	outline: 2px solid var(--link);
+	outline-offset: 2px;
+}
+
+dialog {
+	color: var(--text);
+}
+
+dialog::backdrop {
+	background: rgb(0 0 0 / 0.4);
+}
+
+/* A glyph alone, in the bars at the top. */
+.icon-button {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	border: 0;
+	border-radius: 12px;
+	background: transparent;
+	color: var(--text);
+}
+
+.icon-button:disabled {
+	opacity: 0.3;
+}
+
+@media (hover: hover) {
+	.icon-button:hover:not(:disabled) {
+		background: var(--hover);
+	}
+}
+
+/* «Cancelar», «Listo», «Editar»: words in the corners of a bar. */
+.text-button {
+	padding: 4px 0;
+	border: 0;
+	background: none;
+	color: var(--link);
+	font-size: 17px;
+}
+
+.text-button.strong {
+	font-weight: 600;
+}
+
+/*
+ * Grouped lists in the style of iOS Settings. They live here rather than in each component
+ * because Svelte styles are scoped and several views share these classes.
+ */
+.group {
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	border-radius: 14px;
+	background: var(--group);
+	list-style: none;
+}
+
+.section-title {
+	margin: 28px 4px 8px;
+	color: var(--muted);
+	font-size: 13px;
+	font-weight: 400;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+/* The sheets' primary button: full width, at the bottom. */
+.primary {
+	width: 100%;
+	padding: 14px;
+	border: 0;
+	border-radius: 14px;
+	background: var(--accent);
+	color: #fff;
+	font-size: 17px;
+	font-weight: 600;
+	transition: transform 0.1s;
+}
+
+.primary:active:not(:disabled) {
+	transform: scale(0.98);
+}
+
+.primary:disabled {
+	opacity: 0.4;
+}
+
+/* A destructive action at the foot of a sheet: plain red text, so it is never tapped by mistake. */
+.destructive {
+	display: block;
+	width: 100%;
+	margin-top: 12px;
+	padding: 12px;
+	border: 0;
+	background: none;
+	color: var(--danger);
+	font-size: 17px;
+}
+
+/* A text field inside a group: its label above, the value below. */
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 12px 16px;
+}
+
+.field + .field {
+	border-top: 1px solid var(--border);
+}
+
+.field > span {
+	color: var(--muted);
+	font-size: 13px;
+}
+
+.field input,
+.field textarea,
+.field select {
+	width: 100%;
+	padding: 0;
+	border: 0;
+	outline: none;
+	background: none;
+	font-size: 17px;
+	line-height: 1.35;
+}
+
+.field textarea {
+	/* Grows with its text where supported; three lines tall where not. */
+	field-sizing: content;
+	min-height: calc(3 * 1.35em);
+	max-height: 40dvh;
+	resize: none;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+	color: var(--faint);
+}
+
+.error {
+	margin: 12px 4px 0;
+	color: var(--danger);
+	font-size: 14px;
+	line-height: 1.4;
+}
+
+.hint {
+	margin: 10px 4px 0;
+	color: var(--muted);
+	font-size: 13px;
+	line-height: 1.45;
+}
+
+.spinner {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	border: 2.5px solid currentColor;
+	border-top-color: transparent;
+	border-radius: 50%;
+	vertical-align: -3px;
+	animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}

@@ -6,7 +6,15 @@ export type { Lang } from './components/text';
 
 export { readCache, writeCache } from './cache';
 export { configured } from './config';
-export type { Json, ListItemRow, MovementRow, PersonRow, SettingRow } from './database';
+export type {
+	CardRow,
+	DeckRow,
+	Json,
+	ListItemRow,
+	MovementRow,
+	PersonRow,
+	SettingRow
+} from './database';
 export { eq, insert, oneOf, remove, select, update, upsert } from './db';
 export { local } from './local.svelte';
 export { session } from './session.svelte';
