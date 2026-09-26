@@ -16,14 +16,17 @@
 			<circle cx="492" cy="480" r="270" />
 		</clipPath>
 		<filter id="me-deben-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
-			<feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#0b6b40" flood-opacity="0.25" />
+			<feGaussianBlur in="SourceAlpha" stdDeviation="24" />
+			<feOffset dy="18" result="offset" />
+			<feFlood flood-color="#0b6b40" flood-opacity="0.25" />
+			<feComposite in2="offset" operator="in" />
 		</filter>
 	</defs>
 	<rect width="1024" height="1024" fill="url(#me-deben-bg)" />
-	<!-- Who owes -->
-	<g filter="url(#me-deben-shadow)">
-		<circle cx="492" cy="480" r="270" fill="url(#me-deben-avatar)" />
-	</g>
+	<!-- Who owes. The shadow is a circle of its own under the avatar: Safari draws whatever goes
+	     through a filter blurry on 3x screens, and a shadow can afford to be. -->
+	<circle cx="492" cy="480" r="270" filter="url(#me-deben-shadow)" />
+	<circle cx="492" cy="480" r="270" fill="url(#me-deben-avatar)" />
 	<g clip-path="url(#me-deben-circle)" fill="#fff">
 		<circle cx="492" cy="400" r="100" />
 		<ellipse cx="492" cy="720" rx="200" ry="170" />

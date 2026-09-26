@@ -25,8 +25,17 @@
 			<stop offset="1" stop-color="#fff" stop-opacity="0.78" />
 		</linearGradient>
 		<filter id="home-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
-			<feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#140c33" flood-opacity="0.35" />
+			<feGaussianBlur in="SourceAlpha" stdDeviation="24" />
+			<feOffset dy="16" result="offset" />
+			<feFlood flood-color="#140c33" flood-opacity="0.35" />
+			<feComposite in2="offset" operator="in" />
 		</filter>
+		<g id="home-apps" fill="url(#home-glass)" stroke="#fff" stroke-opacity="0.9" stroke-width="4">
+			<rect x="244" y="244" width="236" height="236" rx="66" />
+			<rect x="544" y="244" width="236" height="236" rx="66" />
+			<rect x="244" y="544" width="236" height="236" rx="66" />
+			<rect x="544" y="544" width="236" height="236" rx="66" />
+		</g>
 	</defs>
 	<!-- The home screen's own wallpaper... -->
 	<rect width="1024" height="1024" fill="url(#home-base)" />
@@ -34,11 +43,9 @@
 	<rect width="1024" height="1024" fill="url(#home-blue)" />
 	<rect width="1024" height="1024" fill="url(#home-pink)" />
 	<rect width="1024" height="1024" fill="url(#home-orange)" />
-	<!-- ...and its apps, of frosted glass -->
-	<g fill="url(#home-glass)" stroke="#fff" stroke-opacity="0.9" stroke-width="4" filter="url(#home-shadow)">
-		<rect x="244" y="244" width="236" height="236" rx="66" />
-		<rect x="544" y="244" width="236" height="236" rx="66" />
-		<rect x="244" y="544" width="236" height="236" rx="66" />
-		<rect x="544" y="544" width="236" height="236" rx="66" />
-	</g>
+	<!-- ...and its apps, of frosted glass. -->
+	<!-- The shadow is a copy of its own under them: Safari draws whatever goes through
+	     a filter blurry on 3x screens, and a shadow can afford to be. -->
+	<use href="#home-apps" filter="url(#home-shadow)" />
+	<use href="#home-apps" />
 </svg>

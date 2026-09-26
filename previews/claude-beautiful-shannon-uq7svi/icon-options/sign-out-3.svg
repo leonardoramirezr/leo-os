@@ -8,19 +8,18 @@
 			<stop offset="0" stop-color="#ff7a70" />
 			<stop offset="1" stop-color="#e3001c" />
 		</linearGradient>
-		<filter id="sign-out-glow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
-			<feGaussianBlur in="SourceGraphic" stdDeviation="30" result="blur" />
-			<feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.6 0" result="glow" />
-			<feMerge>
-				<feMergeNode in="glow" />
-				<feMergeNode in="SourceGraphic" />
-			</feMerge>
+		<filter id="sign-out-blur" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feGaussianBlur stdDeviation="30" />
 		</filter>
+		<!-- The power button -->
+		<g id="sign-out-power" fill="none" stroke="url(#sign-out-red)" stroke-width="86" stroke-linecap="round">
+			<path d="M645.1 350.7A238 238 0 1 1 378.9 350.7" />
+			<path d="M512 236v268" />
+		</g>
 	</defs>
 	<rect width="1024" height="1024" fill="url(#sign-out-bg)" />
-	<!-- The power button -->
-	<g fill="none" stroke="url(#sign-out-red)" stroke-width="86" stroke-linecap="round" filter="url(#sign-out-glow)">
-		<path d="M645.1 350.7A238 238 0 1 1 378.9 350.7" />
-		<path d="M512 236v268" />
-	</g>
+	<!-- The glow is a blurred copy of its own under the button: Safari draws whatever goes through
+	     a filter blurry on 3x screens, and a glow can afford to be. -->
+	<use href="#sign-out-power" filter="url(#sign-out-blur)" opacity="0.6" />
+	<use href="#sign-out-power" />
 </svg>

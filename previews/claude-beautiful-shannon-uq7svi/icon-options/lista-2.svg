@@ -18,17 +18,23 @@
 			<stop offset="1" stop-color="#f2502a" />
 		</linearGradient>
 		<filter id="lista-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
-			<feDropShadow dx="0" dy="24" stdDeviation="32" flood-color="#9e1f3c" flood-opacity="0.34" />
+			<feGaussianBlur in="SourceAlpha" stdDeviation="32" />
+			<feOffset dy="24" result="offset" />
+			<feFlood flood-color="#9e1f3c" flood-opacity="0.34" />
+			<feComposite in2="offset" operator="in" />
 		</filter>
+		<!-- A speech bubble: what is said becomes the list -->
+		<path
+			id="lista-speech"
+			d="M332 220h360a172 172 0 0 1 172 172v168a172 172 0 0 1-172 172H428c-50 46-132 86-240 94 46-36 76-80 86-126-68-30-114-94-114-166V392a172 172 0 0 1 172-172z"
+		/>
 	</defs>
 	<rect width="1024" height="1024" fill="url(#lista-bg)" />
 	<rect width="1024" height="1024" fill="url(#lista-light)" />
-	<!-- A speech bubble: what is said becomes the list -->
-	<path
-		d="M332 220h360a172 172 0 0 1 172 172v168a172 172 0 0 1-172 172H428c-50 46-132 86-240 94 46-36 76-80 86-126-68-30-114-94-114-166V392a172 172 0 0 1 172-172z"
-		fill="url(#lista-bubble)"
-		filter="url(#lista-shadow)"
-	/>
+	<!-- The shadow is a copy of its own under the bubble: Safari draws whatever goes through a filter
+	     blurry on 3x screens, and a shadow can afford to be. -->
+	<use href="#lista-speech" filter="url(#lista-shadow)" />
+	<use href="#lista-speech" fill="url(#lista-bubble)" />
 	<!-- One item ticked, one to go -->
 	<rect x="252" y="304" width="104" height="104" rx="30" fill="url(#lista-ink)" />
 	<path

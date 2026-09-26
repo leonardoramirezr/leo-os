@@ -401,8 +401,8 @@
 		</main>
 
 		<script>
-			// Every icon with its four options, drawn in <slug>-<option>.svg next to this page. `current` is
-			// the icon as it is today; `home` says whether it sits on the home screen above.
+			// Every icon with its four options, drawn in <slug>-<option>.svg next to this page; <slug>.svg is a
+			// copy of the icon as it is today. `home` says whether it sits on the home screen above.
 			const groups = [
 				{
 					title: 'Apps',
@@ -411,7 +411,6 @@
 							slug: 'lista',
 							name: 'Lista',
 							about: 'La lista que se edita con la voz.',
-							current: '../lista/apple-touch-icon.png',
 							home: true,
 							options: [
 								['Renovado', 'El de hoy, pulido: más profundidad y el micrófono encima de la lista.'],
@@ -424,7 +423,6 @@
 							slug: 'me-deben',
 							name: 'Me deben',
 							about: 'Quién te debe y cuánto.',
-							current: '../me-deben/apple-touch-icon.png',
 							home: true,
 							options: [
 								['Renovado', 'El signo de pesos, ahora con una flecha que da la vuelta: el dinero regresa.'],
@@ -437,7 +435,6 @@
 							slug: 'willchat',
 							name: 'WillChat',
 							about: 'Crea y edita imágenes con OpenAI.',
-							current: '../willchat/apple-touch-icon.png',
 							home: true,
 							options: [
 								['Renovado', 'La W de siempre, más cuidada, con un destello por las imágenes.'],
@@ -456,7 +453,6 @@
 							slug: 'settings',
 							name: 'Ajustes',
 							about: 'Cambia el fondo de pantalla y muestra la cuenta.',
-							current: 'settings.svg',
 							home: true,
 							options: [
 								['Renovado', 'El engrane de hoy, más grande y de una sola pieza.'],
@@ -469,7 +465,6 @@
 							slug: 'reload',
 							name: 'Recargar',
 							about: 'Vuelve a cargar el sitio.',
-							current: 'reload.svg',
 							home: true,
 							options: [
 								['Renovado', 'La flecha de hoy, más grande y con volumen.'],
@@ -482,7 +477,6 @@
 							slug: 'sign-out',
 							name: 'Cerrar sesión',
 							about: 'Sale de la cuenta.',
-							current: 'sign-out.svg',
 							home: true,
 							options: [
 								['Renovado', 'La puerta y la flecha de hoy, con más profundidad.'],
@@ -495,7 +489,6 @@
 							slug: 'home',
 							name: 'Leo OS',
 							about: 'El ícono del sitio cuando lo agregas a la pantalla de inicio del iPhone.',
-							current: '../apple-touch-icon.png',
 							home: false,
 							options: [
 								['Renovado', 'La cuadrícula de apps de hoy, que ahora llena el ícono entero, como pide iOS.'],
@@ -510,7 +503,7 @@
 
 			const icons = groups.flatMap((group) => group.icons);
 			const escape = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-			const source = (icon, option) => (option ? `${icon.slug}-${option}.svg` : icon.current);
+			const source = (icon, option) => (option ? `${icon.slug}-${option}.svg` : `${icon.slug}.svg`);
 
 			function card(icon, option) {
 				const [title, description] = option
@@ -552,7 +545,7 @@
 				.map(
 					(icon) => `
 					<span class="app">
-						<img class="icon" data-slug="${icon.slug}" src="${icon.current}" alt="" />
+						<img class="icon" data-slug="${icon.slug}" src="${source(icon, 0)}" alt="" />
 						<span class="label">${escape(icon.name)}</span>
 					</span>`
 				)

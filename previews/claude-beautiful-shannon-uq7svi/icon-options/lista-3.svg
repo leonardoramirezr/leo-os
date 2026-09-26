@@ -17,14 +17,18 @@
 			<stop offset="0" stop-color="#ffb340" />
 			<stop offset="1" stop-color="#ff6a13" />
 		</linearGradient>
-		<filter id="lista-glow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
-			<feGaussianBlur in="SourceGraphic" stdDeviation="26" result="blur" />
-			<feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.55 0" result="glow" />
-			<feMerge>
-				<feMergeNode in="glow" />
-				<feMergeNode in="SourceGraphic" />
-			</feMerge>
+		<filter id="lista-blur" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+			<feGaussianBlur stdDeviation="26" />
 		</filter>
+		<path
+			id="lista-tick"
+			d="M546 520l96 96 196-230"
+			fill="none"
+			stroke="url(#lista-check)"
+			stroke-width="76"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+		/>
 	</defs>
 	<rect width="1024" height="1024" fill="url(#lista-bg)" />
 	<rect width="1024" height="1024" fill="url(#lista-warmth)" />
@@ -32,14 +36,8 @@
 	<g stroke="url(#lista-wave)" stroke-width="36" stroke-linecap="round">
 		<path d="M192 482v60M250 432v160M308 372v280M366 442v140M424 402v220M482 462v100" />
 	</g>
-	<!-- ...becomes a ticked item -->
-	<path
-		d="M546 520l96 96 196-230"
-		fill="none"
-		stroke="url(#lista-check)"
-		stroke-width="76"
-		stroke-linecap="round"
-		stroke-linejoin="round"
-		filter="url(#lista-glow)"
-	/>
+	<!-- ...becomes a ticked item. Its glow is a blurred copy under it: Safari draws whatever goes
+	     through a filter blurry on 3x screens, and a glow can afford to be. -->
+	<use href="#lista-tick" filter="url(#lista-blur)" opacity="0.55" />
+	<use href="#lista-tick" />
 </svg>

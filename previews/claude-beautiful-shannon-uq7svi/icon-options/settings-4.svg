@@ -5,8 +5,16 @@
 			<stop offset="1" stop-color="#0d0d10" />
 		</linearGradient>
 		<filter id="settings-knob" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
-			<feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.45" />
+			<feGaussianBlur in="SourceAlpha" stdDeviation="12" />
+			<feOffset dy="8" result="offset" />
+			<feFlood flood-color="#000" flood-opacity="0.45" />
+			<feComposite in2="offset" operator="in" />
 		</filter>
+		<g id="settings-knobs">
+			<circle cx="628" cy="332" r="60" />
+			<circle cx="412" cy="512" r="60" />
+			<circle cx="700" cy="692" r="60" />
+		</g>
 	</defs>
 	<rect width="1024" height="1024" fill="url(#settings-bg)" />
 	<!-- Three sliders, in the wallpaper's colours -->
@@ -18,9 +26,8 @@
 		<path d="M236 512H412" stroke="#ff4f8b" />
 		<path d="M236 692H700" stroke="#3d8bff" />
 	</g>
-	<g fill="#fff" filter="url(#settings-knob)">
-		<circle cx="628" cy="332" r="60" />
-		<circle cx="412" cy="512" r="60" />
-		<circle cx="700" cy="692" r="60" />
-	</g>
+	<!-- The shadow is a copy of its own under the knobs: Safari draws whatever goes through
+	     a filter blurry on 3x screens, and a shadow can afford to be. -->
+	<use href="#settings-knobs" filter="url(#settings-knob)" />
+	<use href="#settings-knobs" fill="#fff" />
 </svg>
