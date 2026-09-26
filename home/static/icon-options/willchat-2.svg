@@ -28,20 +28,27 @@
 			<rect x="160" y="220" width="704" height="512" rx="172" />
 		</clipPath>
 		<filter id="willchat-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
-			<feDropShadow dx="0" dy="24" stdDeviation="30" flood-color="#12083d" flood-opacity="0.45" />
+			<feGaussianBlur in="SourceAlpha" stdDeviation="30" />
+			<feOffset dy="24" result="offset" />
+			<feFlood flood-color="#12083d" flood-opacity="0.45" />
+			<feComposite in2="offset" operator="in" />
 		</filter>
+		<!-- A message that is a picture -->
+		<path
+			id="willchat-bubble"
+			d="M692 220H332a172 172 0 0 0-172 172v168a172 172 0 0 0 172 172h264c50 46 132 86 240 94-46-36-76-80-86-126 68-30 114-94 114-166V392a172 172 0 0 0-172-172z"
+			fill="#fff"
+			stroke="#fff"
+			stroke-width="48"
+			stroke-linejoin="round"
+		/>
 	</defs>
 	<rect width="1024" height="1024" fill="url(#willchat-bg)" />
 	<rect width="1024" height="1024" fill="url(#willchat-glow)" />
-	<!-- A message that is a picture -->
-	<path
-		d="M692 220H332a172 172 0 0 0-172 172v168a172 172 0 0 0 172 172h264c50 46 132 86 240 94-46-36-76-80-86-126 68-30 114-94 114-166V392a172 172 0 0 0-172-172z"
-		fill="#fff"
-		stroke="#fff"
-		stroke-width="48"
-		stroke-linejoin="round"
-		filter="url(#willchat-shadow)"
-	/>
+	<!-- The shadow is a copy of its own under the bubble: Safari draws whatever goes through a filter
+	     blurry on 3x screens, and a shadow can afford to be. -->
+	<use href="#willchat-bubble" filter="url(#willchat-shadow)" />
+	<use href="#willchat-bubble" />
 	<g clip-path="url(#willchat-picture)">
 		<rect x="160" y="220" width="704" height="512" fill="url(#willchat-sky)" />
 		<circle cx="652" cy="400" r="70" fill="url(#willchat-sun)" />

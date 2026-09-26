@@ -13,7 +13,10 @@
 			<stop offset="1" stop-color="#d9001c" />
 		</linearGradient>
 		<filter id="sign-out-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
-			<feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#3a3a3e" flood-opacity="0.3" />
+			<feGaussianBlur in="SourceAlpha" stdDeviation="18" />
+			<feOffset dy="12" result="offset" />
+			<feFlood flood-color="#3a3a3e" flood-opacity="0.3" />
+			<feComposite in2="offset" operator="in" />
 		</filter>
 	</defs>
 	<rect width="1024" height="1024" fill="url(#sign-out-bg)" />
@@ -22,9 +25,11 @@
 		<circle cx="470" cy="392" r="152" />
 		<ellipse cx="470" cy="930" rx="340" ry="300" />
 	</g>
-	<!-- The way out -->
+	<!-- The way out. Its shadow is a circle of its own under it: Safari draws whatever goes through a
+	     filter blurry on 3x screens, and a shadow can afford to be. -->
 	<circle cx="742" cy="742" r="176" fill="url(#sign-out-bg)" />
-	<circle cx="742" cy="742" r="150" fill="url(#sign-out-red)" filter="url(#sign-out-shadow)" />
+	<circle cx="742" cy="742" r="150" filter="url(#sign-out-shadow)" />
+	<circle cx="742" cy="742" r="150" fill="url(#sign-out-red)" />
 	<path
 		d="M670 742h140M760 690l52 52-52 52"
 		fill="none"

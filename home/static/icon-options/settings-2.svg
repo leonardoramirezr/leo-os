@@ -13,17 +13,28 @@
 			<stop offset="1" stop-color="#e9e9ee" />
 		</linearGradient>
 		<filter id="settings-track" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
-			<feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#1f7a35" flood-opacity="0.22" />
+			<feGaussianBlur in="SourceAlpha" stdDeviation="16" />
+			<feOffset dy="12" result="offset" />
+			<feFlood flood-color="#1f7a35" flood-opacity="0.22" />
+			<feComposite in2="offset" operator="in" />
 		</filter>
 		<filter id="settings-knob" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
-			<feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity="0.25" />
+			<feGaussianBlur in="SourceAlpha" stdDeviation="10" />
+			<feOffset dy="8" result="offset" />
+			<feFlood flood-color="#000" flood-opacity="0.25" />
+			<feComposite in2="offset" operator="in" />
 		</filter>
 	</defs>
 	<rect width="1024" height="1024" fill="url(#settings-bg)" />
+	<!-- The shadow is a copy of its own under each shape: Safari draws whatever goes through
+	     a filter blurry on 3x screens, and a shadow can afford to be. -->
 	<!-- On -->
-	<rect x="206" y="220" width="612" height="260" rx="130" fill="url(#settings-on)" filter="url(#settings-track)" />
-	<circle cx="688" cy="350" r="108" fill="#fff" filter="url(#settings-knob)" />
+	<rect x="206" y="220" width="612" height="260" rx="130" filter="url(#settings-track)" />
+	<rect x="206" y="220" width="612" height="260" rx="130" fill="url(#settings-on)" />
+	<circle cx="688" cy="350" r="108" filter="url(#settings-knob)" />
+	<circle cx="688" cy="350" r="108" fill="#fff" />
 	<!-- Off -->
 	<rect x="206" y="544" width="612" height="260" rx="130" fill="url(#settings-off)" />
-	<circle cx="336" cy="674" r="108" fill="#fff" filter="url(#settings-knob)" />
+	<circle cx="336" cy="674" r="108" filter="url(#settings-knob)" />
+	<circle cx="336" cy="674" r="108" fill="#fff" />
 </svg>

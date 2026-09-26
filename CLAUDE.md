@@ -95,7 +95,9 @@ build time (`home/src/lib/apps.ts` globs the `app.json` and `icon.svg` files): t
 to register it.
 
 - `app.json` with `{ "name": "Visible name" }`, and a square, full-bleed, opaque `icon.svg` — the
-  home screen and iOS apply the rounded mask themselves.
+  home screen and iOS apply the rounded mask themselves. Nothing sharp in it (or in the home
+  screen's own icons) goes through a `filter` or `mask`: Safari draws those blurry on a 3x screen,
+  so a shadow is a blurred copy underneath (README.md, «Home screen icon»).
 - A `build` script that writes `build/index.html`, with `paths: { base: process.env.BASE_PATH ?? '' }`
   in `vite.config.ts` and `ssr = false` + `prerender = true` in `src/routes/+layout.ts`.
 - `@leo-os/shared` as a `workspace:*` dependency, and a `+layout.svelte` that wraps

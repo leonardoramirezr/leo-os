@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="willchat-bg" x1="0" y1="0" x2="1" y2="1">
+			<stop offset="0" stop-color="#6d5dfc" />
+			<stop offset="1" stop-color="#e94fa1" />
+		</linearGradient>
+		<radialGradient id="willchat-glow" cx="0.28" cy="0.18" r="0.9">
+			<stop offset="0" stop-color="#fff" stop-opacity="0.28" />
+			<stop offset="1" stop-color="#fff" stop-opacity="0" />
+		</radialGradient>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#willchat-bg)" />
+	<rect width="1024" height="1024" fill="url(#willchat-glow)" />
+	<path
+		d="M224 320 397 704 512 448 627 704 800 320"
+		fill="none"
+		stroke="#fff"
+		stroke-width="104"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+	/>
+</svg>

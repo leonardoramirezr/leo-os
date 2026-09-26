@@ -8,6 +8,7 @@
 			<stop offset="0" stop-color="#8246f0" stop-opacity="0.35" />
 			<stop offset="1" stop-color="#8246f0" stop-opacity="0" />
 		</radialGradient>
+		<!-- A gradient rather than a blur: Safari draws filtered shapes blurry on 3x screens -->
 		<radialGradient id="home-halo">
 			<stop offset="0" stop-color="#fff" stop-opacity="0.55" />
 			<stop offset="1" stop-color="#fff" stop-opacity="0" />

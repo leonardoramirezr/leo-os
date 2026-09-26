@@ -17,25 +17,32 @@
 			<stop offset="1" stop-color="#ebe6ff" />
 		</linearGradient>
 		<filter id="home-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
-			<feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#0b0726" flood-opacity="0.45" />
+			<feGaussianBlur in="SourceAlpha" stdDeviation="18" />
+			<feOffset dy="12" result="offset" />
+			<feFlood flood-color="#0b0726" flood-opacity="0.45" />
+			<feComposite in2="offset" operator="in" />
 		</filter>
 		<filter id="home-bloom" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
 			<feGaussianBlur stdDeviation="40" />
 		</filter>
+		<!-- 3 × 3 apps, fading towards the bottom right so the grid reads with some depth -->
+		<g id="home-grid">
+			<rect x="208" y="208" width="172" height="172" rx="48" fill="url(#home-white)" />
+			<rect x="426" y="208" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.94" />
+			<rect x="644" y="208" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.88" />
+			<rect x="208" y="426" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.94" />
+			<rect x="426" y="426" width="172" height="172" rx="48" fill="url(#home-accent)" />
+			<rect x="644" y="426" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.82" />
+			<rect x="208" y="644" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.88" />
+			<rect x="426" y="644" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.82" />
+			<rect x="644" y="644" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.76" />
+		</g>
 	</defs>
 	<rect width="1024" height="1024" fill="url(#home-bg)" />
 	<rect width="1024" height="1024" fill="url(#home-warmth)" />
-	<!-- 3 × 3 apps, fading towards the bottom right so the grid reads with some depth -->
 	<rect x="426" y="426" width="172" height="172" rx="48" fill="url(#home-accent)" opacity="0.8" filter="url(#home-bloom)" />
-	<g filter="url(#home-shadow)">
-		<rect x="208" y="208" width="172" height="172" rx="48" fill="url(#home-white)" />
-		<rect x="426" y="208" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.94" />
-		<rect x="644" y="208" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.88" />
-		<rect x="208" y="426" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.94" />
-		<rect x="426" y="426" width="172" height="172" rx="48" fill="url(#home-accent)" />
-		<rect x="644" y="426" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.82" />
-		<rect x="208" y="644" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.88" />
-		<rect x="426" y="644" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.82" />
-		<rect x="644" y="644" width="172" height="172" rx="48" fill="url(#home-white)" opacity="0.76" />
-	</g>
+	<!-- The shadow is a copy of its own under the apps: Safari draws whatever goes through
+	     a filter blurry on 3x screens, and a shadow can afford to be. -->
+	<use href="#home-grid" filter="url(#home-shadow)" />
+	<use href="#home-grid" />
 </svg>

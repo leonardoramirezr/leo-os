@@ -23,8 +23,18 @@
 			<stop offset="1" stop-color="#fff" />
 		</linearGradient>
 		<filter id="me-deben-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
-			<feDropShadow dx="0" dy="24" stdDeviation="26" flood-color="#012b1c" flood-opacity="0.5" />
+			<feGaussianBlur in="SourceAlpha" stdDeviation="26" />
+			<feOffset dy="24" result="offset" />
+			<feFlood flood-color="#012b1c" flood-opacity="0.5" />
+			<feComposite in2="offset" operator="in" />
 		</filter>
+		<!-- ...to the pile -->
+		<g id="me-deben-pile">
+			<path d="M282 688v58a230 84 0 0 0 460 0v-58z" fill="url(#me-deben-side)" />
+			<path d="M282 630v58a230 84 0 0 0 460 0v-58z" fill="url(#me-deben-side)" />
+			<path d="M282 572v58a230 84 0 0 0 460 0v-58z" fill="url(#me-deben-side)" />
+			<ellipse cx="512" cy="572" rx="230" ry="84" fill="url(#me-deben-face)" />
+		</g>
 	</defs>
 	<rect width="1024" height="1024" fill="url(#me-deben-bg)" />
 	<rect width="1024" height="1024" fill="url(#me-deben-light)" />
@@ -32,13 +42,10 @@
 	<g fill="none" stroke="url(#me-deben-arrow)" stroke-width="64" stroke-linecap="round" stroke-linejoin="round">
 		<path d="M512 192v230M424 342l88 88 88-88" />
 	</g>
-	<!-- ...to the pile -->
-	<g filter="url(#me-deben-shadow)">
-		<path d="M282 688v58a230 84 0 0 0 460 0v-58z" fill="url(#me-deben-side)" />
-		<path d="M282 630v58a230 84 0 0 0 460 0v-58z" fill="url(#me-deben-side)" />
-		<path d="M282 572v58a230 84 0 0 0 460 0v-58z" fill="url(#me-deben-side)" />
-		<ellipse cx="512" cy="572" rx="230" ry="84" fill="url(#me-deben-face)" />
-	</g>
+	<!-- The shadow is a copy of its own under the pile: Safari draws whatever goes through a filter
+	     blurry on 3x screens, and a shadow can afford to be. -->
+	<use href="#me-deben-pile" filter="url(#me-deben-shadow)" />
+	<use href="#me-deben-pile" />
 	<g fill="none" stroke-linecap="round">
 		<path d="M282 630a230 84 0 0 0 460 0M282 688a230 84 0 0 0 460 0" stroke="#8a5200" stroke-opacity="0.35" stroke-width="6" />
 		<ellipse cx="512" cy="572" rx="174" ry="62" stroke="#e0a000" stroke-width="12" />
