@@ -66,12 +66,32 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       # Only from the default branch. The migrations are one line of history, and two branches
-      # applying their own would tangle it — so a preview runs against the schema main last left.
+      # applying their own would tangle it — so `public` only ever gets the ones main has. The Neon
+      # API is how the Data API is then told to read the tables again, before the site that needs
+      # them is published.
       - name: Bring the database up to date
         if: steps.target.outputs.preview != 'true'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          VITE_NEON_DATA_API_URL: ${{ vars.NEON_DATA_API_URL }}
         run: pnpm db:migrate
+
+      # A branch's migrations are tried in its preview's own schema instead: a copy of `public`, rows
+      # included, made by the first push that finds none and kept after that, each push applying
+      # only the migrations it brings. `public` is only read. Until NEON_API_KEY and
+      # NEON_PROJECT_ID are set, it says so and the preview uses the published data.
+      - id: database
+        name: Give the preview a schema of its own
+        if: steps.target.outputs.preview == 'true'
+        env:
+          SLUG: ${{ steps.target.outputs.slug }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          VITE_NEON_DATA_API_URL: ${{ vars.NEON_DATA_API_URL }}
+        run: pnpm db:preview create "$SLUG"
 
       - run: pnpm build
         env:
@@ -81,6 +101,8 @@ jobs:
           # up in the published JavaScript either way.
           VITE_NEON_AUTH_URL: ${{ vars.NEON_AUTH_URL }}
           VITE_NEON_DATA_API_URL: ${{ vars.NEON_DATA_API_URL }}
+          # The preview's schema; empty for the site, and for a preview that has none.
+          VITE_NEON_DATA_API_SCHEMA: ${{ steps.database.outputs.schema }}
 
       # Read back by scripts/previews-index.mjs to label the preview with its branch.
       - name: Note the branch behind the preview
@@ -115,22 +137,24 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PREVIEW: ${{ steps.target.outputs.preview }}
           URL: ${{ steps.target.outputs.url }}
+          # What the preview's data is, in a sentence: db/preview.mjs knows what this push did to it.
+          DATA: ${{ steps.database.outputs.data }}
         run: |
-          if [ "$PREVIEW" = 'true' ]; then
-            printf '### Preview\n\n%s\n\nBranch `%s`, commit `%s`.\n' \
-              "$URL" "$GITHUB_REF_NAME" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-          else
+          if [ "$PREVIEW" != 'true' ]; then
             printf '### Published site\n\n%s\n\nCommit `%s`.\n' \
               "$URL" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
+          printf '### Preview\n\n%s\n\nBranch `%s`, commit `%s`.\n\n%s\n' \
+            "$URL" "$GITHUB_REF_NAME" "$GITHUB_SHA" "$DATA" >> "$GITHUB_STEP_SUMMARY"
+
           # Sticky comment on the pull request of this branch, if it has one open.
           pr=$(gh pr list --head "$GITHUB_REF_NAME" --state open --json number --jq '.[0].number // empty')
           [ -n "$pr" ] || exit 0
 
-          body=$(printf '**Preview of this PR:** %s\n\nUpdated with `%s`. GitHub Pages takes a minute to serve the change. It is republished on every push and removed when the branch is deleted.' \
-            "$URL" "${GITHUB_SHA:0:7}")
+          body=$(printf '**Preview of this PR:** %s\n\nUpdated with `%s`. GitHub Pages takes a minute to serve the change. It is republished on every push and removed when the branch is deleted.\n\n%s' \
+            "$URL" "${GITHUB_SHA:0:7}" "$DATA")
           gh pr comment "$pr" --body "$body" --edit-last --create-if-none ||
             gh pr comment "$pr" --body "$body" ||
             echo "▸ Published, but could not comment on the pull request." >&2

@@ -1,11 +1,13 @@
 # Leo OS
 
 A collection of static web apps published together on GitHub Pages. The home screen mimics an
-iPhone home screen: every app is an icon.
+phone home screen: every app is an icon.
 
 - Home: https://leonardoramirezr.github.io/leo-os/
 - WillChat: https://leonardoramirezr.github.io/leo-os/willchat/
 - Me deben: https://leonardoramirezr.github.io/leo-os/me-deben/
+- Lista: https://leonardoramirezr.github.io/leo-os/lista/
+- Repaso: https://leonardoramirezr.github.io/leo-os/repaso/
 
 ## Layout
 
@@ -20,7 +22,8 @@ iPhone home screen: every app is an icon.
 ├── shared/                  # The account and the database, used by the home screen and every app
 ├── db/
 │   ├── schema.ts            # The models: the tables and their row level security policies
-│   └── migrations/          # Generated from the models; the deploy applies them
+│   ├── migrations/          # Generated from the models; the deploy applies them
+│   └── preview.mjs          # Gives each preview a copy of the database of its own
 ├── scripts/
 │   ├── build.mjs            # Builds the home screen and every app into dist/
 │   ├── icons.mjs            # Turns each icon.svg into the PNG iOS asks for
@@ -70,7 +73,8 @@ pnpm check                     # svelte-check across every project, and the mode
 pnpm icons                     # regenerates the apple-touch-icon.png files after editing an icon.svg
 
 pnpm db:generate               # writes the migration for what changed in db/schema.ts
-pnpm db:migrate                # applies the pending migrations to DATABASE_URL
+pnpm db:migrate                # applies the pending migrations to DATABASE_URL, and tells the Data API
+pnpm db:preview create <name>  # a preview's own schema: public copied once, then this branch's migrations
 ```
 
 To try the whole site the way it is published:
@@ -128,9 +132,16 @@ Applying them is the deploy's job: `deploy.yml` runs `pnpm db:migrate` on the de
 before building. Each migration runs once, in order, and the database remembers which ones it has
 seen. To apply them by hand, put the connection string in `DATABASE_URL` and run `pnpm db:migrate`.
 
-Only the default branch migrates. The migrations are one line of history, and two branches applying
-their own would tangle it, so **a preview runs against whatever schema `main` last left** — a branch
-that needs a new column has to be merged before its preview works.
+Then it tells the Data API to read the tables again. The Data API answers from what it last read of
+them, and only reads them again when told or once its cache runs out: until then, the site would
+find the new columns missing. Telling it takes `NEON_API_KEY` and `NEON_PROJECT_ID` ([Setting it
+up](#setting-it-up)); without them `pnpm db:migrate` says so, and leaves it to the cache. With them,
+a run that cannot tell it fails before the site is published, and the next one tells it again.
+
+Only the default branch migrates `public`. The migrations are one line of history, and two branches
+applying their own would tangle it. A branch's migrations are tried in its preview instead, on a copy
+of the database of its own ([Previews](#previews)), so a new column works in the preview before the
+branch is merged.
 
 Two things drizzle-kit does not track, and `db/migrations/0001_grants.sql` does by hand: which
 roles may reach a table at all, and that a table a later migration creates inherits the same. That
@@ -155,14 +166,18 @@ Then, in this repository under **Settings → Secrets and variables → Actions*
 | --- | --- | --- |
 | **Variables** | `NEON_AUTH_URL` | The Auth URL from step 1 |
 | **Variables** | `NEON_DATA_API_URL` | The Data API URL from step 2 |
-| **Secrets** | `DATABASE_URL` | The project's connection string, for the migrations |
+| **Variables** | `NEON_PROJECT_ID` | The project's ID, from its settings in the console |
+| **Secrets** | `DATABASE_URL` | The project's connection string, for the migrations and the previews |
+| **Secrets** | `NEON_API_KEY` | A Neon API key, to tell the Data API what to serve and when to look again |
 
 The two URLs are not secrets: they are the public addresses of services that decide for themselves
 what the caller may see, and they end up in the published JavaScript either way. The connection
-string is: it opens the whole database with none of the policies in the way, which is why only the
-default branch's run is given it.
+string and the API key are: the first opens the whole database with none of the policies in the way,
+the second whatever the key reaches — a project-scoped key (organization **Settings → API keys**)
+keeps that to this project. The default branch's run uses both to migrate `public` and have the Data
+API read it again; a preview's, to make its own schema, and all it does with `public` is read it.
 
-For `pnpm dev`, `pnpm build` and `pnpm db:migrate`, the same three values go in a `.env` at the
+For `pnpm dev`, `pnpm build` and the `pnpm db:*` commands, the same values go in a `.env` at the
 root — see `.env.example`.
 
 A build with no Neon URLs still builds and runs, and every screen says there is no database.
@@ -183,8 +198,8 @@ Everything is published to the `gh-pages` branch, which is the only thing GitHub
 | any other branch | `previews/<branch>/` | `…github.io/leo-os/previews/<branch>/` |
 
 `deploy.yml` runs on every push: it passes `pnpm check`, brings the database up to date if this is
-the default branch, builds with the base path it is due and `scripts/publish-pages.sh` writes the
-result into `gh-pages`. Publishing the site does not wipe the
+the default branch (or gives a preview its own copy of it), builds with the base path it is due and
+`scripts/publish-pages.sh` writes the result into `gh-pages`. Publishing the site does not wipe the
 previews, and each branch only touches its own folder; if two publish at once, the script reads the
 branch again and retries.
 
@@ -205,14 +220,46 @@ it is merged.
 - If the branch has an open PR, the workflow leaves a comment there with the link and keeps it
   updated. The link also shows up in each run's summary, even before there is a PR.
 - `…/leo-os/previews/` lists the ones that exist, newest to oldest.
-- When the branch is deleted, `preview-cleanup.yml` drops its folder. Once none are left,
-  `previews/` disappears. GitHub runs that workflow from `main`, so the cleanup starts working once
-  the file lands there.
+- When the branch is deleted, `preview-cleanup.yml` drops its folder and its schema. Once none are
+  left, `previews/` disappears. GitHub runs that workflow from `main`, so the cleanup starts working
+  once the file lands there.
 - GitHub Pages takes about a minute to serve what was just published.
 
+Each preview has a database of its own: a schema in the same Neon database, named after it
+(`preview_claude_wizardly_euler`), which `db/preview.mjs` keeps up to date. A push that finds none
+— the branch's first, or the next one after a run that did not get to finish — makes it a copy of
+`public` as it is at that moment (tables, rows, policies and grants), with the branch's own
+migrations applied on top. Every push after that keeps it, rows included, and only
+applies the migrations it brings: a branch that adds a column can be tried before it is merged,
+with whatever was typed into the preview still there. The Data API serves every preview's schema
+next to `public`; the preview's queries name theirs, and the published site's name none, which keeps
+them on `public`.
+
+- Nothing done in a preview reaches the published data.
+- Which migrations a preview's schema has is its own log, `drizzle.<schema>`, next to `public`'s.
+  A migration counts as new until the schema has it, whatever its date: the ones main brings over
+  when it is merged into the branch are applied too.
+- A migration the preview has applied and the branch then changes or drops leaves the schema with
+  nothing to follow: that push copies `public` again, and the run summary says why.
+- A migration of the branch older than the last one `public` has is refused: drizzle only applies
+  what is newer, so `pnpm db:migrate` would skip it on main for good. Generating it again, once
+  main is merged into the branch, puts it last.
+- To start a preview's data over, drop its schema — `pnpm db:preview drop <name>`, or from the Neon
+  console — and push: the next push copies `public` again.
+- The copy holds every account's rows behind the same policies: each account sees only its own
+  there too.
+- Each push is one transaction, and `public` is only read: a migration that fails leaves the schema
+  as the push before left it, and the run fails with it. A migration may name `public` the way
+  drizzle-kit writes it, which the preview points at its own schema, but not change the
+  `search_path`.
+- It needs `NEON_API_KEY` and `NEON_PROJECT_ID` ([Setting it up](#setting-it-up)): the Data API is
+  told what to serve through the Neon API. Without them the preview uses the published data, as the
+  run summary says.
+
 A preview lives on the same origin as the published site, so it shares the session, `localStorage`
-and IndexedDB with it: it opens already signed in, and trying «Me deben» in a preview moves the
-same data as the real app.
+and IndexedDB with it: it opens already signed in, with the same wallpaper and the same WillChat
+conversation, which never reach the database. The copy of its rows each app keeps on the device is
+the preview's own.
 
 ## Home screen icon
 
@@ -226,15 +273,24 @@ The icon has to be opaque and reach the edges: iOS applies its own rounded mask 
 transparent black. Safari also caches the icon eagerly; if the old one keeps showing up while
 testing, close the tab and open the page again.
 
+The home screen, and every page that shows an icon, draws the SVG itself in an `<img>`. There,
+Safari renders whatever goes through an SVG `filter` or `mask` at low resolution, which comes out
+blurry on an iPhone's 3x screen. So nothing in an icon that should look sharp goes through either:
+a drop shadow or a glow is a blurred copy of the shape, drawn underneath it, and a cut-out is a
+`clipPath`.
+
 ## Home
 
-Besides the published apps, the home screen carries two icons of its own:
+Besides the published apps, the home screen carries three icons of its own. They live in the dock
+at the bottom, which stays put whichever page of apps is showing, and go without their names there,
+as on iOS:
 
-- **Recargar**: reloads the site, handy when it runs full screen without browser controls.
 - **Ajustes**: changes the wallpaper, and shows which account is signed in with the way out. The
   chosen photo is scaled down to 1600 px, re-encoded as JPEG and stored in the browser's
   `localStorage` under `home:wallpaper`, one per account. With no photo, the default gradient is
   used, which comes back on «Quitar».
+- **Recargar**: reloads the site, handy when it runs full screen without browser controls.
+- **Cerrar sesión**: signs out, after asking.
 
 ## WillChat
 
@@ -246,6 +302,15 @@ A ChatGPT-style chat for creating and editing images with the OpenAI API and you
   any ID can also be typed in.
 - Photos are scaled down to 2048 px and sent as `input_image`. Every turn sends the whole
   conversation, generated images included, so the model can keep editing them.
+- The microphone to the left of the send button dictates. Tapping it starts listening; tapping it
+  again, now a ✓, turns what was said into text and adds it to the message, to be read over before
+  sending, and ✕ throws it away. It also stops and transcribes on its own after three minutes, or
+  when the app goes to the background.
+- Dictation goes to Groq's `whisper-large-v3`, the same model as Lista, with the same Groq API key:
+  the one saved as `groq:api-key`, which every app here that uses Groq reads, so a key entered in
+  Lista already works here. Without one, the microphone opens the settings to enter it. Whisper is
+  told to expect the app's own language, Spanish or English, and the segments it doubts were speech
+  are dropped, as in Lista. The key and the recordings are only ever sent to `api.groq.com`.
 - Requests use `background: true` and are polled every 2 s. Generating an image can take more than a
   minute and Safari on iOS cuts off requests that go 60 s without a response; this way the answer is
   also recovered if you reload or switch apps.
@@ -290,3 +355,86 @@ already overdue, the list of people who owe, and two buttons at the bottom.
   a copy on the device so the app opens without waiting. Amounts are stored as whole cents so
   balances do not accumulate rounding errors. What an earlier version left under the `me-deben:*`
   keys of this browser is brought over the first time you sign in, and only into an empty ledger.
+
+## Lista
+
+A checklist that is only ever edited by voice: dictate a list and every thing in it becomes an item
+with a box to tick, then say what to change.
+
+- Tapping the microphone starts listening and tapping it again sends what was heard; **Cancelar**
+  throws it away. It also stops and sends on its own after three minutes, or when the app goes to
+  the background. While listening, the screen is kept on and a ring around the button follows the
+  voice.
+- What was said goes to Groq twice: `whisper-large-v3` turns the recording into text, and
+  `openai/gpt-oss-120b` decides what that text does to the list. The model is shown the list
+  numbered as it is on screen and can only answer with actions — add, edit, remove, check, uncheck,
+  clear, undo — that Groq's strict mode holds to a JSON schema. An action pointing at an item that
+  is not there is dropped.
+- «Leche, huevos y pan» adds three items; «quita el pan», «cambia la leche por leche deslactosada»,
+  «ya compré los huevos» or «empieza una lista nueva» change the list. There is only ever one list:
+  a new one replaces it.
+- The bar at the bottom shows what Whisper heard and what the model did. **Deshacer**, or saying
+  «deshaz eso», takes back the last voice command, leaving alone any box ticked since.
+- Boxes can also be ticked by tapping them. Everything else goes through the microphone.
+- Out of silence Whisper makes up phrases such as «Gracias.» or «Subtítulos realizados por la
+  comunidad de Amara.org»; the segments it doubts were speech are dropped before the model sees
+  them.
+- It needs a Groq API key of its own: WillChat's is an OpenAI key, which Groq does not take, and the
+  app refuses a key that looks like one rather than send it there. The key is stored in the account
+  like WillChat's and only ever sent to `api.groq.com`, together with the recordings. It is saved as
+  `groq:api-key`, with no app's prefix: every app here that uses Groq reads that same one.
+- The list lives in the `lista_items` table, one row per item, with a copy on the device so the app
+  opens without waiting. Coming back to the app reads it again, in case it changed on another device.
+
+## Repaso
+
+Flashcards studied with spaced repetition, the way Anki does it: decks of cards, each card shown
+again just before it would be forgotten.
+
+- The first screen lists the decks, in alphabetical order, with how many cards each has waiting
+  today; **Nuevo mazo** adds one. A deck shows how many of its cards are new, how many are due again
+  and how many there are in all, the button to study them, and every card, newest first, with when
+  it comes up next. Tapping a card corrects or deletes it; **Editar** renames the deck, or deletes
+  it with all its cards.
+- The back button and the back gesture walk back through the screens. Which one is showing lives in
+  the history entry rather than in the URL, so a reload lands on the list of decks.
+- Cards are added by hand — **Añadir tarjeta**, a front and a back; the sheet stays open for the
+  next one, and ⌘/Ctrl + Enter adds it from the keyboard — or written by AI with **Generar con IA**.
+- Studying shows the front; **Mostrar respuesta**, or tapping the card, turns it over. The answer is
+  one of four buttons, each saying when the card will come back: **Otra vez**, **Difícil**,
+  **Bien** and **Fácil**. On a keyboard, Space turns the card and then counts as «Bien», 1 to 4 are
+  the four answers and Esc ends the session. The pencil corrects the card being studied, which is
+  where a mistake in one the AI wrote shows up.
+- The schedule is Anki's classic one (SM-2) with its default settings, in `src/lib/schedule.ts`. A
+  new card is learned in steps of one and ten minutes and comes back the next day, or in four days
+  with «Fácil». From then on «Bien» multiplies the interval by the card's ease, which starts at
+  2.5; «Difícil» lowers the ease and «Fácil» raises it. A forgotten card is relearned in ten minutes
+  and starts over at a day. The day turns over at 4 a.m., so a session past midnight still belongs
+  to the day before.
+- A session goes through what is due in this order: the cards being learned whose time has come,
+  the reviews, the new cards in the order they were added, and last the cards being learned that
+  come due within twenty minutes, shown early rather than waited for. It ends when nothing is left,
+  which leaves every card it touched learned. There is no daily limit of new cards: a card is
+  studied the day it is added.
+- **Generar con IA** asks Groq for 5, 10 or 20 cards about whatever is written in: a topic, a list
+  or notes pasted in. The model is picked there, among the chat models the key can use (Groq's
+  `/models`, without speech, voices, safety classifiers or agent systems), and remembered in the
+  account; until another is picked it is `openai/gpt-oss-120b`. Next to it, **Idioma** says whether
+  the cards are written in Spanish or English, whatever the topic or the notes are in; it is
+  remembered too. The model is shown the deck's name and its cards, so that it does not repeat
+  them, and whatever it writes that the deck already has is dropped anyway. Before anything is added, any card can be
+  left out with a tap; the cards written stay there until added or discarded, even if the sheet is
+  closed.
+- Groq holds some models to the cards' JSON schema token by token (strict mode) and not others, and
+  which ones changes as models come and go. So every model is asked for strict mode first, and one
+  that turns it down is asked from then on for a plain JSON object, with the prompt spelling out its
+  shape. Nothing model-specific is sent, not even reasoning settings, so the app need not know a
+  model to use it.
+- It uses Lista's Groq API key, `groq:api-key`: entered once, in whichever of the two apps comes
+  first, and asked for here the first time cards are generated. Only the key and what is asked for
+  — the topic or notes, the deck's name and the front of its cards — are ever sent to
+  `api.groq.com`.
+- Decks and cards live in the account, in the `repaso_decks` and `repaso_cards` tables, each card
+  with its place in the schedule in plain columns, and with a copy on the device so the app opens
+  without waiting. Coming back to the app reads them again, in case they were studied on another
+  device.

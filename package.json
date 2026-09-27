@@ -10,6 +10,7 @@
 		"icons": "node scripts/icons.mjs",
 		"db:generate": "pnpm --filter @leo-os/db generate",
 		"db:migrate": "pnpm --filter @leo-os/db migrate",
+		"db:preview": "pnpm --filter @leo-os/db preview",
 		"prepare": "node scripts/icons.mjs"
 	},
 	"devDependencies": {

@@ -1,6 +1,6 @@
 name: Drop the preview
 
-# A deleted branch leaves its preview behind; this takes it out of gh-pages.
+# A deleted branch leaves its preview behind: its folder in gh-pages and its database schema.
 on:
   delete:
 
@@ -17,15 +17,35 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - uses: pnpm/action-setup@v6
+
       - uses: actions/setup-node@v7
         with:
           node-version: 24
+          cache: pnpm
 
-      - name: Drop previews/<branch>
+      - id: target
+        name: Work out the preview's name
         env:
           DELETED: ${{ github.event.ref }}
+        run: echo "slug=$(scripts/preview-slug.sh "$DELETED")" >> "$GITHUB_OUTPUT"
+
+      - name: Drop previews/<branch>
+        if: steps.target.outputs.slug != ''
+        env:
+          SLUG: ${{ steps.target.outputs.slug }}
           PAGES_MESSAGE: Drop the preview of ${{ github.event.ref }}
-        run: |
-          slug=$(scripts/preview-slug.sh "$DELETED")
-          [ -n "$slug" ] || exit 0
-          scripts/publish-pages.sh remove "$slug"
+        run: scripts/publish-pages.sh remove "$SLUG"
+
+      - if: steps.target.outputs.slug != ''
+        run: pnpm install --frozen-lockfile
+
+      - name: Drop its schema
+        if: steps.target.outputs.slug != ''
+        env:
+          SLUG: ${{ steps.target.outputs.slug }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          VITE_NEON_DATA_API_URL: ${{ vars.NEON_DATA_API_URL }}
+        run: pnpm db:preview drop "$SLUG"

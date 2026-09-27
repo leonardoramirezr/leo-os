@@ -126,7 +126,7 @@
 		</div>
 	</main>
 
-	<Composer {onsend} />
+	<Composer {onsend} onneedgroqkey={() => (settingsOpen = true)} />
 </div>
 
 <SettingsSheet bind:open={settingsOpen} onchangekey={changeKey} />

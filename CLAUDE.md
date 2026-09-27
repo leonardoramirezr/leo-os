@@ -95,7 +95,9 @@ build time (`home/src/lib/apps.ts` globs the `app.json` and `icon.svg` files): t
 to register it.
 
 - `app.json` with `{ "name": "Visible name" }`, and a square, full-bleed, opaque `icon.svg` — the
-  home screen and iOS apply the rounded mask themselves.
+  home screen and iOS apply the rounded mask themselves. Nothing sharp in it (or in the home
+  screen's own icons) goes through a `filter` or `mask`: Safari draws those blurry on a 3x screen,
+  so a shadow is a blurred copy underneath (README.md, «Home screen icon»).
 - A `build` script that writes `build/index.html`, with `paths: { base: process.env.BASE_PATH ?? '' }`
   in `vite.config.ts` and `ssr = false` + `prerender = true` in `src/routes/+layout.ts`.
 - `@leo-os/shared` as a `workspace:*` dependency, and a `+layout.svelte` that wraps
@@ -113,14 +115,18 @@ to register it.
   own for anything bigger — and every row carries the account it belongs to. Only images stay on
   the device (`local(…)`, IndexedDB), under keys that carry the account too, and every read and
   write of those is wrapped in `try`/`catch`: the browser may have site data blocked. Keys keep
-  their app's prefix either way (`home:wallpaper`, `me-deben:*`, `willchat:*`).
+  their app's prefix either way (`home:wallpaper`, `me-deben:*`, `willchat:*`), except what several
+  apps share: the Groq API key is `groq:api-key`, and any app that talks to Groq reads that one.
 - **A change to the database starts in `db/schema.ts`**, never in the database and never in a
   migration by hand: edit the models, run `pnpm db:generate`, and commit the migration it writes
   next to them. The row types the apps use come from the same models. `pnpm check` fails when the
   two have drifted, and leaves the missing migration behind for you to read.
-- **Only the default branch migrates**, so a branch that needs a new column has to be merged before
-  its preview works. Grants are the one thing the models do not carry: they live in
-  `db/migrations/0001_grants.sql`, which covers the tables of every migration still to come.
+- **Only the default branch migrates `public`.** A branch's migrations run in its preview's own
+  schema (`db/preview.mjs`): a copy of `public` made by the first push that finds none, which later
+  pushes keep and only migrate. Changing a migration the preview already applied makes it copy
+  `public` again, and a migration older than `public`'s last is refused. Grants are the one thing
+  the models do not carry: they live in `db/migrations/0001_grants.sql`, which covers the tables of
+  every migration still to come.
 - **Dependencies**: as few as possible. No UI or styling frameworks; CSS is written by hand inside
   each component.
 - **Nothing leaves the browser** but the user's own data, to the user's own database, and what they

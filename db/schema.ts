@@ -18,9 +18,11 @@ import { sql } from 'drizzle-orm';
 import { authenticatedRole } from 'drizzle-orm/neon';
 import {
 	bigint,
+	boolean,
 	check,
 	date,
 	index,
+	integer,
 	jsonb,
 	pgPolicy,
 	pgTable,
@@ -109,8 +111,74 @@ export const movements = pgTable(
 	]
 ).enableRLS();
 
+/**
+ * «Lista»: the one checklist an account has. Starting a new list empties this one, so every row of
+ * the account is an item of it.
+ */
+export const listItems = pgTable(
+	'lista_items',
+	{
+		id: uuid().primaryKey(),
+		user_id: account(),
+		text: text().notNull(),
+		done: boolean().notNull().default(false),
+		/** Smallest first. Gaps are fine: removing an item leaves the others where they were. */
+		position: integer().notNull()
+	},
+	(table) => [index('lista_items_user').on(table.user_id), ownRows('lista_items_own')]
+).enableRLS();
+
+/** «Repaso»: flashcards studied with spaced repetition, grouped in decks. */
+export const decks = pgTable(
+	'repaso_decks',
+	{
+		id: uuid().primaryKey(),
+		user_id: account(),
+		name: text().notNull()
+	},
+	(table) => [index('repaso_decks_user').on(table.user_id), ownRows('repaso_decks_own')]
+).enableRLS();
+
+/**
+ * A card with its place in the schedule, which `apps/repaso/src/lib/schedule.ts` moves on with
+ * every answer. The columns are that file's `Schedule`, spelled out.
+ */
+export const cards = pgTable(
+	'repaso_cards',
+	{
+		id: uuid().primaryKey(),
+		user_id: account(),
+		// Deleting a deck takes its cards with it, which is what the app promises.
+		deck_id: uuid()
+			.notNull()
+			.references(() => decks.id, { onDelete: 'cascade' }),
+		front: text().notNull(),
+		back: text().notNull(),
+		state: text().$type<'new' | 'learning' | 'review' | 'relearning'>().notNull().default('new'),
+		/** The learning step it is on, while it is being learned or relearned. */
+		step: integer().notNull().default(0),
+		/** Epoch milliseconds: when it is shown again. Unused while the card is new. */
+		due_at: bigint({ mode: 'number' }).notNull().default(0),
+		/** Days between reviews, once learned. */
+		interval_days: integer().notNull().default(0),
+		/** Thousandths: how much the interval grows with each «Bien», 2500 being ×2.5. */
+		ease: integer().notNull().default(2500),
+		/** Epoch milliseconds. New cards are studied in the order they were added. */
+		created_at: bigint({ mode: 'number' }).notNull().default(0)
+	},
+	(table) => [
+		check('repaso_cards_state', sql`${table.state} in ('new', 'learning', 'review', 'relearning')`),
+		index('repaso_cards_user').on(table.user_id),
+		index('repaso_cards_deck').on(table.deck_id),
+		ownRows('repaso_cards_own')
+	]
+).enableRLS();
+
 // What the browser reads and writes. `shared/` re-exports these, so a column is described once:
 // rename one here and the apps stop typechecking until they follow.
 export type SettingRow = typeof settings.$inferSelect;
 export type PersonRow = typeof people.$inferSelect;
 export type MovementRow = typeof movements.$inferSelect;
+export type ListItemRow = typeof listItems.$inferSelect;
+export type DeckRow = typeof decks.$inferSelect;
+export type CardRow = typeof cards.$inferSelect;
