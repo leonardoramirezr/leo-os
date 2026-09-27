@@ -23,8 +23,11 @@ export type App = {
 	icon: string;
 } & ({ href: string } | { action: () => void });
 
-/** Built into the home screen: they run an action instead of opening a published app. */
-const builtIns: App[] = [
+/**
+ * Built into the home screen: they run an action instead of opening a published app. They live in
+ * the dock, which stays put whichever page of apps is showing.
+ */
+export const dock: App[] = [
 	{
 		slug: 'settings',
 		name: 'Ajustes',
@@ -62,8 +65,8 @@ const icons = import.meta.glob<string>('../../../apps/*/icon.svg', {
 	import: 'default'
 });
 
-export const apps: App[] = [
-	...Object.entries(manifests).map(([path, manifest]): App => {
+export const apps: App[] = Object.entries(manifests)
+	.map(([path, manifest]): App => {
 		const slug = path.split('/').at(-2)!;
 		return {
 			slug,
@@ -71,6 +74,5 @@ export const apps: App[] = [
 			icon: icons[path.replace(/app\.json$/, 'icon.svg')],
 			href: `${resolve('/')}${slug}/`
 		};
-	}),
-	...builtIns
-].sort((a, b) => a.name.localeCompare(b.name));
+	})
+	.sort((a, b) => a.name.localeCompare(b.name));

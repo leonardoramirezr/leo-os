@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { AccountPanel } from '@leo-os/shared';
+	import { tick } from 'svelte';
 	import { wallpaper } from '$lib/settings.svelte';
 	import { prepareWallpaper } from '$lib/wallpaper';
 
@@ -9,6 +10,7 @@
 	let picker: HTMLInputElement;
 	let busy = $state(false);
 	let error = $state('');
+	let closing = $state(false);
 
 	$effect(() => {
 		if (open && !dialog.open) {
@@ -17,6 +19,17 @@
 			dialog.close();
 		}
 	});
+
+	/** Slides the sheet down before closing it, as iOS does: at once when there is no animation. */
+	async function dismiss() {
+		if (closing || !dialog.open) return;
+
+		closing = true;
+		await tick();
+		await Promise.allSettled(dialog.getAnimations().map((animation) => animation.finished));
+		dialog.close();
+		closing = false;
+	}
 
 	async function pick(event: Event & { currentTarget: HTMLInputElement }) {
 		const file = event.currentTarget.files?.[0];
@@ -47,16 +60,21 @@
 
 <dialog
 	bind:this={dialog}
+	class:closing
 	aria-label="Ajustes"
 	onclose={() => (open = false)}
+	oncancel={(event) => {
+		event.preventDefault();
+		dismiss();
+	}}
 	onclick={(event) => {
-		if (event.target === dialog) dialog.close();
+		if (event.target === dialog) dismiss();
 	}}
 >
 	<div class="sheet">
 		<header>
 			<h2>Ajustes</h2>
-			<button class="done" onclick={() => dialog.close()}>Listo</button>
+			<button class="done" onclick={dismiss}>Listo</button>
 		</header>
 
 		<h3>Fondo de pantalla</h3>
@@ -113,11 +131,80 @@
 		background: rgb(0 0 0 / 0.4);
 	}
 
+	/* In from below and back down, on the curve of an iOS sheet, while what is behind dims. */
+	dialog[open] {
+		animation: sheet-in 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+	}
+
+	dialog[open]::backdrop {
+		animation: fade-in 0.45s ease;
+	}
+
+	dialog.closing {
+		animation: sheet-out 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+	}
+
+	dialog.closing::backdrop {
+		animation: fade-out 0.3s ease forwards;
+	}
+
+	@keyframes sheet-in {
+		from {
+			transform: translateY(100%);
+		}
+	}
+
+	@keyframes sheet-out {
+		to {
+			transform: translateY(100%);
+		}
+	}
+
+	@keyframes fade-in {
+		from {
+			opacity: 0;
+		}
+	}
+
+	@keyframes fade-out {
+		to {
+			opacity: 0;
+		}
+	}
+
 	@media (min-width: 640px) {
 		dialog {
 			width: 440px;
 			margin: auto;
 			border-radius: 20px;
+		}
+
+		/* A card in the middle of the screen, which comes up from its bottom edge like an iPad's. */
+		dialog[open] {
+			animation-name: card-in;
+		}
+
+		dialog.closing {
+			animation-name: card-out;
+		}
+	}
+
+	@keyframes card-in {
+		from {
+			transform: translateY(100vh);
+		}
+	}
+
+	@keyframes card-out {
+		to {
+			transform: translateY(100vh);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		dialog[open],
+		dialog[open]::backdrop {
+			animation: none;
 		}
 	}
 

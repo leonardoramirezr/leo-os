@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { MediaQuery } from 'svelte/reactivity';
-	import { apps } from '$lib/apps';
+	import { apps, dock, type App } from '$lib/apps';
 	import SettingsSheet from '$lib/SettingsSheet.svelte';
 	import { ui, wallpaper } from '$lib/settings.svelte';
 	import StatusBar from '$lib/StatusBar.svelte';
@@ -24,6 +24,34 @@
 	}
 </script>
 
+<!-- iOS Safari only marks what is being touched as :active when a touch listener sits on it or above
+     it: without this one, tapping an icon would not dim it. -->
+<svelte:document ontouchstart={() => {}} />
+
+{#snippet tile(app: App, labelled: boolean)}
+	{#if 'href' in app}
+		<a class="app" href={app.href} data-sveltekit-reload aria-label={labelled ? undefined : app.name}>
+			{@render face(app, labelled)}
+		</a>
+	{:else}
+		<button
+			class="app"
+			type="button"
+			onclick={app.action}
+			aria-label={labelled ? undefined : app.name}
+		>
+			{@render face(app, labelled)}
+		</button>
+	{/if}
+{/snippet}
+
+{#snippet face(app: App, labelled: boolean)}
+	<span class="icon"><img src={app.icon} alt="" draggable="false" /></span>
+	{#if labelled}
+		<span class="label">{app.name}</span>
+	{/if}
+{/snippet}
+
 <div
 	class="screen"
 	class:custom-wallpaper={wallpaper.value}
@@ -35,17 +63,7 @@
 		{#each pages as page, index (index)}
 			<nav class="page" aria-label="Apps">
 				{#each page as app (app.slug)}
-					{#if 'href' in app}
-						<a class="app" href={app.href} data-sveltekit-reload>
-							<img class="icon" src={app.icon} alt="" draggable="false" />
-							<span class="label">{app.name}</span>
-						</a>
-					{:else}
-						<button class="app" type="button" onclick={app.action}>
-							<img class="icon" src={app.icon} alt="" draggable="false" />
-							<span class="label">{app.name}</span>
-						</button>
-					{/if}
+					{@render tile(app, true)}
 				{/each}
 			</nav>
 		{/each}
@@ -56,6 +74,13 @@
 			<span class="dot" class:active={index === Math.min(currentPage, pages.length - 1)}></span>
 		{/each}
 	</div>
+
+	<!-- As on iOS, the icons in the dock go without their names. -->
+	<nav class="dock" aria-label="Dock">
+		{#each dock as app (app.slug)}
+			{@render tile(app, false)}
+		{/each}
+	</nav>
 </div>
 
 <SettingsSheet bind:open={ui.settingsOpen} />
@@ -70,7 +95,7 @@
 		flex-direction: column;
 		overflow: hidden;
 		padding-top: calc(env(safe-area-inset-top) + 24 * var(--u));
-		padding-bottom: calc(env(safe-area-inset-bottom) + 8 * var(--u));
+		padding-bottom: calc(env(safe-area-inset-bottom) + 10 * var(--u));
 		background:
 			radial-gradient(90% 55% at 0% 0%, rgb(255 150 90 / 0.95), transparent 70%),
 			radial-gradient(80% 50% at 100% 18%, rgb(240 70 160 / 0.9), transparent 70%),
@@ -128,22 +153,50 @@
 		text-decoration: none;
 		outline: none;
 		cursor: pointer;
+		/* Holding an icon down would bring up Safari's preview of the link. */
+		-webkit-touch-callout: none;
 	}
 
 	.icon {
+		position: relative;
 		display: block;
 		width: calc(62 * var(--u));
 		height: calc(62 * var(--u));
 		border-radius: 22.5%;
-		box-shadow: 0 calc(2 * var(--u)) calc(10 * var(--u)) rgb(0 0 0 / 0.18);
-		transition:
-			filter 0.15s,
-			transform 0.15s;
+		/* A tight shadow where the icon meets the wallpaper and a wide, faint one under it: either
+		   alone reads as a sticker or as a smudge. */
+		box-shadow:
+			0 calc(0.5 * var(--u)) calc(1.5 * var(--u)) rgb(0 0 0 / 0.16),
+			0 calc(5 * var(--u)) calc(15 * var(--u)) rgb(0 0 0 / 0.2);
 	}
 
-	.app:active .icon {
-		filter: brightness(0.7);
-		transform: scale(0.96);
+	.icon img {
+		display: block;
+		width: 100%;
+		height: 100%;
+		border-radius: inherit;
+	}
+
+	/* Over the artwork: the light iOS 26 catches on an icon's edge, and the dimming of a press. Both
+	   are layered on top because nothing sharp in an icon goes through a filter (README.md, «Home
+	   screen icon»). */
+	.icon::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		box-shadow:
+			inset calc(0.75 * var(--u)) calc(1 * var(--u)) calc(0.5 * var(--u)) calc(-0.25 * var(--u))
+				rgb(255 255 255 / 0.45),
+			inset calc(-0.75 * var(--u)) calc(-1 * var(--u)) calc(0.5 * var(--u)) calc(-0.25 * var(--u))
+				rgb(255 255 255 / 0.18),
+			inset 0 0 0 calc(0.5 * var(--u)) rgb(255 255 255 / 0.12);
+		transition: background-color 0.2s;
+	}
+
+	.app:active .icon::after {
+		background-color: rgb(0 0 0 / 0.3);
+		transition: none;
 	}
 
 	.app:focus-visible .icon {
@@ -160,7 +213,12 @@
 		letter-spacing: 0.01em;
 		text-align: center;
 		text-overflow: ellipsis;
-		text-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+		/* A soft dark halo, as iOS gives its labels: faint on a dark wallpaper, and what keeps white
+		   text readable over a bright photo. */
+		text-shadow:
+			0 calc(0.5 * var(--u)) calc(1 * var(--u)) rgb(0 0 0 / 0.45),
+			0 0 calc(3 * var(--u)) rgb(0 0 0 / 0.4),
+			0 0 calc(8 * var(--u)) rgb(0 0 0 / 0.25);
 		white-space: nowrap;
 	}
 
@@ -169,18 +227,44 @@
 		flex: none;
 		justify-content: center;
 		gap: calc(8 * var(--u));
-		padding: calc(14 * var(--u)) 0;
+		padding: calc(12 * var(--u)) 0;
 	}
 
 	.dot {
 		width: calc(7 * var(--u));
 		height: calc(7 * var(--u));
 		border-radius: 50%;
-		background: rgb(255 255 255 / 0.4);
+		background: rgb(255 255 255 / 0.35);
 	}
 
 	.dot.active {
 		background: #fff;
+	}
+
+	/* Glass, like the iOS 26 dock: the wallpaper blurred and brightened through it, light caught
+	   along its rim, and a soft shadow under it. */
+	.dock {
+		display: flex;
+		flex: none;
+		justify-content: center;
+		/* 10 + 8 a side leaves the grid's width inside, so four icons line up with its columns. */
+		margin: 0 calc(10 * var(--u));
+		padding: calc(16 * var(--u)) calc(8 * var(--u));
+		border-radius: calc(38 * var(--u));
+		background: rgb(255 255 255 / 0.16);
+		-webkit-backdrop-filter: blur(20px) saturate(1.4);
+		backdrop-filter: blur(20px) saturate(1.4);
+		box-shadow:
+			inset calc(1 * var(--u)) calc(1.5 * var(--u)) calc(1 * var(--u)) calc(-0.5 * var(--u))
+				rgb(255 255 255 / 0.5),
+			inset calc(-1 * var(--u)) calc(-1.5 * var(--u)) calc(1 * var(--u)) calc(-0.5 * var(--u))
+				rgb(255 255 255 / 0.25),
+			inset 0 0 0 calc(0.5 * var(--u)) rgb(255 255 255 / 0.12),
+			0 calc(8 * var(--u)) calc(30 * var(--u)) rgb(0 0 0 / 0.14);
+	}
+
+	.dock .app {
+		flex: 0 0 25%;
 	}
 
 	/* On larger screens, fill the viewport with an iPad home screen (1180 × 820 points in landscape). */
@@ -215,7 +299,20 @@
 		}
 
 		.dots {
-			padding: calc(18 * var(--u)) 0;
+			padding: calc(16 * var(--u)) 0;
+		}
+
+		/* The iPad's dock floats, as wide as the icons in it. */
+		.dock {
+			align-self: center;
+			gap: calc(20 * var(--u));
+			margin: 0;
+			padding: calc(12 * var(--u));
+			border-radius: calc(30 * var(--u));
+		}
+
+		.dock .app {
+			flex: none;
 		}
 	}
 
@@ -228,6 +325,14 @@
 			grid-template-columns: repeat(5, 1fr);
 			grid-template-rows: repeat(6, 1fr);
 			padding-inline: calc(48 * var(--u));
+		}
+	}
+
+	/* Added to the home screen, the site reaches the bottom edge, where iOS draws its home indicator
+	   over whatever is there: the dock keeps clear of it. */
+	@media (display-mode: standalone) {
+		.screen {
+			padding-bottom: calc(env(safe-area-inset-bottom) + 20 * var(--u));
 		}
 	}
 </style>

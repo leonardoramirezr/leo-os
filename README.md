@@ -281,13 +281,16 @@ a drop shadow or a glow is a blurred copy of the shape, drawn underneath it, and
 
 ## Home
 
-Besides the published apps, the home screen carries two icons of its own:
+Besides the published apps, the home screen carries three icons of its own. They live in the dock
+at the bottom, which stays put whichever page of apps is showing, and go without their names there,
+as on iOS:
 
-- **Recargar**: reloads the site, handy when it runs full screen without browser controls.
 - **Ajustes**: changes the wallpaper, and shows which account is signed in with the way out. The
   chosen photo is scaled down to 1600 px, re-encoded as JPEG and stored in the browser's
   `localStorage` under `home:wallpaper`, one per account. With no photo, the default gradient is
   used, which comes back on «Quitar».
+- **Recargar**: reloads the site, handy when it runs full screen without browser controls.
+- **Cerrar sesión**: signs out, after asking.
 
 ## WillChat
 
