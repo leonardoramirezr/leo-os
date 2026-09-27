@@ -4,11 +4,13 @@
 	import { resolve } from '$app/paths';
 	import { collection, type Deck } from '$lib/collection.svelte';
 	import { plural } from '$lib/format';
+	import AnkiWebSheet from './AnkiWebSheet.svelte';
 	import DeckSheet from './DeckSheet.svelte';
 	import Icon from './Icon.svelte';
 	import SettingsSheet from './SettingsSheet.svelte';
 
 	let creating = $state(false);
+	let importing = $state(false);
 	let settingsOpen = $state(false);
 
 	/** Every card waiting across the decks: the new ones and the ones due again. */
@@ -79,21 +81,31 @@
 					Nuevo mazo
 				</button>
 			</li>
+			<li>
+				<button class="deck add" onclick={() => (importing = true)} aria-haspopup="dialog">
+					<Icon name="download" />
+					Mazos de AnkiWeb
+				</button>
+			</li>
 		</ul>
 	{:else}
 		<div class="empty">
 			<img class="logo" src={icon} alt="" width="84" height="84" />
 			<p class="empty-title">Crea tu primer mazo</p>
 			<p class="empty-text">
-				Un mazo reúne las tarjetas de un tema. Escríbelas a mano o deja que la IA las escriba por ti, y
-				repásalas justo antes de olvidarlas.
+				Un mazo reúne las tarjetas de un tema. Escríbelas a mano, deja que la IA las escriba por ti o trae
+				uno de los miles que comparte la comunidad de Anki, y repásalas justo antes de olvidarlas.
 			</p>
 			<button class="primary" onclick={() => (creating = true)}>Nuevo mazo</button>
+			<button class="secondary" onclick={() => (importing = true)} aria-haspopup="dialog">
+				Buscar en AnkiWeb
+			</button>
 		</div>
 	{/if}
 </div>
 
 <DeckSheet bind:open={creating} oncreate={open} />
+<AnkiWebSheet bind:open={importing} />
 <SettingsSheet bind:open={settingsOpen} />
 
 <style>
@@ -233,5 +245,14 @@
 
 	.empty .primary {
 		max-width: 280px;
+	}
+
+	.secondary {
+		margin-top: 8px;
+		padding: 12px;
+		border: 0;
+		background: none;
+		color: var(--link);
+		font-size: 17px;
 	}
 </style>

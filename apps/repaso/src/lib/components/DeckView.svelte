@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { pushState } from '$app/navigation';
 	import { collection, type Card, type Deck } from '$lib/collection.svelte';
-	import { formatWait } from '$lib/format';
+	import { formatWait, plural } from '$lib/format';
 	import { isDue } from '$lib/schedule';
 	import CardSheet from './CardSheet.svelte';
 	import DeckSheet from './DeckSheet.svelte';
@@ -10,17 +10,33 @@
 
 	let { deck }: { deck: Deck } = $props();
 
+	/** An imported deck has thousands of cards: drawing every row would keep the screen waiting. */
+	const LISTED = 200;
+
 	let editingDeck = $state(false);
 	let adding = $state(false);
 	let generating = $state(false);
 	let selected = $state<Card>();
 	let editingCard = $state(false);
+	let listAll = $state(false);
 
 	const counts = $derived(collection.countsOf(deck.id));
 	const cards = $derived(collection.cardsOf(deck.id));
+	const listed = $derived(listAll ? cards : cards.slice(0, LISTED));
 	const pending = $derived(counts.new + counts.due);
 	/** With nothing to study, when there will be something again. */
 	const next = $derived(pending ? 0 : collection.nextDue(deck.id));
+	/** With today's new cards studied, how many come tomorrow. */
+	const tomorrow = $derived(
+		!pending && counts.unseen ? Math.min(counts.unseen, deck.newPerDay || counts.unseen) : 0
+	);
+	const later = $derived.by(() => {
+		const back = next ? `La próxima tarjeta vuelve en ${formatWait(next - collection.now)}` : '';
+		const fresh = tomorrow ? plural(tomorrow, 'tarjeta nueva', 'tarjetas nuevas') : '';
+		if (back && fresh) return `${back}, y mañana llegan ${fresh}.`;
+		if (fresh) return `Mañana llegan ${fresh}.`;
+		return back && `${back}.`;
+	});
 
 	function study() {
 		pushState('', { deck: deck.id, study: true });
@@ -69,8 +85,8 @@
 		<button class="study" disabled={!pending} onclick={study}>
 			{pending ? 'Estudiar' : 'Todo al día'}
 		</button>
-		{#if next}
-			<p class="next">La próxima tarjeta vuelve en {formatWait(next - collection.now)}.</p>
+		{#if later}
+			<p class="next">{later}</p>
 		{/if}
 	{/if}
 
@@ -88,7 +104,7 @@
 	{#if cards.length}
 		<h2 class="section-title">Tarjetas</h2>
 		<ul class="group">
-			{#each cards as card (card.id)}
+			{#each listed as card (card.id)}
 				<li>
 					<button class="card" onclick={() => edit(card)}>
 						<span class="text">
@@ -100,6 +116,11 @@
 				</li>
 			{/each}
 		</ul>
+		{#if listed.length < cards.length}
+			<button class="more" onclick={() => (listAll = true)}>
+				Mostrar las {cards.length} tarjetas
+			</button>
+		{/if}
 	{:else}
 		<div class="empty">
 			<p class="empty-title">Este mazo está vacío</p>
@@ -298,6 +319,17 @@
 	.when.fresh {
 		color: var(--easy);
 		font-weight: 500;
+	}
+
+	.more {
+		display: block;
+		width: 100%;
+		margin-top: 8px;
+		padding: 12px;
+		border: 0;
+		background: none;
+		color: var(--link);
+		font-size: 16px;
 	}
 
 	.empty {

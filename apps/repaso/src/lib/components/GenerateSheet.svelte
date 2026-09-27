@@ -325,32 +325,6 @@
 		font-weight: 600;
 	}
 
-	/* A label on the left and its control on the right, on one line. */
-	.field.inline {
-		flex-direction: row;
-		align-items: center;
-		justify-content: space-between;
-		gap: 12px;
-	}
-
-	.field.inline > span {
-		flex: none;
-		color: var(--text);
-		font-size: 17px;
-	}
-
-	.field.inline select {
-		width: auto;
-		min-width: 0;
-		max-width: 70%;
-		color: var(--muted);
-		font-size: 15px;
-		text-align: right;
-		/* `text-align` is not enough for the selected text of a select. */
-		text-align-last: right;
-		text-overflow: ellipsis;
-	}
-
 	.segmented {
 		display: flex;
 		padding: 2px;

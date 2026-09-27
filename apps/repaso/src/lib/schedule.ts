@@ -55,7 +55,7 @@ const DAY_STARTS_AT = 4;
 const LEARN_AHEAD = 20 * MINUTE;
 
 /** The moment the day `now` belongs to began. */
-function dayStart(now: number): number {
+export function dayStart(now: number): number {
 	const date = new Date(now - DAY_STARTS_AT * HOUR);
 	date.setHours(DAY_STARTS_AT, 0, 0, 0);
 	return date.getTime();

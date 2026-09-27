@@ -392,10 +392,12 @@ Flashcards studied with spaced repetition, the way Anki does it: decks of cards,
 again just before it would be forgotten.
 
 - The first screen lists the decks, in alphabetical order, with how many cards each has waiting
-  today; **Nuevo mazo** adds one. A deck shows how many of its cards are new, how many are due again
-  and how many there are in all, the button to study them, and every card, newest first, with when
-  it comes up next. Tapping a card corrects or deletes it; **Editar** renames the deck, or deletes
-  it with all its cards.
+  today; **Nuevo mazo** adds one, and **Mazos de AnkiWeb** brings one of the decks the Anki
+  community shares. A deck shows how many of its cards are new today, how many are due again and how
+  many there are in all, the button to study them, and its cards, newest first, with when each comes
+  up next: the first 200, and the rest on request. Tapping a card corrects or deletes it;
+  **Editar** renames the deck, sets how many new cards a day it brings, or deletes it with all its
+  cards.
 - The back button and the back gesture walk back through the screens. Which one is showing lives in
   the history entry rather than in the URL, so a reload lands on the list of decks.
 - Cards are added by hand — **Añadir tarjeta**, a front and a back; the sheet stays open for the
@@ -414,8 +416,11 @@ again just before it would be forgotten.
 - A session goes through what is due in this order: the cards being learned whose time has come,
   the reviews, the new cards in the order they were added, and last the cards being learned that
   come due within twenty minutes, shown early rather than waited for. It ends when nothing is left,
-  which leaves every card it touched learned. There is no daily limit of new cards: a card is
-  studied the day it is added.
+  which leaves every card it touched learned.
+- A deck may cap the new cards a day, as Anki does: **Nuevas al día**, under **Editar**. One written
+  by hand or by the AI has no cap, so its cards are studied the day they are added; an imported one
+  starts at Anki's 20, having thousands. A card counts towards the day it is first answered, and
+  once the day's are done the deck says how many come tomorrow.
 - **Generar con IA** asks Groq for 5, 10 or 20 cards about whatever is written in: a topic, a list
   or notes pasted in. The model is picked there, among the chat models the key can use (Groq's
   `/models`, without speech, voices, safety classifiers or agent systems), and remembered in the
@@ -434,7 +439,29 @@ again just before it would be forgotten.
   first, and asked for here the first time cards are generated. Only the key and what is asked for
   — the topic or notes, the deck's name and the front of its cards — are ever sent to
   `api.groq.com`.
+- **Mazos de AnkiWeb** brings decks from [AnkiWeb's shared decks](https://ankiweb.net/shared/decks).
+  AnkiWeb lets no other site read what it serves — it sends no CORS headers — so searching and
+  downloading happen on AnkiWeb itself, in the browser: the search box, or one of the topics under
+  it, opens AnkiWeb's results, and a deck's «Download» saves an `.apkg` file, which **Elegir el
+  archivo .apkg** opens here. A file can also be dropped on the sheet. After a few downloads AnkiWeb
+  asks to sign in with an account of its own, which is free.
+- The file is read in the browser, and nothing of it leaves but the cards. `src/lib/anki/` unzips
+  only the collection inside, an SQLite database — never the images and audio, which can be
+  hundreds of megabytes — and reads it, with no library for either. What comes in is text: each
+  card's front and back are what Anki's templates render (fields, sections, cloze deletions, type-in
+  answers, hints, furigana), read as a browser would show them, without what the note type's CSS
+  hides, its scripts, its images or its audio. The answer drops the lines every card has alike —
+  credits, dashes, the label of an empty field — and the question when it repeats it. Cards whose
+  question is only an image or a recording, or that have no answer, are left out, and the preview
+  says how many, next to a few of the cards, the deck's name and its new cards a day, to change
+  before importing. The deck and its cards reach the database 500 cards to a request.
+- AnkiWeb hands out its decks in Anki's older formats. A package exported by Anki itself in the
+  newest one (`collection.anki21b`) is compressed with zstd, which browsers cannot uncompress: it
+  is turned down, with the way out — exporting it again with «Support older Anki versions».
 - Decks and cards live in the account, in the `repaso_decks` and `repaso_cards` tables, each card
   with its place in the schedule in plain columns, and with a copy on the device so the app opens
   without waiting. Coming back to the app reads them again, in case they were studied on another
-  device.
+  device. The copy is written a second after the last change, or as the app goes to the background,
+  so that no answer waits for thousands of cards to be copied; and a collection too large for the
+  few megabytes of localStorage the whole site shares — thousands of cards, as an imported deck
+  brings — is not kept on the device at all, and is read from the database every time.
