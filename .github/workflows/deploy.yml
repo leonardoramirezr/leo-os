@@ -40,7 +40,7 @@ jobs:
       - id: target
         name: Work out where this push goes
         env:
-          # The site's own domain, e.g. leo.is-cool.dev. With it the site is served from that domain's
+          # The site's own domain, e.g. leo-os.is-cool.dev. With it the site is served from that domain's
           # root; without it, from <owner>.github.io/<repo>/. See «Own domain» in README.md.
           DOMAIN: ${{ vars.PAGES_DOMAIN }}
         run: |

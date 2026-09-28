@@ -195,13 +195,13 @@ subdomain of it. Neon Auth cannot be given a domain, so a [Neon Function](https:
 that only forwards to it, `neon/auth-proxy.ts`, takes that subdomain instead. The Data API stays as
 it is: it is shown a token, not a cookie, and answers any origin.
 
-With a free subdomain from [Open Domains](https://open-domains.com), say `leo.is-cool.dev` — pick
+With a free subdomain from [Open Domains](https://open-domains.com), say `leo-os.is-cool.dev` — pick
 one of its domains on the [Public Suffix List](https://publicsuffix.org) (`is-cool.dev`,
 `is-not-a.dev`, `localplayer.dev`, `is-local.org`, `is-a-fullstack.dev`), so that the subdomain is a
 site of its own and not shared with everyone else's:
 
-1. **The site.** At Open Domains, a `CNAME` from `leo.is-cool.dev` to `leonardoramirezr.github.io`,
-   DNS only (not proxied). Then the repository variable `PAGES_DOMAIN` = `leo.is-cool.dev` and a
+1. **The site.** At Open Domains, a `CNAME` from `leo-os.is-cool.dev` to `leonardoramirezr.github.io`,
+   DNS only (not proxied). Then the repository variable `PAGES_DOMAIN` = `leo-os.is-cool.dev` and a
    run of `deploy.yml` on `main` (Actions → Deploy to GitHub Pages → Run workflow): the site is
    built for the domain's root and ships the `CNAME` file GitHub Pages reads its domain from — the
    variable, not the field in **Settings → Pages**, is what decides, since every publish replaces
@@ -213,18 +213,18 @@ site of its own and not shared with everyone else's:
    ```sh
    neon functions deploy authproxy --src neon/auth-proxy.ts \
      --env NEON_AUTH_ORIGIN=https://ep-xxx.neonauth.c-7.us-east-2.aws.neon.tech \
-     --env SITE_ORIGIN=https://leo.is-cool.dev
-   neon functions domains register auth.leo.is-cool.dev --slug authproxy --output json
+     --env SITE_ORIGIN=https://leo-os.is-cool.dev
+   neon functions domains register auth.leo-os.is-cool.dev --slug authproxy --output json
    ```
 
    `NEON_AUTH_ORIGIN` is the Auth URL without its path. The second command answers with a
    `cname_target`.
-3. **Its subdomain.** At Open Domains, a `CNAME` from `auth.leo.is-cool.dev` to that target, DNS
+3. **Its subdomain.** At Open Domains, a `CNAME` from `auth.leo-os.is-cool.dev` to that target, DNS
    only too. `neon functions domains list --output json` says `active` once the certificate is
-   issued; `https://auth.leo.is-cool.dev/<database>/auth/get-session` then answers `null`.
-4. **Neon Auth.** Add `https://leo.is-cool.dev` to its trusted domains.
+   issued; `https://auth.leo-os.is-cool.dev/<database>/auth/get-session` then answers `null`.
+4. **Neon Auth.** Add `https://leo-os.is-cool.dev` to its trusted domains.
 5. **This repository.** The variable `NEON_AUTH_URL` becomes the function's domain with the Auth
-   URL's path: `https://auth.leo.is-cool.dev/<database>/auth`. Run `deploy.yml` on `main` again.
+   URL's path: `https://auth.leo-os.is-cool.dev/<database>/auth`. Run `deploy.yml` on `main` again.
 
 On the iPhone, the old icon goes and the new address is added again. Whatever stays on the device
 only — the wallpaper, WillChat's conversation — belongs to the old origin and does not come along.
