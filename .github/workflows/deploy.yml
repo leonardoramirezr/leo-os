@@ -39,15 +39,25 @@ jobs:
 
       - id: target
         name: Work out where this push goes
+        env:
+          # The site's own domain, e.g. leo.is-cool.dev. With it the site is served from that domain's
+          # root; without it, from <owner>.github.io/<repo>/. See «Own domain» in README.md.
+          DOMAIN: ${{ vars.PAGES_DOMAIN }}
         run: |
           owner=$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
           repo='${{ github.event.repository.name }}'
-          site="https://$owner.github.io/$repo"
+          if [ -n "$DOMAIN" ]; then
+            root=''
+            site="https://$DOMAIN"
+          else
+            root="/$repo"
+            site="https://$owner.github.io/$repo"
+          fi
 
           if [ "$GITHUB_REF_NAME" = '${{ github.event.repository.default_branch }}' ]; then
             {
               echo "preview=false"
-              echo "base=/$repo"
+              echo "base=$root"
               echo "url=$site/"
             } >> "$GITHUB_OUTPUT"
             exit 0
@@ -61,7 +71,7 @@ jobs:
           {
             echo "preview=true"
             echo "slug=$slug"
-            echo "base=/$repo/previews/$slug"
+            echo "base=$root/previews/$slug"
             echo "url=$site/previews/$slug/"
           } >> "$GITHUB_OUTPUT"
 
@@ -103,6 +113,15 @@ jobs:
           VITE_NEON_DATA_API_URL: ${{ vars.NEON_DATA_API_URL }}
           # The preview's schema; empty for the site, and for a preview that has none.
           VITE_NEON_DATA_API_SCHEMA: ${{ steps.database.outputs.schema }}
+
+      # GitHub Pages takes the custom domain from a CNAME file at the root of the branch it serves.
+      # Publishing the site replaces that root whole, so the file has to come with every build — and
+      # leaving it out is what hands the site back to github.io.
+      - name: Name the domain
+        if: steps.target.outputs.preview != 'true' && vars.PAGES_DOMAIN != ''
+        env:
+          DOMAIN: ${{ vars.PAGES_DOMAIN }}
+        run: printf '%s\n' "$DOMAIN" > dist/CNAME
 
       # Read back by scripts/previews-index.mjs to label the preview with its branch.
       - name: Note the branch behind the preview

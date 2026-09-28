@@ -24,6 +24,8 @@ phone home screen: every app is an icon.
 │   ├── schema.ts            # The models: the tables and their row level security policies
 │   ├── migrations/          # Generated from the models; the deploy applies them
 │   └── preview.mjs          # Gives each preview a copy of the database of its own
+├── neon/
+│   └── auth-proxy.ts        # Stands Neon Auth on an own domain (see «Own domain»)
 ├── scripts/
 │   ├── build.mjs            # Builds the home screen and every app into dist/
 │   ├── icons.mjs            # Turns each icon.svg into the PNG iOS asks for
@@ -53,8 +55,7 @@ On top of that:
 - The iPhone home screen icon comes from that same `icon.svg`: there is no second drawing to make.
 - Everything renders on the client. There is no backend of ours: an app queries Neon directly, as
   described in [Account and data](#account-and-data).
-- Every app shares the `leonardoramirezr.github.io` origin, and therefore the session, `localStorage`
-  and IndexedDB too. Use a prefix of your own in the keys (e.g. `willchat:`).
+- Every app shares the site's origin, and therefore the session, `localStorage` and IndexedDB too. Use a prefix of your own in the keys (e.g. `willchat:`).
 
 For a new SvelteKit app, start from `pnpm dlx sv create apps/<folder> --template minimal --types ts --add sveltekit-adapter="adapter:static"`
 and copy two details from `apps/willchat`: `paths.base` read from `BASE_PATH` in `vite.config.ts`,
@@ -90,6 +91,8 @@ Everything an app records — who owes what, which models WillChat uses — live
 database and is queried straight from the browser. There is still no backend of ours in between:
 [Neon Auth](https://neon.com/docs/auth/overview) holds the session and the
 [Neon Data API](https://neon.com/docs/data-api/overview) (PostgREST over HTTPS) serves the tables.
+The one exception is on an [own domain](#own-domain), where a function that only forwards stands
+Neon Auth on that domain.
 
 - **Signing in.** The home screen and every app open behind the same door. Neon Auth keeps the
   session in a cookie of its own domain, so signing in once covers the whole site. It is asked for
@@ -182,11 +185,52 @@ root — see `.env.example`.
 
 A build with no Neon URLs still builds and runs, and every screen says there is no database.
 
-> **Safari and the cookie.** The site is served from `github.io` and Neon Auth from its own domain,
-> so its session cookie is a third-party one. Safari blocks those by default, which would leave the
-> iPhone asking to sign in over and over. If that happens, the way out is a custom domain: point
-> GitHub Pages at one you own and Neon Auth at a subdomain of it, and the cookie stops being
-> third-party.
+### Own domain
+
+Neon Auth lives at `*.neon.tech`, so to a site on `github.io` its session cookie is a third-party
+one. Safari in a tab may let it through; a web app saved to the iPhone home screen never does, and
+there signing in goes through and the very next call is told the session ran out. The way out is to
+serve the site and Neon Auth from the same site: the site on a domain of its own, Neon Auth on a
+subdomain of it. Neon Auth cannot be given a domain, so a [Neon Function](https://neon.com/docs/compute/functions/overview)
+that only forwards to it, `neon/auth-proxy.ts`, takes that subdomain instead. The Data API stays as
+it is: it is shown a token, not a cookie, and answers any origin.
+
+With a free subdomain from [Open Domains](https://open-domains.com), say `leo.is-cool.dev` — pick
+one of its domains on the [Public Suffix List](https://publicsuffix.org) (`is-cool.dev`,
+`is-not-a.dev`, `localplayer.dev`, `is-local.org`, `is-a-fullstack.dev`), so that the subdomain is a
+site of its own and not shared with everyone else's:
+
+1. **The site.** At Open Domains, a `CNAME` from `leo.is-cool.dev` to `leonardoramirezr.github.io`,
+   DNS only (not proxied). Then the repository variable `PAGES_DOMAIN` = `leo.is-cool.dev` and a
+   run of `deploy.yml` on `main` (Actions → Deploy to GitHub Pages → Run workflow): the site is
+   built for the domain's root and ships the `CNAME` file GitHub Pages reads its domain from — the
+   variable, not the field in **Settings → Pages**, is what decides, since every publish replaces
+   that file. Once the certificate is issued, tick **Enforce HTTPS** there. `github.io/leo-os/`
+   redirects to the domain from then on; previews published before need a push to move with it.
+2. **The function.** With the [Neon CLI](https://neon.com/docs/cli), linked to this project and
+   its production branch:
+
+   ```sh
+   neon functions deploy authproxy --src neon/auth-proxy.ts \
+     --env NEON_AUTH_ORIGIN=https://ep-xxx.neonauth.c-7.us-east-2.aws.neon.tech \
+     --env SITE_ORIGIN=https://leo.is-cool.dev
+   neon functions domains register auth.leo.is-cool.dev --slug authproxy --output json
+   ```
+
+   `NEON_AUTH_ORIGIN` is the Auth URL without its path. The second command answers with a
+   `cname_target`.
+3. **Its subdomain.** At Open Domains, a `CNAME` from `auth.leo.is-cool.dev` to that target, DNS
+   only too. `neon functions domains list --output json` says `active` once the certificate is
+   issued; `https://auth.leo.is-cool.dev/<database>/auth/get-session` then answers `null`.
+4. **Neon Auth.** Add `https://leo.is-cool.dev` to its trusted domains.
+5. **This repository.** The variable `NEON_AUTH_URL` becomes the function's domain with the Auth
+   URL's path: `https://auth.leo.is-cool.dev/<database>/auth`. Run `deploy.yml` on `main` again.
+
+On the iPhone, the old icon goes and the new address is added again. Whatever stays on the device
+only — the wallpaper, WillChat's conversation — belongs to the old origin and does not come along.
+Safari caps the cookies of a subdomain that points at another provider to seven days, renewed each
+time the session is, so an app left unopened for a week asks to sign in again. For `pnpm dev`,
+`.env` keeps the Auth URL as it is: the function only answers the published site.
 
 ## Deploy
 
@@ -196,6 +240,9 @@ Everything is published to the `gh-pages` branch, which is the only thing GitHub
 | -------------- | ---------------------- | ------------------------------------ |
 | `main`         | the root of `gh-pages` | `…github.io/leo-os/`                 |
 | any other branch | `previews/<branch>/` | `…github.io/leo-os/previews/<branch>/` |
+
+On an [own domain](#own-domain), the same without `/leo-os`: `https://<domain>/` and
+`https://<domain>/previews/<branch>/`.
 
 `deploy.yml` runs on every push: it passes `pnpm check`, brings the database up to date if this is
 the default branch (or gives a preview its own copy of it), builds with the base path it is due and
