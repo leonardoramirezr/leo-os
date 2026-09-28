@@ -11,6 +11,13 @@
 //
 //   NEON_AUTH_ORIGIN  Where Neon Auth really is: https://ep-xxx.neonauth.<region>.aws.neon.tech
 //   SITE_ORIGIN       The only page allowed to call it: https://<domain>
+//
+/**
+$ neon functions deploy authproxy --src neon/auth-proxy.ts \
+  --env NEON_AUTH_ORIGIN=https://ep-lively-pond-b59z8201.neonauth.c-7.us-east-2.aws.neon.tech \
+  --env SITE_ORIGIN=https://leo-os.is-cool.dev
+$ neon functions domains register auth.leo-os.is-cool.dev --slug authproxy --output json
+**/
 
 const upstream = (process.env.NEON_AUTH_ORIGIN ?? '').replace(/\/+$/, '');
 const site = (process.env.SITE_ORIGIN ?? '').replace(/\/+$/, '');
