@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<!-- No viewport-fit=cover: iOS 26 draws home-screen web apps a status bar's height short of the
+		     screen. With cover the empty band is left at the bottom; without it, it sits under the status bar. -->
+		<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
+		<meta name="text-scale" content="scale" />
+		<meta name="color-scheme" content="light dark" />
+		<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f2f7" />
+		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1c1c1e" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-title" content="Dictado" />
+		<!-- Safari ignores an SVG here, so scripts/icons.mjs rasterizes icon.svg into this PNG. -->
+		<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+		<title>Dictado</title>
+		<style>
+			html {
+				background: #f2f2f7;
+			}
+			@media (prefers-color-scheme: dark) {
+				html {
+					background: #1c1c1e;
+				}
+			}
+		</style>
+		<link href="./_app/immutable/entry/start.C86JYOnx.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/C5umD3nb.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/Bnia1AU6.js" rel="modulepreload">
+		<link href="./_app/immutable/entry/app.K0IUKnpF.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/xihTtKlq.js" rel="modulepreload">
+		<link href="./_app/immutable/nodes/0.p4IjeByn.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/C5PqKw2a.js" rel="modulepreload">
+		<link href="./_app/immutable/nodes/2.CRkjhC0L.js" rel="modulepreload">
+		
+		<link href="./_app/immutable/assets/draft.BU-TbsMp.css" rel="stylesheet">
+		<link href="./_app/immutable/assets/0.TMouuAW6.css" rel="stylesheet">
+		<link href="./_app/immutable/assets/2.Oy1-aO1v.css" rel="stylesheet">
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">
+			<script>
+				{
+					__sveltekit_13xx930 = {
+						base: new URL(".", location).pathname.slice(0, -1),
+						assets: "/previews/claude-home-button-every-screen/dictado"
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("./_app/immutable/entry/start.C86JYOnx.js"),
+						import("./_app/immutable/entry/app.K0IUKnpF.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element);
+					});
+				}
+			</script>
+		</div>
+	</body>
+</html>
