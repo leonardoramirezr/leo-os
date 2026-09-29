@@ -1,6 +1,6 @@
 export type Rgb = [r: number, g: number, b: number];
 
-/** What app.html paints under the status bar until a colour is picked: the page's own background. */
+/** The band's colour until one is picked: the home screen's base colour, as app.html paints it. */
 export const BUILT_IN_STATUS_BAR = '#1c1446';
 
 /**
@@ -57,19 +57,17 @@ export function isLight(hex: string): boolean {
 	return 0.299 * r + 0.587 * g + 0.114 * b > 160;
 }
 
-let builtInThemeColor: string | undefined;
+/** The colour for the band: the one picked, when it is one, or the built-in. */
+export function statusBarColor(picked: string): string {
+	return isHex(picked) ? picked.toLowerCase() : BUILT_IN_STATUS_BAR;
+}
 
 /**
- * Colours the band under the status bar. Added to the home screen with the translucent bar the site
- * asks for, iOS fills it with the page's background; with an opaque one, with `theme-color`. Both
- * take the colour, so it shows either way. '' puts back what app.html has.
+ * Hands the band's colour to the places a browser falls back on when no fixed element carries one
+ * (see `.screen` in +page.svelte): the page's background, and `theme-color`, which Safari before 26
+ * and Chrome still read.
  */
 export function paintStatusBar(color: string) {
-	const picked = isHex(color) ? color : '';
-	document.documentElement.style.backgroundColor = picked;
-
-	const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-	if (!meta) return;
-	builtInThemeColor ??= meta.content;
-	meta.content = picked || builtInThemeColor;
+	document.documentElement.style.backgroundColor = color;
+	document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', color);
 }

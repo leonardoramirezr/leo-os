@@ -3,7 +3,7 @@ import { local, setting } from '@leo-os/shared';
 /** The home screen's own settings, opened from the Ajustes icon defined in `apps.ts`. */
 export const ui = $state({
 	settingsOpen: false,
-	/** A colour being tried for the status bar, shown there before it is kept; '' when none is. */
+	/** A colour being tried for the status bar, previewed before it is kept; '' when none is. */
 	statusBarTrial: ''
 });
 

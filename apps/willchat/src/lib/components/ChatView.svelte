@@ -144,6 +144,9 @@
 		display: flex;
 		flex-direction: column;
 		height: 100dvh;
+		/* The page's own colour, repeated: iOS 26 colours the status bar after the fixed element at
+		   the top, and only follows a theme change when that element has a plain colour to read. */
+		background-color: var(--bg);
 	}
 
 	header {

@@ -134,6 +134,10 @@ to register it.
   `public` again, and a migration older than `public`'s last is refused. Grants are the one thing
   the models do not carry: they live in `db/migrations/0001_grants.sql`, which covers the tables of
   every migration still to come.
+- **The status bar's colour on iOS 26** is the plain `background-color` of the fixed element at the
+  top edge, or the page's background when there is none — never `theme-color`. A fixed element that
+  fills the screen with only a gradient or an image gets one colour sampled on its first paint, kept
+  for good: give it a `background-color` (README.md, «Home»).
 - **Dependencies**: as few as possible. No UI or styling frameworks; CSS is written by hand inside
   each component.
 - **Nothing leaves the browser** but the user's own data, to the user's own database, and what they

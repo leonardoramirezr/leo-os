@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { AccountPanel, theme, type Theme } from '@leo-os/shared';
 	import { tick } from 'svelte';
-	import { BUILT_IN_STATUS_BAR } from '$lib/color';
+	import { statusBarColor } from '$lib/color';
 	import ColorPicker from '$lib/ColorPicker.svelte';
 	import Segmented from '$lib/Segmented.svelte';
 	import { statusBar, ui, wallpaper } from '$lib/settings.svelte';
@@ -23,7 +23,7 @@
 	/** Ajustes itself, or the page it opens for the status bar's colour. */
 	let page = $state<'main' | 'status-bar'>('main');
 
-	const barColor = $derived(ui.statusBarTrial || statusBar.value || BUILT_IN_STATUS_BAR);
+	const barColor = $derived(statusBarColor(ui.statusBarTrial || statusBar.value));
 
 	$effect(() => {
 		if (open && !dialog.open) {
@@ -173,7 +173,7 @@
 			</div>
 
 			<ColorPicker
-				value={statusBar.value || BUILT_IN_STATUS_BAR}
+				value={statusBarColor(statusBar.value)}
 				oninput={(color) => (ui.statusBarTrial = color)}
 				onchange={keepBarColor}
 			/>

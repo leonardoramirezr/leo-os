@@ -353,10 +353,16 @@ In Ajustes:
   `light-dark()`, and `Account` puts the theme picked on `<html>` as `data-theme`.
 - **Barra de estado**: the colour of the band iOS leaves at the top, at the height of the camera,
   when the site runs from the home screen. It is picked from the grid of iOS's colour picker, or by
-  red, green and blue, slid or typed as a code (`#1C1446`, `28, 20, 70`), and shows there while it
-  is being tried. It is kept in the account as `home:status-bar-color`; «Usar el predeterminado»
-  goes back to the site's own. The band only takes it once the session is confirmed, so it shows
-  the site's own colour for a moment on opening.
+  red, green and blue, slid or typed as a code (`#1C1446`, `28, 20, 70`), and previewed at the top
+  of that page. It is kept in the account as `home:status-bar-color`; «Usar el predeterminado» goes
+  back to the site's own. The band takes it once Ajustes closes — while it is open, iOS colours the
+  band after the dimmed backdrop — and only once the session is confirmed, so it shows the site's
+  own colour for a moment on opening.
+
+iOS 26 does not colour that band with `theme-color`, nor with the page's background while a fixed
+element touches the top edge: it takes that element's plain `background-color`, read again whenever
+it changes. The home screen is such an element, and carries the band's colour under the wallpaper.
+Were it only a gradient or a photo, WebKit would sample one colour on the first paint and keep it.
 
 ## WillChat
 
