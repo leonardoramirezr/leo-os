@@ -27,6 +27,9 @@ Link the home screen, plus the direct path of each app that was touched — an a
 >
 > GitHub Pages takes about a minute to serve the change.
 
+- Once the repository variable `PAGES_DOMAIN` is set (README, «Own domain»), the site lives at that
+  domain's root: every `https://leonardoramirezr.github.io/leo-os/` here becomes `https://<domain>/`.
+  The workflow run's summary has the exact link.
 - On `main` there is no preview: the link is the published site,
   `https://leonardoramirezr.github.io/leo-os/` (and `…/leo-os/<app>/` for an app).
 - If the push has not happened yet, or the workflow failed, say so instead of handing over a link
@@ -61,6 +64,7 @@ data», including what has to be set up in the Neon console.
 home/            The home screen
 apps/<slug>/     One folder per app; the slug is part of the URL
 shared/          The account and the database; every project depends on it
+neon/            The Neon Function that forwards to Neon Auth on an own domain; deployed by hand
 db/              The models (schema.ts) and the migrations generated from them
 scripts/         build, icons, local preview, and publishing to the gh-pages branch
 .github/workflows/  deploy.yml on every push, preview-cleanup.yml when a branch is deleted
@@ -103,6 +107,9 @@ to register it.
 - `@leo-os/shared` as a `workspace:*` dependency, and a `+layout.svelte` that wraps
   `{@render children()}` in its `<Account load={…}>`: nothing of the app draws until there is an
   account and its rows have been read.
+- Colours that change with the theme are `light-dark(light, dark)` under `color-scheme: light dark`,
+  never an `@media (prefers-color-scheme)` block: only that way does the theme picked in the home
+  screen's Ajustes reach the app (`shared/src/theme.ts`).
 - The folder name is part of the URL: lowercase letters, digits and dashes only.
 
 ## Conventions
@@ -127,6 +134,10 @@ to register it.
   `public` again, and a migration older than `public`'s last is refused. Grants are the one thing
   the models do not carry: they live in `db/migrations/0001_grants.sql`, which covers the tables of
   every migration still to come.
+- **The status bar's colour on iOS 26** is what `--status-bar`, or else `--bg`, holds: `Account`
+  paints it on an invisible strip along the top edge, the one thing there WebKit keeps reading.
+  `theme-color` does nothing, and neither does colouring anything that fills the screen
+  (README.md, «Home»).
 - **Dependencies**: as few as possible. No UI or styling frameworks; CSS is written by hand inside
   each component.
 - **Nothing leaves the browser** but the user's own data, to the user's own database, and what they

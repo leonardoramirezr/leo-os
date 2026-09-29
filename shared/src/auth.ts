@@ -73,7 +73,9 @@ async function call(path: string, body?: unknown): Promise<unknown> {
 	const answer: unknown = await response.json().catch(() => null);
 	if (!response.ok) {
 		const failure = (answer ?? {}) as { message?: string; code?: string };
-		throw new AuthError(failure.message || `Neon Auth respondió ${response.status}.`, failure.code);
+		// Its rate limit brings no code of its own, only a sentence in English.
+		const code = failure.code || (response.status === 429 ? 'TOO_MANY_REQUESTS' : '');
+		throw new AuthError(failure.message || `Neon Auth respondió ${response.status}.`, code);
 	}
 	return answer;
 }
@@ -119,6 +121,22 @@ export async function signUp(
 	jwt = { value: '', expiresAt: 0 };
 	const user = userOf(await call('/sign-up/email', { name, email, password }));
 	return jwt.value ? user : undefined;
+}
+
+/**
+ * Confirms the email with the code Neon Auth sent to it. Gives back the account only when that
+ * also opened a session, which is the console's call: when it did not, the email is confirmed all
+ * the same and signing in is what is left.
+ */
+export async function confirmEmail(email: string, code: string): Promise<AuthUser | undefined> {
+	const answer = await call('/email-otp/verify-email', { email, otp: code });
+	// The user comes back either way; `token`, the session's, only when one was opened.
+	return (answer as { token?: unknown } | null)?.token ? userOf(answer) : undefined;
+}
+
+/** Emails a new code. The one sent before it stops working. */
+export async function sendCode(email: string): Promise<void> {
+	await call('/email-otp/send-verification-otp', { email, type: 'email-verification' });
 }
 
 export async function signOut(): Promise<void> {

@@ -11,22 +11,15 @@
 	--group: light-dark(#ffffff, #2c2c2e);
 	--hover: light-dark(#f0f0f2, #3a3a3c);
 	--sheet: light-dark(#f2f2f7, #1c1c1e);
-	/* Deep enough for white text on it, like the «Estudiar» button. */
-	--accent: light-dark(#5856d6, #5e5ce6);
+	/* Deep enough for a white glyph on it, like the microphone. */
+	--accent: #0d8f86;
 	/* The accent as text or a glyph on a surface; in the dark it has to be lighter to be read. */
-	--tint: light-dark(#5856d6, #8e8cff);
+	--tint: light-dark(#0b7d75, #3fd6c4);
 	--link: #0a84ff;
 	--danger: light-dark(#d4382c, #ff6b5f);
-	/* The four answers, from «Otra vez» to «Fácil»: dark enough to read on their own tint. */
-	--again: light-dark(#c0262d, #ff8a8a);
-	--hard: light-dark(#9a5200, #f5b041);
-	--good: light-dark(#117a37, #4ade80);
-	--easy: light-dark(#2160d6, #8fb6ff);
+	/* The microphone while it listens. */
+	--live: light-dark(#ff3b30, #ff453a);
 	--shadow: 0 2px 12px light-dark(rgb(0 0 0 / 0.07), rgb(0 0 0 / 0.25));
-	/* The card being studied floats a little higher than everything else. */
-	--lift:
-		0 18px 48px light-dark(rgb(40 40 90 / 0.14), rgb(0 0 0 / 0.45)),
-		0 2px 8px light-dark(rgb(40 40 90 / 0.06), rgb(0 0 0 / 0.3));
 
 	--font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 	--mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
@@ -81,7 +74,7 @@ dialog::backdrop {
 	background: rgb(0 0 0 / 0.4);
 }
 
-/* A glyph alone, in the bars at the top. */
+/* A glyph alone, in the bar at the top. */
 .icon-button {
 	display: grid;
 	place-items: center;
@@ -104,7 +97,7 @@ dialog::backdrop {
 	}
 }
 
-/* «Cancelar», «Listo», «Editar»: words in the corners of a bar. */
+/* «Listo», «Restablecer»: words in the corners of a bar, or under a group. */
 .text-button {
 	padding: 4px 0;
 	border: 0;
@@ -119,7 +112,7 @@ dialog::backdrop {
 
 /*
  * Grouped lists in the style of iOS Settings. They live here rather than in each component
- * because Svelte styles are scoped and several views share these classes.
+ * because Svelte styles are scoped and both sheets share these classes.
  */
 .group {
 	margin: 0;
@@ -131,7 +124,7 @@ dialog::backdrop {
 }
 
 .section-title {
-	margin: 28px 4px 8px;
+	margin: 28px 16px 8px;
 	color: var(--muted);
 	font-size: 13px;
 	font-weight: 400;
@@ -139,40 +132,7 @@ dialog::backdrop {
 	text-transform: uppercase;
 }
 
-/* The sheets' primary button: full width, at the bottom. */
-.primary {
-	width: 100%;
-	padding: 14px;
-	border: 0;
-	border-radius: 14px;
-	background: var(--accent);
-	color: #fff;
-	font-size: 17px;
-	font-weight: 600;
-	transition: transform 0.1s;
-}
-
-.primary:active:not(:disabled) {
-	transform: scale(0.98);
-}
-
-.primary:disabled {
-	opacity: 0.4;
-}
-
-/* A destructive action at the foot of a sheet: plain red text, so it is never tapped by mistake. */
-.destructive {
-	display: block;
-	width: 100%;
-	margin-top: 12px;
-	padding: 12px;
-	border: 0;
-	background: none;
-	color: var(--danger);
-	font-size: 17px;
-}
-
-/* A text field inside a group: its label above, the value below. */
+/* A field inside a group: its label above, the value below. */
 .field {
 	display: flex;
 	flex-direction: column;
@@ -202,10 +162,10 @@ dialog::backdrop {
 }
 
 .field textarea {
-	/* Grows with its text where supported; three lines tall where not. */
+	/* Grows with its text where supported; six lines tall where not. */
 	field-sizing: content;
-	min-height: calc(3 * 1.35em);
-	max-height: 40dvh;
+	min-height: calc(6 * 1.35em);
+	max-height: 50dvh;
 	resize: none;
 }
 
@@ -220,6 +180,7 @@ dialog::backdrop {
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
+	min-height: 48px;
 }
 
 .field.inline > span {
@@ -248,7 +209,7 @@ dialog::backdrop {
 }
 
 .hint {
-	margin: 10px 4px 0;
+	margin: 8px 16px 0;
 	color: var(--muted);
 	font-size: 13px;
 	line-height: 1.45;

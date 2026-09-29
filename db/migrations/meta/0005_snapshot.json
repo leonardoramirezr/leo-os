@@ -1,6 +1,6 @@
 {
-  "id": "8471f363-6b7b-4833-8c4d-ce7b92fec8fe",
-  "prevId": "7b6e259a-2147-4414-b3eb-7b16cf9f8e8b",
+  "id": "3065e00b-f370-4050-a074-66bb45641f78",
+  "prevId": "8471f363-6b7b-4833-8c4d-ce7b92fec8fe",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -76,6 +76,13 @@
         },
         "created_at": {
           "name": "created_at",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "introduced_at": {
+          "name": "introduced_at",
           "type": "bigint",
           "primaryKey": false,
           "notNull": true,
@@ -173,6 +180,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "new_per_day": {
+          "name": "new_per_day",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         }
       },
       "indexes": {

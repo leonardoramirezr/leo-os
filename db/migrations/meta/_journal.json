@@ -33,8 +33,15 @@
     {
       "idx": 4,
       "version": "7",
-      "when": 1790544768212,
-      "tag": "0004_repaso_new_per_day",
+      "when": 1790641417444,
+      "tag": "0004_dictado",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790659422464,
+      "tag": "0005_repaso_new_per_day",
       "breakpoints": true
     }
   ]

@@ -8,6 +8,7 @@ phone home screen: every app is an icon.
 - Me deben: https://leonardoramirezr.github.io/leo-os/me-deben/
 - Lista: https://leonardoramirezr.github.io/leo-os/lista/
 - Repaso: https://leonardoramirezr.github.io/leo-os/repaso/
+- Dictado: https://leonardoramirezr.github.io/leo-os/dictado/
 
 ## Layout
 
@@ -24,6 +25,8 @@ phone home screen: every app is an icon.
 │   ├── schema.ts            # The models: the tables and their row level security policies
 │   ├── migrations/          # Generated from the models; the deploy applies them
 │   └── preview.mjs          # Gives each preview a copy of the database of its own
+├── neon/
+│   └── auth-proxy.ts        # Stands Neon Auth on an own domain (see «Own domain»)
 ├── scripts/
 │   ├── build.mjs            # Builds the home screen and every app into dist/
 │   ├── icons.mjs            # Turns each icon.svg into the PNG iOS asks for
@@ -53,8 +56,10 @@ On top of that:
 - The iPhone home screen icon comes from that same `icon.svg`: there is no second drawing to make.
 - Everything renders on the client. There is no backend of ours: an app queries Neon directly, as
   described in [Account and data](#account-and-data).
-- Every app shares the `leonardoramirezr.github.io` origin, and therefore the session, `localStorage`
-  and IndexedDB too. Use a prefix of your own in the keys (e.g. `willchat:`).
+- Every app shares the site's origin, and therefore the session, `localStorage` and IndexedDB too. Use a prefix of your own in the keys (e.g. `willchat:`).
+- Colours that change between light and dark are written as `light-dark(light, dark)` under
+  `color-scheme: light dark`, not in an `@media (prefers-color-scheme)` block: that is how the theme
+  picked in the home screen's Ajustes reaches the app.
 
 For a new SvelteKit app, start from `pnpm dlx sv create apps/<folder> --template minimal --types ts --add sveltekit-adapter="adapter:static"`
 and copy two details from `apps/willchat`: `paths.base` read from `BASE_PATH` in `vite.config.ts`,
@@ -90,11 +95,16 @@ Everything an app records — who owes what, which models WillChat uses — live
 database and is queried straight from the browser. There is still no backend of ours in between:
 [Neon Auth](https://neon.com/docs/auth/overview) holds the session and the
 [Neon Data API](https://neon.com/docs/data-api/overview) (PostgREST over HTTPS) serves the tables.
+The one exception is on an [own domain](#own-domain), where a function that only forwards stands
+Neon Auth on that domain.
 
 - **Signing in.** The home screen and every app open behind the same door. Neon Auth keeps the
   session in a cookie of its own domain, so signing in once covers the whole site. It is asked for
   with `rememberMe`, which makes the cookie outlive closing the tab; how long it may live is the
   session lifetime configured in the Neon console.
+- **Confirming the email.** An account gets no session until its email is confirmed. Right after
+  signing up, the door asks for the code Neon Auth emailed; left for later, signing in with that
+  email asks for it again. «Enviar otro código» emails a new one, and the one before stops working.
 - **One account, one set of rows.** Every table carries the account a row belongs to, and the
   policies in `db/schema.ts` only ever let `auth.user_id()` — the account behind the request's
   token — see its own. Signed out there is no token, and the `anonymous` role is granted nothing.
@@ -153,7 +163,12 @@ In the [Neon console](https://console.neon.tech), on the project this site uses:
 
 1. **Auth.** Turn Neon Auth on and copy its URL (`…/auth`). Under its configuration, add
    `https://leonardoramirezr.github.io` as a trusted domain — previews live on the same origin, so
-   one entry covers them all — and set the session lifetime to a year.
+   one entry covers them all — and set the session lifetime to a year. Under **Sign-up with
+   Email**, turn on **Verify at Sign-up** with **Verification code**: the sign-in screen asks for a
+   code, not a link. Signing in with an email still unconfirmed only emails a fresh code if sending
+   on sign-in is on as well, which the Neon CLI does with
+   `neon neon-auth config email-password update --send-verification-email-on-sign-in`; without it
+   the screen still asks, and «Enviar otro código» is what sends one.
 2. **Data API.** Turn it on and copy its URL (`…/rest/v1`). If it asks which origins may call it,
    that same one. Do this before the first migration: the `authenticated` and `anonymous` roles the
    policies name are its, and turning it on is what creates them.
@@ -182,11 +197,52 @@ root — see `.env.example`.
 
 A build with no Neon URLs still builds and runs, and every screen says there is no database.
 
-> **Safari and the cookie.** The site is served from `github.io` and Neon Auth from its own domain,
-> so its session cookie is a third-party one. Safari blocks those by default, which would leave the
-> iPhone asking to sign in over and over. If that happens, the way out is a custom domain: point
-> GitHub Pages at one you own and Neon Auth at a subdomain of it, and the cookie stops being
-> third-party.
+### Own domain
+
+Neon Auth lives at `*.neon.tech`, so to a site on `github.io` its session cookie is a third-party
+one. Safari in a tab may let it through; a web app saved to the iPhone home screen never does, and
+there signing in goes through and the very next call is told the session ran out. The way out is to
+serve the site and Neon Auth from the same site: the site on a domain of its own, Neon Auth on a
+subdomain of it. Neon Auth cannot be given a domain, so a [Neon Function](https://neon.com/docs/compute/functions/overview)
+that only forwards to it, `neon/auth-proxy.ts`, takes that subdomain instead. The Data API stays as
+it is: it is shown a token, not a cookie, and answers any origin.
+
+With a free subdomain from [Open Domains](https://open-domains.com), say `leo-os.is-cool.dev` — pick
+one of its domains on the [Public Suffix List](https://publicsuffix.org) (`is-cool.dev`,
+`is-not-a.dev`, `localplayer.dev`, `is-local.org`, `is-a-fullstack.dev`), so that the subdomain is a
+site of its own and not shared with everyone else's:
+
+1. **The site.** At Open Domains, a `CNAME` from `leo-os.is-cool.dev` to `leonardoramirezr.github.io`,
+   DNS only (not proxied). Then the repository variable `PAGES_DOMAIN` = `leo-os.is-cool.dev` and a
+   run of `deploy.yml` on `main` (Actions → Deploy to GitHub Pages → Run workflow): the site is
+   built for the domain's root and ships the `CNAME` file GitHub Pages reads its domain from — the
+   variable, not the field in **Settings → Pages**, is what decides, since every publish replaces
+   that file. Once the certificate is issued, tick **Enforce HTTPS** there. `github.io/leo-os/`
+   redirects to the domain from then on; previews published before need a push to move with it.
+2. **The function.** With the [Neon CLI](https://neon.com/docs/cli), linked to this project and
+   its production branch:
+
+   ```sh
+   neon functions deploy authproxy --src neon/auth-proxy.ts \
+     --env NEON_AUTH_ORIGIN=https://ep-xxx.neonauth.c-7.us-east-2.aws.neon.tech \
+     --env SITE_ORIGIN=https://leo-os.is-cool.dev
+   neon functions domains register auth.leo-os.is-cool.dev --slug authproxy --output json
+   ```
+
+   `NEON_AUTH_ORIGIN` is the Auth URL without its path. The second command answers with a
+   `cname_target`.
+3. **Its subdomain.** At Open Domains, a `CNAME` from `auth.leo-os.is-cool.dev` to that target, DNS
+   only too. `neon functions domains list --output json` says `active` once the certificate is
+   issued; `https://auth.leo-os.is-cool.dev/<database>/auth/get-session` then answers `null`.
+4. **Neon Auth.** Add `https://leo-os.is-cool.dev` to its trusted domains.
+5. **This repository.** The variable `NEON_AUTH_URL` becomes the function's domain with the Auth
+   URL's path: `https://auth.leo-os.is-cool.dev/<database>/auth`. Run `deploy.yml` on `main` again.
+
+On the iPhone, the old icon goes and the new address is added again. Whatever stays on the device
+only — the wallpaper, WillChat's conversation — belongs to the old origin and does not come along.
+Safari caps the cookies of a subdomain that points at another provider to seven days, renewed each
+time the session is, so an app left unopened for a week asks to sign in again. For `pnpm dev`,
+`.env` keeps the Auth URL as it is: the function only answers the published site.
 
 ## Deploy
 
@@ -196,6 +252,9 @@ Everything is published to the `gh-pages` branch, which is the only thing GitHub
 | -------------- | ---------------------- | ------------------------------------ |
 | `main`         | the root of `gh-pages` | `…github.io/leo-os/`                 |
 | any other branch | `previews/<branch>/` | `…github.io/leo-os/previews/<branch>/` |
+
+On an [own domain](#own-domain), the same without `/leo-os`: `https://<domain>/` and
+`https://<domain>/previews/<branch>/`.
 
 `deploy.yml` runs on every push: it passes `pnpm check`, brings the database up to date if this is
 the default branch (or gives a preview its own copy of it), builds with the base path it is due and
@@ -285,12 +344,36 @@ Besides the published apps, the home screen carries three icons of its own. They
 at the bottom, which stays put whichever page of apps is showing, and go without their names there,
 as on iOS:
 
-- **Ajustes**: changes the wallpaper, and shows which account is signed in with the way out. The
-  chosen photo is scaled down to 1600 px, re-encoded as JPEG and stored in the browser's
-  `localStorage` under `home:wallpaper`, one per account. With no photo, the default gradient is
-  used, which comes back on «Quitar».
+- **Ajustes**: the wallpaper, the theme and the colour of the status bar, and which account is
+  signed in with the way out.
 - **Recargar**: reloads the site, handy when it runs full screen without browser controls.
 - **Cerrar sesión**: signs out, after asking.
+
+Added to the home screen, the dock floats 12 points over the bottom edge, as the iOS 26 one does.
+
+In Ajustes:
+
+- **Fondo de pantalla**: the chosen photo is scaled down to 1600 px, re-encoded as JPEG and stored
+  in the browser's `localStorage` under `home:wallpaper`, one per account. With no photo, the
+  default gradient is used, which comes back on «Quitar».
+- **Apariencia**: light, dark, or «Sistema», which follows the device. It is the home screen's and
+  every app's at once, kept in the account as `leo-os:theme`: each project writes its colours with
+  `light-dark()`, and `Account` puts the theme picked on `<html>` as `data-theme`.
+- **Barra de estado**: the colour of the band iOS leaves at the top, at the height of the camera,
+  when the site runs from the home screen. It is picked from the grid of iOS's colour picker, or by
+  red, green and blue, slid or typed as a code (`#1C1446`, `28, 20, 70`), and previewed at the top
+  of that page. It is kept in the account as `home:status-bar-color`; «Usar el predeterminado» goes
+  back to the site's own. The band takes it once Ajustes closes — while it is open, the band keeps
+  the colour it had — and on opening, once the session is confirmed: until then it is the purple of
+  the door.
+
+iOS 26 does not colour that band with `theme-color`. WebKit takes the plain `background-color` of the
+fixed element at the top edge, and reads it again whenever it changes only while that element is
+shorter than the screen: one that fills it — the door `Account` shows while loading, the home
+screen, an app's frame — keeps whatever colour the band already had, so the door's purple would stay
+for good. That is why `Account` keeps an invisible strip along the top edge, above everything, in
+the project's `--status-bar`, or else its `--bg`: the home screen sets the first to the colour
+picked here, and in every app the band is the page's own background, following the theme.
 
 ## WillChat
 
@@ -465,3 +548,43 @@ again just before it would be forgotten.
   so that no answer waits for thousands of cards to be copied; and a collection too large for the
   few megabytes of localStorage the whole site shares — thousands of cards, as an imported deck
   brings — is not kept on the device at all, and is read from the database every time.
+
+## Dictado
+
+Voice to text: say something and it is written down, then go on dictating, or say what to change.
+
+- It opens on the microphone and the **Mejorar texto** switch. Tapping the microphone starts
+  listening and tapping it again, now **Listo**, turns what was said into text; **Cancelar** throws
+  it away. It also stops and goes on on its own after ten minutes, or when the app goes to the
+  background. While listening, the screen is kept on and a ring around the button follows the voice.
+- From then on the text takes most of the screen, and can be typed in as well. **Añadir** dictates
+  more, which goes at the end: a stretch of speech follows on from the text, and anything in several
+  lines — paragraphs, a list — starts a paragraph of its own. **Editar** listens for an instruction
+  instead, such as «hazlo más formal», «quita la última frase» or «tradúcelo al inglés», which the
+  chat model carries out on the whole text.
+- **Deshacer** and **Rehacer** walk through every version the text has had since the app was opened:
+  dictated, improved, edited or typed, where typing counts as one change until it pauses. ⌘Z and ⇧⌘Z
+  (Ctrl on the others) do the same. The versions last as long as the visit; the text is kept.
+- With **Mejorar texto** on, every dictation also goes through the chat model, with the instructions
+  under **Instrucciones**, which are the user's to rewrite, and what comes back takes the place of
+  the transcription. The transcription is on screen first and Deshacer goes back to it; if improving
+  it fails, it stays. The model is shown the end of the text so far, to follow on from it, and only
+  what goes after it comes back.
+- Typing on a touch screen, the bar with the microphones steps aside for the keyboard, and the top
+  one has Deshacer, Rehacer and **Listo**. The copy button copies the whole text, and **Texto nuevo**
+  empties it after asking; Deshacer brings it back.
+- **Ajustes** picks the speech-to-text model among those Groq's `/models` lists (`whisper-large-v3`
+  until another is picked; `whisper-large-v3-turbo` is the faster one), the language Whisper is told
+  the dictation is in — Spanish, English, or «Automático» for Whisper to work it out — and the chat
+  model that improves and edits, `openai/gpt-oss-120b` until another is picked. It is plain text in
+  and plain text out, with nothing model-specific sent, so any chat model the key can use will do.
+  These choices, the switch and the instructions are kept in the account.
+- Out of silence Whisper makes up phrases such as «Gracias.»; the segments it doubts were speech are
+  dropped, as in Lista.
+- It uses the same Groq API key as Lista and Repaso, `groq:api-key`, and asks for one when there is
+  none. Only the key, the recordings and the text are ever sent to `api.groq.com`.
+- The text lives in the account, in the `dictado_texts` table, one row per account, with a copy on
+  the device. A change is saved a moment after it is made, and until the database has it the copy on
+  the device says so: the next time the app opens, that copy is sent rather than read over, so a
+  dictation is not lost to a moment without signal. Coming back to the app reads the text again, in
+  case it changed on another device.

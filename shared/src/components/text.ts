@@ -22,6 +22,20 @@ const es = {
 	notConfigured:
 		'Esta versión se publicó sin la configuración de Neon, así que no hay dónde guardar nada.',
 
+	confirmTitle: 'Confirma tu correo',
+	code: 'Código',
+	confirm: 'Confirmar',
+	resendCode: 'Enviar otro código',
+	back: 'Volver',
+	/** Under the title, depending on what sent the code: signing up, signing in, or asking again. */
+	codeFrom: {
+		up: (email: string) =>
+			`Te enviamos un código a ${email}. Escríbelo aquí para confirmar tu correo.`,
+		in: (email: string) =>
+			`Tu correo aún no está confirmado. Escribe el código que te enviamos a ${email}, o pide otro.`,
+		again: (email: string) => `Te enviamos otro código a ${email}. Usa el del último correo.`
+	},
+
 	/** What Neon Auth answers with, which it says in English. */
 	errors: {
 		INVALID_EMAIL_OR_PASSWORD: 'Correo o contraseña incorrectos.',
@@ -30,9 +44,11 @@ const es = {
 		USER_ALREADY_EXISTS: 'Ya hay una cuenta con ese correo. Entra con ella.',
 		PASSWORD_TOO_SHORT: 'La contraseña es demasiado corta.',
 		PASSWORD_TOO_LONG: 'La contraseña es demasiado larga.',
-		EMAIL_NOT_VERIFIED: 'Confirma tu correo antes de entrar.',
+		INVALID_OTP: 'Ese código no es correcto.',
+		OTP_EXPIRED: 'Ese código ya caducó. Pide otro.',
+		TOO_MANY_ATTEMPTS: 'Demasiados intentos con ese código. Pide otro.',
+		TOO_MANY_REQUESTS: 'Demasiados intentos seguidos. Espera un minuto y vuelve a probar.',
 		SESSION_EXPIRED: 'La sesión caducó. Vuelve a entrar.',
-		SIGNED_UP: 'Cuenta creada. Si pide confirmación, revisa tu correo y vuelve a entrar.',
 		FAILED: 'No se pudo entrar.'
 	} as Record<string, string>
 };
@@ -56,6 +72,18 @@ const en: typeof es = {
 	notConfigured:
 		'This build was published without the Neon configuration: there is nowhere to save.',
 
+	confirmTitle: 'Confirm your email',
+	code: 'Code',
+	confirm: 'Confirm',
+	resendCode: 'Send another code',
+	back: 'Back',
+	codeFrom: {
+		up: (email: string) => `We sent a code to ${email}. Type it here to confirm your email.`,
+		in: (email: string) =>
+			`Your email isn't confirmed yet. Type the code we sent to ${email}, or ask for another one.`,
+		again: (email: string) => `We sent another code to ${email}. Use the one in the latest email.`
+	},
+
 	errors: {
 		INVALID_EMAIL_OR_PASSWORD: 'Wrong email or password.',
 		INVALID_EMAIL: 'That email is not valid.',
@@ -63,9 +91,11 @@ const en: typeof es = {
 		USER_ALREADY_EXISTS: 'There is already an account with that email. Sign in with it.',
 		PASSWORD_TOO_SHORT: 'That password is too short.',
 		PASSWORD_TOO_LONG: 'That password is too long.',
-		EMAIL_NOT_VERIFIED: 'Confirm your email before signing in.',
+		INVALID_OTP: "That code isn't right.",
+		OTP_EXPIRED: 'That code has expired. Ask for another one.',
+		TOO_MANY_ATTEMPTS: 'Too many tries with that code. Ask for another one.',
+		TOO_MANY_REQUESTS: 'Too many tries in a row. Wait a minute and try again.',
 		SESSION_EXPIRED: 'Your session ran out. Sign in again.',
-		SIGNED_UP: 'Account created. If it asks for confirmation, check your email and sign in.',
 		FAILED: "Couldn't sign in."
 	}
 };

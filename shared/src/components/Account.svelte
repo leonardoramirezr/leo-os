@@ -9,6 +9,7 @@
 	import { session } from '../session.svelte';
 	import { loadSettings } from '../settings.svelte';
 	import { sync } from '../sync.svelte';
+	import { applyTheme, theme } from '../theme';
 	import { text, type Lang } from './text';
 
 	let {
@@ -36,6 +37,7 @@
 	let name = $state('');
 	let email = $state('');
 	let password = $state('');
+	let code = $state('');
 	let ready = $state(false);
 
 	// Runs once per account: the settings every app shares, then whatever this app keeps of its own.
@@ -56,14 +58,32 @@
 		return () => (current = false);
 	});
 
+	// The device's until this account's settings say otherwise, which is before the app draws.
+	$effect(() => applyTheme(theme.value));
+
 	if (configured) session.check();
 
-	function submit(event: SubmitEvent) {
+	async function submit(event: SubmitEvent) {
 		event.preventDefault();
 		if (session.busy) return;
 
-		if (mode === 'in') session.signIn(email, password);
-		else session.signUp(name, email, password);
+		if (session.confirming) await session.confirm(code, password);
+		else if (mode === 'in') await session.signIn(email, password);
+		else await session.signUp(name, email, password);
+
+		// Asked for a code, the account exists: whenever the form is back, it is to sign in to it.
+		if (session.confirming) mode = 'in';
+	}
+
+	function resend() {
+		// Whatever was typed belongs to a code that no longer works.
+		code = '';
+		session.resendCode();
+	}
+
+	function back() {
+		code = '';
+		session.stopConfirming();
 	}
 </script>
 
@@ -76,6 +96,37 @@
 	</div>
 {:else if session.status === 'checking'}
 	<div class="gate" aria-busy="true"></div>
+{:else if session.status === 'out' && session.confirming}
+	<div class="gate">
+		<form class="card" onsubmit={submit}>
+			<h1>{t.confirmTitle}</h1>
+			<p class="hint">{t.codeFrom[session.codeFrom](session.confirming)}</p>
+
+			<!-- iOS offers the code from Mail as soon as the email arrives: one-time-code asks it to. -->
+			<input
+				bind:value={code}
+				class="code"
+				type="text"
+				inputmode="numeric"
+				autocomplete="one-time-code"
+				placeholder={t.code}
+				aria-label={t.code}
+				required
+			/>
+
+			{#if problem}
+				<p class="hint error">{problem}</p>
+			{/if}
+
+			<button class="primary" type="submit" disabled={session.busy}>
+				{session.busy ? t.working : t.confirm}
+			</button>
+			<button class="switch" type="button" onclick={resend} disabled={session.busy}>
+				{t.resendCode}
+			</button>
+			<button class="switch" type="button" onclick={back} disabled={session.busy}>{t.back}</button>
+		</form>
+	</div>
 {:else if session.status === 'out'}
 	<div class="gate">
 		<form class="card" onsubmit={submit}>
@@ -141,7 +192,22 @@
 	{@render children()}
 {/if}
 
+<!-- What iOS 26 colours the status bar after (README.md, «Home»): the project's --status-bar, or else
+     its --bg, and the door's own purple while the door is up. WebKit keeps reading the background of
+     a fixed element as wide as the screen and shorter than it, like this strip; one that fills the
+     screen, like the door or an app's frame, keeps whatever colour the band already had. -->
+<div class="top-edge" class:door={!ready} aria-hidden="true"></div>
+
 <style>
+	/* The theme picked in the home screen's Ajustes, over the device's (theme.ts). */
+	:global(:root[data-theme='light']) {
+		color-scheme: light;
+	}
+
+	:global(:root[data-theme='dark']) {
+		color-scheme: dark;
+	}
+
 	.gate {
 		display: flex;
 		position: fixed;
@@ -202,6 +268,17 @@
 		outline-offset: -2px;
 	}
 
+	.code {
+		font-variant-numeric: tabular-nums;
+		letter-spacing: 0.3em;
+		text-align: center;
+	}
+
+	/* The placeholder is a word, not digits: spaced out like them it reads badly. */
+	.code::placeholder {
+		letter-spacing: normal;
+	}
+
 	button {
 		padding: 12px;
 		border: 0;
@@ -229,6 +306,32 @@
 	.switch {
 		padding: 4px;
 		font-size: 15px;
+	}
+
+	.switch:disabled {
+		color: #98989f;
+		cursor: default;
+	}
+
+	/* Only there for WebKit to read, so out of sight and out of the way of every tap. A mask hides it
+	   because WebKit skips what is hidden or transparent, but reads what is masked; and it is over
+	   10px tall because WebKit reads no colour from anything thinner. */
+	.top-edge {
+		position: fixed;
+		z-index: 1000;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 12px;
+		background-color: var(--status-bar, var(--bg, transparent));
+		pointer-events: none;
+		-webkit-mask-image: linear-gradient(transparent, transparent);
+		mask-image: linear-gradient(transparent, transparent);
+	}
+
+	/* The top of the door's gradient. */
+	.top-edge.door {
+		background-color: #4a2a8a;
 	}
 
 	/* Above whatever the app draws: a write that did not make it has to be seen. */
