@@ -15,7 +15,7 @@ export const ui = $state({
 export const wallpaper = local('home:wallpaper', '');
 
 /**
- * The colour of the band under the status bar, at the height of the camera, as `#rrggbb`; '' for
- * app.html's. Added to the home screen, the site starts below that band and iOS fills it in.
+ * The colour of the band under the status bar, at the height of the camera, as `#rrggbb`; '' for the
+ * built-in one. Added to the home screen, the site starts below that band and iOS fills it in.
  */
 export const statusBar = setting('home:status-bar-color', '');

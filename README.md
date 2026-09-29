@@ -355,14 +355,17 @@ In Ajustes:
   when the site runs from the home screen. It is picked from the grid of iOS's colour picker, or by
   red, green and blue, slid or typed as a code (`#1C1446`, `28, 20, 70`), and previewed at the top
   of that page. It is kept in the account as `home:status-bar-color`; «Usar el predeterminado» goes
-  back to the site's own. The band takes it once Ajustes closes — while it is open, iOS colours the
-  band after the dimmed backdrop — and only once the session is confirmed, so it shows the site's
-  own colour for a moment on opening.
+  back to the site's own. The band takes it once Ajustes closes — while it is open, the band keeps
+  the colour it had — and on opening, once the session is confirmed: until then it is the purple of
+  the door.
 
-iOS 26 does not colour that band with `theme-color`, nor with the page's background while a fixed
-element touches the top edge: it takes that element's plain `background-color`, read again whenever
-it changes. The home screen is such an element, and carries the band's colour under the wallpaper.
-Were it only a gradient or a photo, WebKit would sample one colour on the first paint and keep it.
+iOS 26 does not colour that band with `theme-color`. WebKit takes the plain `background-color` of the
+fixed element at the top edge, and reads it again whenever it changes only while that element is
+shorter than the screen: one that fills it — the door `Account` shows while loading, the home
+screen, an app's frame — keeps whatever colour the band already had, so the door's purple would stay
+for good. That is why `Account` keeps an invisible strip along the top edge, above everything, in
+the project's `--status-bar`, or else its `--bg`: the home screen sets the first to the colour
+picked here, and in every app the band is the page's own background, following the theme.
 
 ## WillChat
 

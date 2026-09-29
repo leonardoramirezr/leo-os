@@ -63,11 +63,10 @@ export function statusBarColor(picked: string): string {
 }
 
 /**
- * Hands the band's colour to the places a browser falls back on when no fixed element carries one
- * (see `.screen` in +page.svelte): the page's background, and `theme-color`, which Safari before 26
- * and Chrome still read.
+ * Gives the band its colour: as `--status-bar`, which iOS 26 reads off the strip `Account` keeps
+ * along the top edge, and as `theme-color`, which Safari before 26 and Chrome read instead.
  */
 export function paintStatusBar(color: string) {
-	document.documentElement.style.backgroundColor = color;
+	document.documentElement.style.setProperty('--status-bar', color);
 	document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', color);
 }

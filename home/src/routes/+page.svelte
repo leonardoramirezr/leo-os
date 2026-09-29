@@ -58,14 +58,9 @@
 	{/if}
 {/snippet}
 
-<!-- iOS 26 paints the band under the status bar with the plain background colour of the fixed element
-     at the top edge, and reads it again whenever it changes: that element is this one, so it carries
-     the band's colour under the wallpaper, where it never shows. With only a gradient or a photo,
-     WebKit would sample it once and keep that colour for good. -->
 <div
 	class="screen"
 	class:custom-wallpaper={wallpaper.value}
-	style:background-color={barColor}
 	style:background-image={wallpaper.value ? `url(${wallpaper.value})` : undefined}
 >
 	<StatusBar />
@@ -120,6 +115,7 @@
 		background-position: center;
 		background-repeat: no-repeat;
 		background-size: cover;
+		background-color: #1c1446;
 	}
 
 	.pager {
