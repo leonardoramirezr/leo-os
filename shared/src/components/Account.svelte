@@ -36,6 +36,7 @@
 	let name = $state('');
 	let email = $state('');
 	let password = $state('');
+	let code = $state('');
 	let ready = $state(false);
 
 	// Runs once per account: the settings every app shares, then whatever this app keeps of its own.
@@ -58,12 +59,27 @@
 
 	if (configured) session.check();
 
-	function submit(event: SubmitEvent) {
+	async function submit(event: SubmitEvent) {
 		event.preventDefault();
 		if (session.busy) return;
 
-		if (mode === 'in') session.signIn(email, password);
-		else session.signUp(name, email, password);
+		if (session.confirming) await session.confirm(code, password);
+		else if (mode === 'in') await session.signIn(email, password);
+		else await session.signUp(name, email, password);
+
+		// Asked for a code, the account exists: whenever the form is back, it is to sign in to it.
+		if (session.confirming) mode = 'in';
+	}
+
+	function resend() {
+		// Whatever was typed belongs to a code that no longer works.
+		code = '';
+		session.resendCode();
+	}
+
+	function back() {
+		code = '';
+		session.stopConfirming();
 	}
 </script>
 
@@ -76,6 +92,37 @@
 	</div>
 {:else if session.status === 'checking'}
 	<div class="gate" aria-busy="true"></div>
+{:else if session.status === 'out' && session.confirming}
+	<div class="gate">
+		<form class="card" onsubmit={submit}>
+			<h1>{t.confirmTitle}</h1>
+			<p class="hint">{t.codeFrom[session.codeFrom](session.confirming)}</p>
+
+			<!-- iOS offers the code from Mail as soon as the email arrives: one-time-code asks it to. -->
+			<input
+				bind:value={code}
+				class="code"
+				type="text"
+				inputmode="numeric"
+				autocomplete="one-time-code"
+				placeholder={t.code}
+				aria-label={t.code}
+				required
+			/>
+
+			{#if problem}
+				<p class="hint error">{problem}</p>
+			{/if}
+
+			<button class="primary" type="submit" disabled={session.busy}>
+				{session.busy ? t.working : t.confirm}
+			</button>
+			<button class="switch" type="button" onclick={resend} disabled={session.busy}>
+				{t.resendCode}
+			</button>
+			<button class="switch" type="button" onclick={back} disabled={session.busy}>{t.back}</button>
+		</form>
+	</div>
 {:else if session.status === 'out'}
 	<div class="gate">
 		<form class="card" onsubmit={submit}>
@@ -202,6 +249,17 @@
 		outline-offset: -2px;
 	}
 
+	.code {
+		font-variant-numeric: tabular-nums;
+		letter-spacing: 0.3em;
+		text-align: center;
+	}
+
+	/* The placeholder is a word, not digits: spaced out like them it reads badly. */
+	.code::placeholder {
+		letter-spacing: normal;
+	}
+
 	button {
 		padding: 12px;
 		border: 0;
@@ -229,6 +287,11 @@
 	.switch {
 		padding: 4px;
 		font-size: 15px;
+	}
+
+	.switch:disabled {
+		color: #98989f;
+		cursor: default;
 	}
 
 	/* Above whatever the app draws: a write that did not make it has to be seen. */
