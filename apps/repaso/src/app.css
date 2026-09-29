@@ -1,53 +1,35 @@
+/* Each colour is light-dark(light, dark): the device picks, unless a theme was picked in the home
+   screen's Ajustes (shared/src/theme.ts). */
 :root {
 	color-scheme: light dark;
 
-	--bg: #f2f2f7;
-	--text: #0d0d0d;
-	--muted: #6b6b76;
+	--bg: light-dark(#f2f2f7, #1c1c1e);
+	--text: light-dark(#0d0d0d, #ececec);
+	--muted: light-dark(#6b6b76, #a3a3ab);
 	--faint: #8e8e93;
-	--border: #e3e3e6;
-	--group: #ffffff;
-	--hover: #f0f0f2;
-	--sheet: #f2f2f7;
+	--border: light-dark(#e3e3e6, #3a3a3d);
+	--group: light-dark(#ffffff, #2c2c2e);
+	--hover: light-dark(#f0f0f2, #3a3a3c);
+	--sheet: light-dark(#f2f2f7, #1c1c1e);
 	/* Deep enough for white text on it, like the «Estudiar» button. */
-	--accent: #5856d6;
+	--accent: light-dark(#5856d6, #5e5ce6);
 	/* The accent as text or a glyph on a surface; in the dark it has to be lighter to be read. */
-	--tint: #5856d6;
+	--tint: light-dark(#5856d6, #8e8cff);
 	--link: #0a84ff;
-	--danger: #d4382c;
+	--danger: light-dark(#d4382c, #ff6b5f);
 	/* The four answers, from «Otra vez» to «Fácil»: dark enough to read on their own tint. */
-	--again: #c0262d;
-	--hard: #9a5200;
-	--good: #117a37;
-	--easy: #2160d6;
-	--shadow: 0 2px 12px rgb(0 0 0 / 0.07);
+	--again: light-dark(#c0262d, #ff8a8a);
+	--hard: light-dark(#9a5200, #f5b041);
+	--good: light-dark(#117a37, #4ade80);
+	--easy: light-dark(#2160d6, #8fb6ff);
+	--shadow: 0 2px 12px light-dark(rgb(0 0 0 / 0.07), rgb(0 0 0 / 0.25));
 	/* The card being studied floats a little higher than everything else. */
-	--lift: 0 18px 48px rgb(40 40 90 / 0.14), 0 2px 8px rgb(40 40 90 / 0.06);
+	--lift:
+		0 18px 48px light-dark(rgb(40 40 90 / 0.14), rgb(0 0 0 / 0.45)),
+		0 2px 8px light-dark(rgb(40 40 90 / 0.06), rgb(0 0 0 / 0.3));
 
 	--font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 	--mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-	:root {
-		--bg: #1c1c1e;
-		--text: #ececec;
-		--muted: #a3a3ab;
-		--faint: #8e8e93;
-		--border: #3a3a3d;
-		--group: #2c2c2e;
-		--hover: #3a3a3c;
-		--sheet: #1c1c1e;
-		--accent: #5e5ce6;
-		--tint: #8e8cff;
-		--danger: #ff6b5f;
-		--again: #ff8a8a;
-		--hard: #f5b041;
-		--good: #4ade80;
-		--easy: #8fb6ff;
-		--shadow: 0 2px 12px rgb(0 0 0 / 0.25);
-		--lift: 0 18px 48px rgb(0 0 0 / 0.45), 0 2px 8px rgb(0 0 0 / 0.3);
-	}
 }
 
 *,

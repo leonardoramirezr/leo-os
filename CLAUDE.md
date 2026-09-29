@@ -107,6 +107,9 @@ to register it.
 - `@leo-os/shared` as a `workspace:*` dependency, and a `+layout.svelte` that wraps
   `{@render children()}` in its `<Account load={…}>`: nothing of the app draws until there is an
   account and its rows have been read.
+- Colours that change with the theme are `light-dark(light, dark)` under `color-scheme: light dark`,
+  never an `@media (prefers-color-scheme)` block: only that way does the theme picked in the home
+  screen's Ajustes reach the app (`shared/src/theme.ts`).
 - The folder name is part of the URL: lowercase letters, digits and dashes only.
 
 ## Conventions
@@ -131,6 +134,10 @@ to register it.
   `public` again, and a migration older than `public`'s last is refused. Grants are the one thing
   the models do not carry: they live in `db/migrations/0001_grants.sql`, which covers the tables of
   every migration still to come.
+- **The status bar's colour on iOS 26** is what `--status-bar`, or else `--bg`, holds: `Account`
+  paints it on an invisible strip along the top edge, the one thing there WebKit keeps reading.
+  `theme-color` does nothing, and neither does colouring anything that fills the screen
+  (README.md, «Home»).
 - **Dependencies**: as few as possible. No UI or styling frameworks; CSS is written by hand inside
   each component.
 - **Nothing leaves the browser** but the user's own data, to the user's own database, and what they

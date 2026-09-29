@@ -1,43 +1,28 @@
+/* Each colour is light-dark(light, dark): the device picks, unless a theme was picked in the home
+   screen's Ajustes (shared/src/theme.ts). */
 :root {
 	color-scheme: light dark;
 
-	--bg: #f2f2f7;
-	--text: #0d0d0d;
-	--muted: #6b6b76;
+	--bg: light-dark(#f2f2f7, #1c1c1e);
+	--text: light-dark(#0d0d0d, #ececec);
+	--muted: light-dark(#6b6b76, #a3a3ab);
 	--faint: #8e8e93;
-	--border: #e3e3e6;
-	--group: #ffffff;
-	--hover: #f0f0f2;
-	--sheet: #f2f2f7;
+	--border: light-dark(#e3e3e6, #3a3a3d);
+	--group: light-dark(#ffffff, #2c2c2e);
+	--hover: light-dark(#f0f0f2, #3a3a3c);
+	--sheet: light-dark(#f2f2f7, #1c1c1e);
 	/* Deep enough for a white glyph on it, like the microphone. */
 	--accent: #ea580c;
 	--link: #0a84ff;
-	--danger: #d4382c;
+	--danger: light-dark(#d4382c, #ff6b5f);
 	/* The microphone while it listens. */
-	--live: #ff3b30;
+	--live: light-dark(#ff3b30, #ff453a);
 	/* An item a voice command just added or changed. */
-	--flash: #ffedd5;
-	--shadow: 0 2px 12px rgb(0 0 0 / 0.07);
+	--flash: light-dark(#ffedd5, #4a2c14);
+	--shadow: 0 2px 12px light-dark(rgb(0 0 0 / 0.07), rgb(0 0 0 / 0.25));
 
 	--font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 	--mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-	:root {
-		--bg: #1c1c1e;
-		--text: #ececec;
-		--muted: #a3a3ab;
-		--faint: #8e8e93;
-		--border: #3a3a3d;
-		--group: #2c2c2e;
-		--hover: #3a3a3c;
-		--sheet: #1c1c1e;
-		--danger: #ff6b5f;
-		--live: #ff453a;
-		--flash: #4a2c14;
-		--shadow: 0 2px 12px rgb(0 0 0 / 0.25);
-	}
 }
 
 *,

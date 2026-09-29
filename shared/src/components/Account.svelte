@@ -9,6 +9,7 @@
 	import { session } from '../session.svelte';
 	import { loadSettings } from '../settings.svelte';
 	import { sync } from '../sync.svelte';
+	import { applyTheme, theme } from '../theme';
 	import { text, type Lang } from './text';
 
 	let {
@@ -56,6 +57,9 @@
 		})();
 		return () => (current = false);
 	});
+
+	// The device's until this account's settings say otherwise, which is before the app draws.
+	$effect(() => applyTheme(theme.value));
 
 	if (configured) session.check();
 
@@ -188,7 +192,22 @@
 	{@render children()}
 {/if}
 
+<!-- What iOS 26 colours the status bar after (README.md, «Home»): the project's --status-bar, or else
+     its --bg, and the door's own purple while the door is up. WebKit keeps reading the background of
+     a fixed element as wide as the screen and shorter than it, like this strip; one that fills the
+     screen, like the door or an app's frame, keeps whatever colour the band already had. -->
+<div class="top-edge" class:door={!ready} aria-hidden="true"></div>
+
 <style>
+	/* The theme picked in the home screen's Ajustes, over the device's (theme.ts). */
+	:global(:root[data-theme='light']) {
+		color-scheme: light;
+	}
+
+	:global(:root[data-theme='dark']) {
+		color-scheme: dark;
+	}
+
 	.gate {
 		display: flex;
 		position: fixed;
@@ -292,6 +311,27 @@
 	.switch:disabled {
 		color: #98989f;
 		cursor: default;
+	}
+
+	/* Only there for WebKit to read, so out of sight and out of the way of every tap. A mask hides it
+	   because WebKit skips what is hidden or transparent, but reads what is masked; and it is over
+	   10px tall because WebKit reads no colour from anything thinner. */
+	.top-edge {
+		position: fixed;
+		z-index: 1000;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 12px;
+		background-color: var(--status-bar, var(--bg, transparent));
+		pointer-events: none;
+		-webkit-mask-image: linear-gradient(transparent, transparent);
+		mask-image: linear-gradient(transparent, transparent);
+	}
+
+	/* The top of the door's gradient. */
+	.top-edge.door {
+		background-color: #4a2a8a;
 	}
 
 	/* Above whatever the app draws: a write that did not make it has to be seen. */
