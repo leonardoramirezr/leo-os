@@ -174,6 +174,19 @@ export const cards = pgTable(
 	]
 ).enableRLS();
 
+/**
+ * «Dictado»: the text an account is writing by voice. There is only ever one — starting a new text
+ * empties it — so the account is the whole key.
+ */
+export const dictations = pgTable(
+	'dictado_texts',
+	{
+		user_id: account().primaryKey(),
+		text: text().notNull()
+	},
+	() => [ownRows('dictado_texts_own')]
+).enableRLS();
+
 // What the browser reads and writes. `shared/` re-exports these, so a column is described once:
 // rename one here and the apps stop typechecking until they follow.
 export type SettingRow = typeof settings.$inferSelect;
@@ -182,3 +195,4 @@ export type MovementRow = typeof movements.$inferSelect;
 export type ListItemRow = typeof listItems.$inferSelect;
 export type DeckRow = typeof decks.$inferSelect;
 export type CardRow = typeof cards.$inferSelect;
+export type DictationRow = typeof dictations.$inferSelect;

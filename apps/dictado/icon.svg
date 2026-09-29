@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="dictado-bg" x1="0" y1="0" x2="1" y2="1">
+			<stop offset="0" stop-color="#2ee6c5" />
+			<stop offset="1" stop-color="#0b78a8" />
+		</linearGradient>
+		<radialGradient id="dictado-glow" cx="0.28" cy="0.18" r="0.9">
+			<stop offset="0" stop-color="#fff" stop-opacity="0.3" />
+			<stop offset="1" stop-color="#fff" stop-opacity="0" />
+		</radialGradient>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#dictado-bg)" />
+	<rect width="1024" height="1024" fill="url(#dictado-glow)" />
+	<g fill="none" stroke="#fff" stroke-linecap="round" stroke-width="64">
+		<!-- The voice, dying down as it reaches… -->
+		<path d="M204 452v120M300 332v360M396 402v220M492 482v60" />
+		<!-- …the text it turns into -->
+		<path d="M604 392h216M604 512h216M604 632h120" />
+	</g>
+</svg>
