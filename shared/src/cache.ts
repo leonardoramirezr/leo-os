@@ -14,6 +14,13 @@ const MARKER = ':cache:';
 
 const SCHEMA = dataApiSchema ? `${dataApiSchema}:` : '';
 
+/**
+ * Set by signing out, which drops every cache and reloads the page. Until the page is gone an app
+ * may still save — a read coming back, a copy written as the page is hidden — and that would put
+ * back what was just dropped.
+ */
+let closed = false;
+
 function read<T>(key: string): T | undefined {
 	try {
 		const raw = localStorage.getItem(key);
@@ -24,9 +31,16 @@ function read<T>(key: string): T | undefined {
 	}
 }
 
-function write(key: string, value: unknown): boolean {
+function write(key: string, value: unknown, limit = Infinity): boolean {
+	if (closed) return false;
 	try {
-		localStorage.setItem(key, JSON.stringify(value));
+		const json = JSON.stringify(value);
+		if (json.length > limit) {
+			// The copy left from before would be painted as if it were the latest.
+			localStorage.removeItem(key);
+			return false;
+		}
+		localStorage.setItem(key, json);
 		return true;
 	} catch {
 		return false;
@@ -37,9 +51,13 @@ export function readCache<T>(prefix: string, userId: string): T | undefined {
 	return read(`${prefix}${MARKER}${SCHEMA}${userId}`);
 }
 
-/** Says whether it made it: storage may be full, or blocked, and some callers have to tell. */
-export function writeCache(prefix: string, userId: string, value: unknown): boolean {
-	return write(`${prefix}${MARKER}${SCHEMA}${userId}`, value);
+/**
+ * Says whether it made it: storage may be full, or blocked, and some callers have to tell. Every
+ * app shares the few megabytes localStorage has, so a value longer than `limit` characters is not
+ * kept at all rather than crowd the others out.
+ */
+export function writeCache(prefix: string, userId: string, value: unknown, limit?: number): boolean {
+	return write(`${prefix}${MARKER}${SCHEMA}${userId}`, value, limit);
 }
 
 /**
@@ -56,6 +74,7 @@ export function writeLocal(prefix: string, userId: string, value: unknown): bool
 
 /** Drops every account's cache. Called on sign-out: nothing of theirs is left on the device. */
 export function clearCaches() {
+	closed = true;
 	try {
 		const keys = Object.keys(localStorage).filter((key) => key.includes(MARKER));
 		for (const key of keys) localStorage.removeItem(key);

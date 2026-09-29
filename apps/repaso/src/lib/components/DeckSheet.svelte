@@ -2,6 +2,7 @@
 	import { tick, untrack } from 'svelte';
 	import { collection, type Deck } from '$lib/collection.svelte';
 	import { plural } from '$lib/format';
+	import NewPerDayField from './NewPerDayField.svelte';
 	import Sheet from './Sheet.svelte';
 
 	interface Props {
@@ -15,13 +16,17 @@
 	let { open = $bindable(), deck, oncreate }: Props = $props();
 
 	let name = $state('');
+	let perDay = $state(0);
 	let field = $state<HTMLInputElement>();
 
-	// Every time the sheet opens it starts blank, or from the deck being renamed.
+	// Every time the sheet opens it starts blank, or from the deck being edited.
 	$effect(() => {
 		if (!open) return;
 
-		untrack(() => (name = deck?.name ?? ''));
+		untrack(() => {
+			name = deck?.name ?? '';
+			perDay = deck?.newPerDay ?? 0;
+		});
 		tick().then(() => field?.focus());
 	});
 
@@ -31,7 +36,7 @@
 		if (!chosen) return;
 
 		open = false;
-		if (deck) collection.renameDeck(deck.id, chosen);
+		if (deck) collection.updateDeck(deck.id, chosen, perDay);
 		else oncreate?.(collection.addDeck(chosen));
 	}
 
@@ -68,7 +73,15 @@
 					enterkeyhint="done"
 				/>
 			</label>
+			{#if deck}
+				<NewPerDayField bind:value={perDay} />
+			{/if}
 		</div>
+		{#if deck}
+			<p class="hint">
+				Cuántas tarjetas nuevas entran a estudio cada día, como en Anki. Las demás esperan su turno.
+			</p>
+		{/if}
 
 		<button class="primary" type="submit" disabled={!name.trim()}>
 			{deck ? 'Guardar' : 'Crear mazo'}

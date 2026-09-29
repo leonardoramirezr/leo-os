@@ -7,11 +7,15 @@
 	let { children } = $props();
 
 	// What is due follows the clock: a card learned ten minutes ago may be due now. Coming back to the
-	// app, the cards may also have been studied on another device in the meantime.
+	// app, the cards may also have been studied on another device in the meantime. Leaving it, the
+	// copy on the device catches up with the last answers.
 	$effect(() => {
 		const timer = setInterval(() => collection.tick(), 30_000);
 		const onvisible = () => {
-			if (document.visibilityState !== 'visible') return;
+			if (document.visibilityState !== 'visible') {
+				collection.flush();
+				return;
+			}
 			collection.tick();
 			collection.refresh();
 		};

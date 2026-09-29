@@ -134,7 +134,9 @@ export const decks = pgTable(
 	{
 		id: uuid().primaryKey(),
 		user_id: account(),
-		name: text().notNull()
+		name: text().notNull(),
+		/** How many new cards a day brings at most, as in Anki; 0 is every one of them. */
+		new_per_day: integer().notNull().default(0)
 	},
 	(table) => [index('repaso_decks_user').on(table.user_id), ownRows('repaso_decks_own')]
 ).enableRLS();
@@ -164,7 +166,9 @@ export const cards = pgTable(
 		/** Thousandths: how much the interval grows with each «Bien», 2500 being ×2.5. */
 		ease: integer().notNull().default(2500),
 		/** Epoch milliseconds. New cards are studied in the order they were added. */
-		created_at: bigint({ mode: 'number' }).notNull().default(0)
+		created_at: bigint({ mode: 'number' }).notNull().default(0),
+		/** Epoch milliseconds: when it was first answered, the day it counts among the new. 0 while new. */
+		introduced_at: bigint({ mode: 'number' }).notNull().default(0)
 	},
 	(table) => [
 		check('repaso_cards_state', sql`${table.state} in ('new', 'learning', 'review', 'relearning')`),
