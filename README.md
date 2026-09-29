@@ -99,6 +99,9 @@ Neon Auth on that domain.
   session in a cookie of its own domain, so signing in once covers the whole site. It is asked for
   with `rememberMe`, which makes the cookie outlive closing the tab; how long it may live is the
   session lifetime configured in the Neon console.
+- **Confirming the email.** An account gets no session until its email is confirmed. Right after
+  signing up, the door asks for the code Neon Auth emailed; left for later, signing in with that
+  email asks for it again. «Enviar otro código» emails a new one, and the one before stops working.
 - **One account, one set of rows.** Every table carries the account a row belongs to, and the
   policies in `db/schema.ts` only ever let `auth.user_id()` — the account behind the request's
   token — see its own. Signed out there is no token, and the `anonymous` role is granted nothing.
@@ -157,7 +160,12 @@ In the [Neon console](https://console.neon.tech), on the project this site uses:
 
 1. **Auth.** Turn Neon Auth on and copy its URL (`…/auth`). Under its configuration, add
    `https://leonardoramirezr.github.io` as a trusted domain — previews live on the same origin, so
-   one entry covers them all — and set the session lifetime to a year.
+   one entry covers them all — and set the session lifetime to a year. Under **Sign-up with
+   Email**, turn on **Verify at Sign-up** with **Verification code**: the sign-in screen asks for a
+   code, not a link. Signing in with an email still unconfirmed only emails a fresh code if sending
+   on sign-in is on as well, which the Neon CLI does with
+   `neon neon-auth config email-password update --send-verification-email-on-sign-in`; without it
+   the screen still asks, and «Enviar otro código» is what sends one.
 2. **Data API.** Turn it on and copy its URL (`…/rest/v1`). If it asks which origins may call it,
    that same one. Do this before the first migration: the `authenticated` and `anonymous` roles the
    policies name are its, and turning it on is what creates them.
