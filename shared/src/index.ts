@@ -9,6 +9,7 @@ export { configured } from './config';
 export type {
 	CardRow,
 	DeckRow,
+	DictationRow,
 	Json,
 	ListItemRow,
 	MovementRow,

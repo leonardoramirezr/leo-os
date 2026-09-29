@@ -8,6 +8,7 @@ phone home screen: every app is an icon.
 - Me deben: https://leonardoramirezr.github.io/leo-os/me-deben/
 - Lista: https://leonardoramirezr.github.io/leo-os/lista/
 - Repaso: https://leonardoramirezr.github.io/leo-os/repaso/
+- Dictado: https://leonardoramirezr.github.io/leo-os/dictado/
 
 ## Layout
 
@@ -485,3 +486,43 @@ again just before it would be forgotten.
   with its place in the schedule in plain columns, and with a copy on the device so the app opens
   without waiting. Coming back to the app reads them again, in case they were studied on another
   device.
+
+## Dictado
+
+Voice to text: say something and it is written down, then go on dictating, or say what to change.
+
+- It opens on the microphone and the **Mejorar texto** switch. Tapping the microphone starts
+  listening and tapping it again, now **Listo**, turns what was said into text; **Cancelar** throws
+  it away. It also stops and goes on on its own after ten minutes, or when the app goes to the
+  background. While listening, the screen is kept on and a ring around the button follows the voice.
+- From then on the text takes most of the screen, and can be typed in as well. **Añadir** dictates
+  more, which goes at the end: a stretch of speech follows on from the text, and anything in several
+  lines — paragraphs, a list — starts a paragraph of its own. **Editar** listens for an instruction
+  instead, such as «hazlo más formal», «quita la última frase» or «tradúcelo al inglés», which the
+  chat model carries out on the whole text.
+- **Deshacer** and **Rehacer** walk through every version the text has had since the app was opened:
+  dictated, improved, edited or typed, where typing counts as one change until it pauses. ⌘Z and ⇧⌘Z
+  (Ctrl on the others) do the same. The versions last as long as the visit; the text is kept.
+- With **Mejorar texto** on, every dictation also goes through the chat model, with the instructions
+  under **Instrucciones**, which are the user's to rewrite, and what comes back takes the place of
+  the transcription. The transcription is on screen first and Deshacer goes back to it; if improving
+  it fails, it stays. The model is shown the end of the text so far, to follow on from it, and only
+  what goes after it comes back.
+- Typing on a touch screen, the bar with the microphones steps aside for the keyboard, and the top
+  one has Deshacer, Rehacer and **Listo**. The copy button copies the whole text, and **Texto nuevo**
+  empties it after asking; Deshacer brings it back.
+- **Ajustes** picks the speech-to-text model among those Groq's `/models` lists (`whisper-large-v3`
+  until another is picked; `whisper-large-v3-turbo` is the faster one), the language Whisper is told
+  the dictation is in — Spanish, English, or «Automático» for Whisper to work it out — and the chat
+  model that improves and edits, `openai/gpt-oss-120b` until another is picked. It is plain text in
+  and plain text out, with nothing model-specific sent, so any chat model the key can use will do.
+  These choices, the switch and the instructions are kept in the account.
+- Out of silence Whisper makes up phrases such as «Gracias.»; the segments it doubts were speech are
+  dropped, as in Lista.
+- It uses the same Groq API key as Lista and Repaso, `groq:api-key`, and asks for one when there is
+  none. Only the key, the recordings and the text are ever sent to `api.groq.com`.
+- The text lives in the account, in the `dictado_texts` table, one row per account, with a copy on
+  the device. A change is saved a moment after it is made, and until the database has it the copy on
+  the device says so: the next time the app opens, that copy is sent rather than read over, so a
+  dictation is not lost to a moment without signal. Coming back to the app reads the text again, in
+  case it changed on another device.
