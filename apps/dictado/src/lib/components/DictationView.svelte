@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import icon from '../../../icon.svg';
 	import { draft } from '$lib/draft.svelte';
 	import { voice } from '$lib/voice.svelte';
@@ -141,6 +142,7 @@
 <div class="app" bind:this={app}>
 	<header>
 		<div class="side">
+			<HomeButton href="{resolve('/')}../" />
 			{#if typing}
 				<button
 					class="icon-button"
@@ -164,10 +166,6 @@
 				>
 					<Icon name="redo" />
 				</button>
-			{:else}
-				<a class="icon-button" href="{resolve('/')}../" aria-label="Apps" title="Apps" data-sveltekit-reload>
-					<Icon name="apps" />
-				</a>
 			{/if}
 		</div>
 
@@ -262,15 +260,13 @@
 		height: 100dvh;
 	}
 
+	/* From edge to edge, like every screen's bar: the way home is in the same corner everywhere. */
 	header {
 		display: grid;
 		flex: none;
 		grid-template-columns: 1fr auto 1fr;
 		align-items: center;
 		gap: 8px;
-		width: 100%;
-		max-width: 760px;
-		margin: 0 auto;
 		padding: calc(env(safe-area-inset-top) + 6px) max(10px, env(safe-area-inset-right)) 6px
 			max(10px, env(safe-area-inset-left));
 	}

@@ -60,6 +60,10 @@ On top of that:
 - Colours that change between light and dark are written as `light-dark(light, dark)` under
   `color-scheme: light dark`, not in an `@media (prefers-color-scheme)` block: that is how the theme
   picked in the home screen's Ajustes reaches the app.
+- Every screen carries the way back to the home screen: a bar along its top edge that stays put
+  when the screen scrolls, and first in it `HomeButton`, from `shared/`, in the same corner on every
+  screen of every app. Saved to the iPhone's home screen, a web app has no browser controls to leave
+  by.
 
 For a new SvelteKit app, start from `pnpm dlx sv create apps/<folder> --template minimal --types ts --add sveltekit-adapter="adapter:static"`
 and copy two details from `apps/willchat`: `paths.base` read from `BASE_PATH` in `vite.config.ts`,

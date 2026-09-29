@@ -107,6 +107,10 @@ to register it.
 - `@leo-os/shared` as a `workspace:*` dependency, and a `+layout.svelte` that wraps
   `{@render children()}` in its `<Account load={…}>`: nothing of the app draws until there is an
   account and its rows have been read.
+- Every screen, onboarding included, opens with a bar along the top edge that stays put when the
+  screen scrolls, with `<HomeButton href="{resolve('/')}../" />` from `@leo-os/shared` first in it
+  and the same padding as every other bar, so that it sits in the same corner everywhere: saved to
+  the home screen there are no browser controls, and it is the only way back.
 - Colours that change with the theme are `light-dark(light, dark)` under `color-scheme: light dark`,
   never an `@media (prefers-color-scheme)` block: only that way does the theme picked in the home
   screen's Ajustes reach the app (`shared/src/theme.ts`).

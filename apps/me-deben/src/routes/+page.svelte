@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import MovementSheet from '$lib/components/MovementSheet.svelte';
 	import PersonSheet from '$lib/components/PersonSheet.svelte';
 	import { ledger, type Person } from '$lib/ledger.svelte';
@@ -15,8 +17,12 @@
 	}
 </script>
 
+<header>
+	<HomeButton href="{resolve('/')}../" />
+</header>
+
 <div class="screen">
-	<header>
+	<section class="summary">
 		<h1>Me deben en total</h1>
 		<p class="amount total">{formatMoney(ledger.total)}</p>
 		<p class="caption">
@@ -39,7 +45,7 @@
 				{/if}
 			</p>
 		{/if}
-	</header>
+	</section>
 
 	<main>
 		{#if ledger.debtors.length > 0}
@@ -120,8 +126,19 @@
 		margin: 0 auto;
 	}
 
+	/* Stuck to the top edge, so that the way home does not scroll away with a long list. */
 	header {
-		padding: calc(24px + env(safe-area-inset-top)) 4px 24px;
+		position: sticky;
+		z-index: 10;
+		top: 0;
+		display: flex;
+		padding: calc(env(safe-area-inset-top) + 6px) max(10px, env(safe-area-inset-right)) 6px
+			max(10px, env(safe-area-inset-left));
+		background: var(--bg);
+	}
+
+	.summary {
+		padding: 4px 4px 24px;
 	}
 
 	h1 {

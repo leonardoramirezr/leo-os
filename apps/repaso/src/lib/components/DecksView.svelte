@@ -2,6 +2,7 @@
 	import icon from '../../../icon.svg';
 	import { pushState } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import { collection, type Deck } from '$lib/collection.svelte';
 	import { plural } from '$lib/format';
 	import AnkiWebSheet from './AnkiWebSheet.svelte';
@@ -31,22 +32,20 @@
 	}
 </script>
 
-<div class="screen">
-	<header class="bar">
-		<a class="icon-button" href="{resolve('/')}../" aria-label="Apps" title="Apps" data-sveltekit-reload>
-			<Icon name="apps" />
-		</a>
-		<button
-			class="icon-button"
-			onclick={() => (settingsOpen = true)}
-			aria-label="Ajustes"
-			title="Ajustes"
-			aria-haspopup="dialog"
-		>
-			<Icon name="settings" />
-		</button>
-	</header>
+<header class="top-bar">
+	<HomeButton href="{resolve('/')}../" />
+	<button
+		class="icon-button settings"
+		onclick={() => (settingsOpen = true)}
+		aria-label="Ajustes"
+		title="Ajustes"
+		aria-haspopup="dialog"
+	>
+		<Icon name="settings" />
+	</button>
+</header>
 
+<div class="screen">
 	<h1>Repaso</h1>
 
 	{#if collection.decks.length}
@@ -115,12 +114,8 @@
 		padding: 0 16px calc(32px + env(safe-area-inset-bottom));
 	}
 
-	.bar {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		margin: 0 -8px;
-		padding-top: calc(env(safe-area-inset-top) + 6px);
+	.settings {
+		margin-left: auto;
 	}
 
 	h1 {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import icon from '../../../icon.svg';
 	import { chat } from '$lib/chat.svelte';
 	import { t } from '$lib/i18n';
@@ -79,15 +80,7 @@
 
 <div class="app" bind:this={app}>
 	<header>
-		<a
-			class="icon-button"
-			href="{resolve('/')}../"
-			aria-label={t.apps}
-			title={t.apps}
-			data-sveltekit-reload
-		>
-			<Icon name="apps" />
-		</a>
+		<HomeButton href="{resolve('/')}../" />
 
 		<button class="title" onclick={() => (settingsOpen = true)} aria-haspopup="dialog">
 			<span class="name">WillChat <Icon name="chevron" size={16} /></span>
@@ -177,7 +170,8 @@
 		flex-direction: column;
 		align-items: center;
 		min-width: 0;
-		padding: 3px 12px;
+		/* No taller than the buttons beside it: a taller bar would move the way home down. */
+		padding: 1px 12px;
 		border: 0;
 		border-radius: 12px;
 		background: transparent;

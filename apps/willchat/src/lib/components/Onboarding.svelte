@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import icon from '../../../icon.svg';
 	import { t } from '$lib/i18n';
 	import { fetchModelIds } from '$lib/models';
@@ -30,48 +32,71 @@
 	}
 </script>
 
-<main class="onboarding">
-	<form {onsubmit}>
-		<img class="logo" src={icon} alt="" width="72" height="72" />
-		<h1>{t.welcomeTitle}</h1>
-		<p class="lead">{t.welcomeText}</p>
+<div class="screen">
+	<header>
+		<HomeButton href="{resolve('/')}../" />
+	</header>
 
-		<label>
-			<span>{t.apiKey}</span>
-			<input
-				type="password"
-				name="openai-api-key"
-				placeholder="sk-…"
-				autocomplete="off"
-				autocapitalize="off"
-				spellcheck="false"
-				bind:value={key}
-			/>
-		</label>
+	<main class="onboarding">
+		<form {onsubmit}>
+			<img class="logo" src={icon} alt="" width="72" height="72" />
+			<h1>{t.welcomeTitle}</h1>
+			<p class="lead">{t.welcomeText}</p>
 
-		{#if error}
-			<p class="error" role="alert">{error}</p>
-		{/if}
+			<label>
+				<span>{t.apiKey}</span>
+				<input
+					type="password"
+					name="openai-api-key"
+					placeholder="sk-…"
+					autocomplete="off"
+					autocapitalize="off"
+					spellcheck="false"
+					bind:value={key}
+				/>
+			</label>
 
-		<button type="submit" disabled={checking || !key.trim()}>
-			{checking ? t.checkingKey : t.continue}
-		</button>
+			{#if error}
+				<p class="error" role="alert">{error}</p>
+			{/if}
 
-		<p class="hint">
-			{t.keyPrivacy}
-			<a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">
-				{t.getApiKey}
-			</a>
-		</p>
-	</form>
-</main>
+			<button type="submit" disabled={checking || !key.trim()}>
+				{checking ? t.checkingKey : t.continue}
+			</button>
+
+			<p class="hint">
+				{t.keyPrivacy}
+				<a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">
+					{t.getApiKey}
+				</a>
+			</p>
+		</form>
+	</main>
+</div>
 
 <style>
+	.screen {
+		display: flex;
+		flex-direction: column;
+		min-height: 100dvh;
+	}
+
+	/* The bar every screen has along its top edge, stuck there, with the way home. */
+	header {
+		position: sticky;
+		z-index: 10;
+		top: 0;
+		display: flex;
+		padding: calc(env(safe-area-inset-top) + 6px) max(10px, env(safe-area-inset-right)) 6px
+			max(10px, env(safe-area-inset-left));
+		background: var(--bg);
+	}
+
 	.onboarding {
 		display: grid;
+		flex: 1;
 		place-items: center;
-		min-height: 100dvh;
-		padding: calc(env(safe-area-inset-top) + 24px) 20px calc(env(safe-area-inset-bottom) + 24px);
+		padding: 24px 20px calc(env(safe-area-inset-bottom) + 24px);
 	}
 
 	form {

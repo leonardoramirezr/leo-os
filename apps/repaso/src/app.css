@@ -81,6 +81,20 @@ dialog::backdrop {
 	background: rgb(0 0 0 / 0.4);
 }
 
+/* The bar along the top edge of every screen, stuck there even when the screen scrolls: the way home
+   in its left corner, and after it whatever the screen needs. `.bar` is taken by a progress bar. */
+.top-bar {
+	position: sticky;
+	z-index: 10;
+	top: 0;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: calc(env(safe-area-inset-top) + 6px) max(10px, env(safe-area-inset-right)) 6px
+		max(10px, env(safe-area-inset-left));
+	background: var(--bg);
+}
+
 /* A glyph alone, in the bars at the top. */
 .icon-button {
 	display: grid;

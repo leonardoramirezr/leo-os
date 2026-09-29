@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { MediaQuery, SvelteSet } from 'svelte/reactivity';
 	import { fly } from 'svelte/transition';
+	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import { collection, type Deck } from '$lib/collection.svelte';
 	import { formatWait, plural } from '$lib/format';
 	import { ratings, wait, type Rating } from '$lib/schedule';
@@ -116,7 +118,8 @@
 <svelte:window {onkeydown} />
 
 <div class="study">
-	<header class="top">
+	<header class="top-bar">
+		<HomeButton href="{resolve('/')}../" />
 		<button class="icon-button" onclick={close} aria-label="Terminar" title="Terminar (Esc)">
 			<Icon name="close" size={22} />
 		</button>
@@ -208,17 +211,16 @@
 		inset: 0;
 		display: flex;
 		flex-direction: column;
-		max-width: 640px;
-		margin: 0 auto;
-		padding: calc(env(safe-area-inset-top) + 6px) 16px calc(env(safe-area-inset-bottom) + 16px);
+		padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
 	}
 
-	.top {
-		display: flex;
-		flex: none;
-		align-items: center;
-		gap: 8px;
-		margin: 0 -8px;
+	/* The bar goes from edge to edge, like every screen's; the card and its buttons keep to a column. */
+	.stage,
+	.controls {
+		width: 100%;
+		max-width: 640px;
+		margin: 0 auto;
+		padding-inline: 16px;
 	}
 
 	.progress {
@@ -251,7 +253,7 @@
 		min-height: 0;
 		grid-template: minmax(0, 1fr) / minmax(0, 1fr);
 		align-items: center;
-		padding: 16px 0 20px;
+		padding-block: 16px 20px;
 	}
 
 	.slot {

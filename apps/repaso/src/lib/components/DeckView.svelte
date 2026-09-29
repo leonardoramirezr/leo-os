@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { pushState } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import { collection, type Card, type Deck } from '$lib/collection.svelte';
 	import { formatWait, plural } from '$lib/format';
 	import { isDue } from '$lib/schedule';
@@ -55,15 +57,16 @@
 	}
 </script>
 
-<div class="screen">
-	<header class="bar">
-		<button class="back" onclick={() => history.back()}>
-			<Icon name="back" size={24} />
-			Mazos
-		</button>
-		<button class="text-button" onclick={() => (editingDeck = true)} aria-haspopup="dialog">Editar</button>
-	</header>
+<header class="top-bar">
+	<HomeButton href="{resolve('/')}../" />
+	<button class="back" onclick={() => history.back()}>
+		<Icon name="back" size={24} />
+		Mazos
+	</button>
+	<button class="text-button edit" onclick={() => (editingDeck = true)} aria-haspopup="dialog">Editar</button>
+</header>
 
+<div class="screen">
 	<h1>{deck.name}</h1>
 
 	{#if counts.total}
@@ -143,23 +146,19 @@
 		padding: 0 16px calc(32px + env(safe-area-inset-bottom));
 	}
 
-	.bar {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		min-height: 46px;
-		padding-top: calc(env(safe-area-inset-top) + 6px);
-	}
-
 	.back {
 		display: flex;
 		align-items: center;
-		margin-left: -8px;
 		padding: 4px 8px 4px 0;
 		border: 0;
 		background: none;
 		color: var(--link);
 		font-size: 17px;
+	}
+
+	.edit {
+		margin-left: auto;
+		padding: 8px 6px;
 	}
 
 	h1 {

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import icon from '../../../icon.svg';
 	import { GroqError, listModels } from '$lib/groq';
 	import { apiKey, models } from '$lib/settings.svelte';
@@ -38,53 +40,76 @@
 	}
 </script>
 
-<main class="onboarding">
-	<form {onsubmit}>
-		<img class="logo" src={icon} alt="" width="72" height="72" />
-		<h1>Dictado</h1>
-		<p class="lead">
-			Habla y Groq lo pasa a texto. Si quieres, un modelo de IA lo corrige a tu gusto, y después lo
-			cambias diciéndole qué hacer. Para empezar, ingresa tu API key de Groq.
-		</p>
+<div class="screen">
+	<header>
+		<HomeButton href="{resolve('/')}../" />
+	</header>
 
-		<label>
-			<span>API key de Groq</span>
-			<input
-				type="password"
-				name="groq-api-key"
-				placeholder="gsk_…"
-				autocomplete="off"
-				autocapitalize="off"
-				spellcheck="false"
-				bind:value={key}
-			/>
-		</label>
+	<main class="onboarding">
+		<form {onsubmit}>
+			<img class="logo" src={icon} alt="" width="72" height="72" />
+			<h1>Dictado</h1>
+			<p class="lead">
+				Habla y Groq lo pasa a texto. Si quieres, un modelo de IA lo corrige a tu gusto, y después lo
+				cambias diciéndole qué hacer. Para empezar, ingresa tu API key de Groq.
+			</p>
 
-		{#if error}
-			<p class="error" role="alert">{error}</p>
-		{/if}
+			<label>
+				<span>API key de Groq</span>
+				<input
+					type="password"
+					name="groq-api-key"
+					placeholder="gsk_…"
+					autocomplete="off"
+					autocapitalize="off"
+					spellcheck="false"
+					bind:value={key}
+				/>
+			</label>
 
-		<button type="submit" disabled={checking || !key.trim()}>
-			{checking ? 'Verificando…' : 'Continuar'}
-		</button>
+			{#if error}
+				<p class="error" role="alert">{error}</p>
+			{/if}
 
-		<p class="hint">
-			Esta API key se usa en esta app y en las demás apps de Leo OS que usen Groq: la ingresas una sola
-			vez. Se guarda en tu cuenta, donde solo tú puedes leerla, y solo se envía a api.groq.com, igual que
-			lo que grabes.
-			<a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">
-				Obtener una API key
-			</a>
-		</p>
-	</form>
-</main>
+			<button type="submit" disabled={checking || !key.trim()}>
+				{checking ? 'Verificando…' : 'Continuar'}
+			</button>
+
+			<p class="hint">
+				Esta API key se usa en esta app y en las demás apps de Leo OS que usen Groq: la ingresas una sola
+				vez. Se guarda en tu cuenta, donde solo tú puedes leerla, y solo se envía a api.groq.com, igual que
+				lo que grabes.
+				<a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">
+					Obtener una API key
+				</a>
+			</p>
+		</form>
+	</main>
+</div>
 
 <style>
+	.screen {
+		display: flex;
+		flex-direction: column;
+		min-height: 100dvh;
+	}
+
+	/* The bar every screen has along its top edge, stuck there, with the way home. */
+	header {
+		position: sticky;
+		z-index: 10;
+		top: 0;
+		display: flex;
+		padding: calc(env(safe-area-inset-top) + 6px) max(10px, env(safe-area-inset-right)) 6px
+			max(10px, env(safe-area-inset-left));
+		background: var(--bg);
+	}
+
 	.onboarding {
 		display: grid;
+		flex: 1;
 		place-items: center;
-		min-height: 100dvh;
-		padding: calc(env(safe-area-inset-top) + 24px) 20px calc(env(safe-area-inset-bottom) + 24px);
+		padding: 24px 20px calc(env(safe-area-inset-bottom) + 24px);
 	}
 
 	form {

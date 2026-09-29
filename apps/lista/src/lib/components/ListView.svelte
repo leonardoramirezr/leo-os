@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import { list } from '$lib/list.svelte';
 	import { voice } from '$lib/voice.svelte';
 	import Icon from './Icon.svelte';
@@ -49,22 +50,20 @@
 	});
 </script>
 
-<div class="screen">
-	<header>
-		<a class="icon-button" href="{resolve('/')}../" aria-label="Apps" title="Apps" data-sveltekit-reload>
-			<Icon name="apps" />
-		</a>
-		<button
-			class="icon-button"
-			onclick={() => (settingsOpen = true)}
-			aria-label="Ajustes"
-			title="Ajustes"
-			aria-haspopup="dialog"
-		>
-			<Icon name="settings" />
-		</button>
-	</header>
+<header>
+	<HomeButton href="{resolve('/')}../" />
+	<button
+		class="icon-button"
+		onclick={() => (settingsOpen = true)}
+		aria-label="Ajustes"
+		title="Ajustes"
+		aria-haspopup="dialog"
+	>
+		<Icon name="settings" />
+	</button>
+</header>
 
+<div class="screen">
 	<h1>Lista</h1>
 
 	{#if total}
@@ -111,12 +110,17 @@
 		padding: 0 16px calc(210px + env(safe-area-inset-bottom));
 	}
 
+	/* Stuck to the top edge, so that the way home does not scroll away with a long list. */
 	header {
+		position: sticky;
+		z-index: 10;
+		top: 0;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin: 0 -8px;
-		padding-top: calc(env(safe-area-inset-top) + 6px);
+		padding: calc(env(safe-area-inset-top) + 6px) max(10px, env(safe-area-inset-right)) 6px
+			max(10px, env(safe-area-inset-left));
+		background: var(--bg);
 	}
 
 	.icon-button {
