@@ -21,3 +21,4 @@ export { local } from './local.svelte';
 export { session } from './session.svelte';
 export { setting } from './settings.svelte';
 export { pull, push, sync } from './sync.svelte';
+export { theme, type Theme } from './theme';

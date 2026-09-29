@@ -14,6 +14,11 @@
 </Account>
 
 <style>
+	/* Light or dark with the device, unless a theme was picked in Ajustes (@leo-os/shared's theme). */
+	:global(:root) {
+		color-scheme: light dark;
+	}
+
 	:global(html, body) {
 		margin: 0;
 		height: 100%;

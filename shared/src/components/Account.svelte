@@ -9,6 +9,7 @@
 	import { session } from '../session.svelte';
 	import { loadSettings } from '../settings.svelte';
 	import { sync } from '../sync.svelte';
+	import { applyTheme, theme } from '../theme';
 	import { text, type Lang } from './text';
 
 	let {
@@ -55,6 +56,9 @@
 		})();
 		return () => (current = false);
 	});
+
+	// The device's until this account's settings say otherwise, which is before the app draws.
+	$effect(() => applyTheme(theme.value));
 
 	if (configured) session.check();
 
@@ -142,6 +146,15 @@
 {/if}
 
 <style>
+	/* The theme picked in the home screen's Ajustes, over the device's (theme.ts). */
+	:global(:root[data-theme='light']) {
+		color-scheme: light;
+	}
+
+	:global(:root[data-theme='dark']) {
+		color-scheme: dark;
+	}
+
 	.gate {
 		display: flex;
 		position: fixed;

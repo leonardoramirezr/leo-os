@@ -107,6 +107,9 @@ to register it.
 - `@leo-os/shared` as a `workspace:*` dependency, and a `+layout.svelte` that wraps
   `{@render children()}` in its `<Account load={…}>`: nothing of the app draws until there is an
   account and its rows have been read.
+- Colours that change with the theme are `light-dark(light, dark)` under `color-scheme: light dark`,
+  never an `@media (prefers-color-scheme)` block: only that way does the theme picked in the home
+  screen's Ajustes reach the app (`shared/src/theme.ts`).
 - The folder name is part of the URL: lowercase letters, digits and dashes only.
 
 ## Conventions

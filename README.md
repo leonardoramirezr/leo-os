@@ -57,6 +57,9 @@ On top of that:
 - Everything renders on the client. There is no backend of ours: an app queries Neon directly, as
   described in [Account and data](#account-and-data).
 - Every app shares the site's origin, and therefore the session, `localStorage` and IndexedDB too. Use a prefix of your own in the keys (e.g. `willchat:`).
+- Colours that change between light and dark are written as `light-dark(light, dark)` under
+  `color-scheme: light dark`, not in an `@media (prefers-color-scheme)` block: that is how the theme
+  picked in the home screen's Ajustes reaches the app.
 
 For a new SvelteKit app, start from `pnpm dlx sv create apps/<folder> --template minimal --types ts --add sveltekit-adapter="adapter:static"`
 and copy two details from `apps/willchat`: `paths.base` read from `BASE_PATH` in `vite.config.ts`,
@@ -333,12 +336,27 @@ Besides the published apps, the home screen carries three icons of its own. They
 at the bottom, which stays put whichever page of apps is showing, and go without their names there,
 as on iOS:
 
-- **Ajustes**: changes the wallpaper, and shows which account is signed in with the way out. The
-  chosen photo is scaled down to 1600 px, re-encoded as JPEG and stored in the browser's
-  `localStorage` under `home:wallpaper`, one per account. With no photo, the default gradient is
-  used, which comes back on «Quitar».
+- **Ajustes**: the wallpaper, the theme and the colour of the status bar, and which account is
+  signed in with the way out.
 - **Recargar**: reloads the site, handy when it runs full screen without browser controls.
 - **Cerrar sesión**: signs out, after asking.
+
+Added to the home screen, the dock floats 12 points over the bottom edge, as the iOS 26 one does.
+
+In Ajustes:
+
+- **Fondo de pantalla**: the chosen photo is scaled down to 1600 px, re-encoded as JPEG and stored
+  in the browser's `localStorage` under `home:wallpaper`, one per account. With no photo, the
+  default gradient is used, which comes back on «Quitar».
+- **Apariencia**: light, dark, or «Sistema», which follows the device. It is the home screen's and
+  every app's at once, kept in the account as `leo-os:theme`: each project writes its colours with
+  `light-dark()`, and `Account` puts the theme picked on `<html>` as `data-theme`.
+- **Barra de estado**: the colour of the band iOS leaves at the top, at the height of the camera,
+  when the site runs from the home screen. It is picked from the grid of iOS's colour picker, or by
+  red, green and blue, slid or typed as a code (`#1C1446`, `28, 20, 70`), and shows there while it
+  is being tried. It is kept in the account as `home:status-bar-color`; «Usar el predeterminado»
+  goes back to the site's own. The band only takes it once the session is confirmed, so it shows
+  the site's own colour for a moment on opening.
 
 ## WillChat
 

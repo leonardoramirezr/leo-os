@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { MediaQuery } from 'svelte/reactivity';
 	import { apps, dock, type App } from '$lib/apps';
+	import { paintStatusBar } from '$lib/color';
 	import SettingsSheet from '$lib/SettingsSheet.svelte';
-	import { ui, wallpaper } from '$lib/settings.svelte';
+	import { statusBar, ui, wallpaper } from '$lib/settings.svelte';
 	import StatusBar from '$lib/StatusBar.svelte';
 
 	// Keep in sync with the iPad media query below and in StatusBar.svelte.
@@ -22,6 +23,9 @@
 	function onscroll({ currentTarget: pager }: UIEvent & { currentTarget: HTMLElement }) {
 		currentPage = Math.round(pager.scrollLeft / pager.clientWidth);
 	}
+
+	// The band above the wallpaper takes the colour picked in Ajustes, or the one being tried there.
+	$effect(() => paintStatusBar(ui.statusBarTrial || statusBar.value));
 </script>
 
 <!-- iOS Safari only marks what is being touched as :active when a touch listener sits on it or above
@@ -241,8 +245,9 @@
 		background: #fff;
 	}
 
-	/* Glass, like the iOS 26 dock: the wallpaper blurred and brightened through it, light caught
-	   along its rim, and a soft shadow under it. */
+	/* Glass, like the iOS 26 dock: the wallpaper blurred through it, light caught along its rim, and
+	   a soft shadow under it. Brightened in the light theme; in the dark one, smoked about as much as
+	   iOS's own, measured on a screenshot. */
 	.dock {
 		display: flex;
 		flex: none;
@@ -251,15 +256,15 @@
 		margin: 0 calc(10 * var(--u));
 		padding: calc(16 * var(--u)) calc(8 * var(--u));
 		border-radius: calc(38 * var(--u));
-		background: rgb(255 255 255 / 0.16);
+		background: light-dark(rgb(255 255 255 / 0.16), rgb(0 0 0 / 0.5));
 		-webkit-backdrop-filter: blur(20px) saturate(1.4);
 		backdrop-filter: blur(20px) saturate(1.4);
 		box-shadow:
 			inset calc(1 * var(--u)) calc(1.5 * var(--u)) calc(1 * var(--u)) calc(-0.5 * var(--u))
-				rgb(255 255 255 / 0.5),
+				light-dark(rgb(255 255 255 / 0.5), rgb(255 255 255 / 0.3)),
 			inset calc(-1 * var(--u)) calc(-1.5 * var(--u)) calc(1 * var(--u)) calc(-0.5 * var(--u))
-				rgb(255 255 255 / 0.25),
-			inset 0 0 0 calc(0.5 * var(--u)) rgb(255 255 255 / 0.12),
+				light-dark(rgb(255 255 255 / 0.25), rgb(255 255 255 / 0.15)),
+			inset 0 0 0 calc(0.5 * var(--u)) light-dark(rgb(255 255 255 / 0.12), rgb(255 255 255 / 0.1)),
 			0 calc(8 * var(--u)) calc(30 * var(--u)) rgb(0 0 0 / 0.14);
 	}
 
@@ -329,10 +334,11 @@
 	}
 
 	/* Added to the home screen, the site reaches the bottom edge, where iOS draws its home indicator
-	   over whatever is there: the dock keeps clear of it. */
+	   over whatever is there. The dock floats as high over it as the iOS 26 one does: 12 points,
+	   measured on an iPhone screenshot. */
 	@media (display-mode: standalone) {
 		.screen {
-			padding-bottom: calc(env(safe-area-inset-bottom) + 20 * var(--u));
+			padding-bottom: calc(env(safe-area-inset-bottom) + 12 * var(--u));
 		}
 	}
 </style>
