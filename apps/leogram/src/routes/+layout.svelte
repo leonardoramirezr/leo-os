@@ -1,9 +1,10 @@
 <script lang="ts">
 	import '../app.css';
 	import icon from '../../icon.svg';
-	import { Account } from '@leo-os/shared';
+	import { Account, pull } from '@leo-os/shared';
 	import { page } from '$app/state';
 	import PostPage from '$lib/components/PostPage.svelte';
+	import { readMine } from '$lib/mine';
 	import { posts } from '$lib/posts.svelte';
 	import { profile } from '$lib/profile.svelte';
 
@@ -13,8 +14,15 @@
 	// Everything else is the account's own posts.
 	const code = $derived(page.url.searchParams.get('p'));
 
+	// What the device kept shows at once; the profile and the grid come from one read after it.
 	async function load(userId: string) {
-		await Promise.all([profile.load(userId), posts.load(userId)]);
+		profile.restore(userId);
+		posts.restore(userId);
+		const mine = await pull(readMine);
+		if (mine) {
+			profile.adopt(mine);
+			posts.adopt(mine.posts);
+		}
 	}
 </script>
 

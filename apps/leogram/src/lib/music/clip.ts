@@ -113,28 +113,12 @@ function wav(audio: AudioBuffer, start: number, length: number): Blob {
 	return new Blob([view], { type: 'audio/wav' });
 }
 
-export function dataUrl(blob: Blob): Promise<string> {
-	return new Promise((resolve, reject) => {
-		const reader = new FileReader();
-		reader.onload = () => resolve(reader.result as string);
-		reader.onerror = () => reject(reader.error ?? new Error('No se pudo leer el archivo.'));
-		reader.readAsDataURL(blob);
-	});
-}
-
 /**
  * The clip that goes with the post, and where in it the chosen moment starts: an MP3 cut starts a
  * little before it (see `cutMp3`).
  */
-export async function cutClip(
-	upload: Upload,
-	start: number,
-	length: number
-): Promise<{ url: string; lead: number }> {
-	if (upload.mp3) {
-		const { clip, lead } = cutMp3(upload.mp3, start, length);
-		return { url: await dataUrl(clip), lead };
-	}
+export function cutClip(upload: Upload, start: number, length: number): { clip: Blob; lead: number } {
+	if (upload.mp3) return cutMp3(upload.mp3, start, length);
 	if (!upload.audio) throw new Error('No se pudo leer la canción.');
-	return { url: await dataUrl(wav(upload.audio, start, length)), lead: 0 };
+	return { clip: wav(upload.audio, start, length), lead: 0 };
 }

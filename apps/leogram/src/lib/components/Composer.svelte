@@ -1,14 +1,23 @@
 <script lang="ts">
-	// «Nueva publicación»: up to ten photos, cut to one of Instagram's shapes and framed by dragging
-	// each one, a caption and a song. «Compartir» publishes it, and its link is ready right away:
-	// there is no other step to make it public, and nobody finds it without the link.
+	// «Nueva publicación»: up to ten photos and videos, in one of Instagram's shapes and framed by
+	// dragging each one, a caption and a song. «Compartir» publishes it, and its link is ready right
+	// away: there is no other step to make it public, and nobody finds it without the link.
 	import { isExpired, session } from '@leo-os/shared';
 	import { replaceState } from '$app/navigation';
 	import { onDestroy, onMount } from 'svelte';
 	import { linkOf } from '$lib/code';
 	import { clock } from '$lib/format';
-	import { ASPECTS, closestAspect, load, sizeOf, type Aspect } from '$lib/images';
-	import { MAX_PHOTOS, posts, type DraftMusic, type DraftPhoto } from '$lib/posts.svelte';
+	import {
+		ASPECTS,
+		closestAspect,
+		load,
+		MAX_VIDEO,
+		readVideo,
+		sizeOf,
+		videoType,
+		type Aspect
+	} from '$lib/images';
+	import { MAX_SLIDES, posts, type DraftMusic, type DraftSlide } from '$lib/posts.svelte';
 	import { profile } from '$lib/profile.svelte';
 	import Avatar from './Avatar.svelte';
 	import Icon from './Icon.svelte';
@@ -20,11 +29,11 @@
 		{ aspect: 'landscape', label: '1.91:1' }
 	];
 
-	let photos = $state<DraftPhoto[]>([]);
+	let slides = $state<DraftSlide[]>([]);
 	let aspect = $state<Aspect>('portrait');
 	let caption = $state('');
 	let music = $state<DraftMusic | null>(null);
-	/** The photo being framed. */
+	/** The slide being framed. */
 	let current = $state(0);
 	let choosingMusic = $state(false);
 	let reading = $state(false);
@@ -37,6 +46,7 @@
 
 	let picker: HTMLInputElement;
 	let frame = $state<HTMLDivElement>();
+	let video = $state<HTMLVideoElement>();
 	let drag: { x: number; y: number; focusX: number; focusY: number } | undefined;
 
 	// «+» was the tap that asked for photos: the picker opens with the composer. A browser that
@@ -44,55 +54,104 @@
 	onMount(() => picker.click());
 
 	onDestroy(() => {
-		for (const photo of photos) URL.revokeObjectURL(photo.preview);
+		for (const item of slides) letGo(item);
 		if (music?.upload) URL.revokeObjectURL(music.upload.url);
 	});
 
-	async function addPhotos() {
-		const files = [...(picker.files ?? [])].slice(0, MAX_PHOTOS - photos.length);
+	// A video being framed plays, without sound, as it will in the post.
+	$effect(() => {
+		if (!video) return;
+		video.muted = true;
+		video.play().catch(() => {});
+	});
+
+	function letGo(item: DraftSlide) {
+		URL.revokeObjectURL(item.preview);
+		if (item.thumb !== item.preview) URL.revokeObjectURL(item.thumb);
+	}
+
+	/**
+	 * A file from the gallery as a slide. A photo is decoded once for its size and let go of: it is
+	 * decoded again to be published. A video is read for its size and its first frame.
+	 */
+	async function read(file: File): Promise<DraftSlide> {
+		const focus = { x: 0.5, y: 0.5 };
+		const type = videoType(file);
+		if (type) {
+			if (file.size > MAX_VIDEO) throw new Error('Un video pesa más de 300 MB: elige uno más corto.');
+			const { width, height, frame } = await readVideo(file);
+			const [preview, thumb] = [URL.createObjectURL(file), URL.createObjectURL(frame)];
+			return { kind: 'video', file, type, width, height, frame, preview, thumb, focus };
+		}
+		if (file.type.startsWith('video/')) {
+			throw new Error('Ese video no se puede subir: elige uno en MP4 o MOV.');
+		}
+
+		let image: Awaited<ReturnType<typeof load>>;
+		try {
+			image = await load(file);
+		} catch {
+			throw new Error('No se pudo leer una de las fotos.');
+		}
+		const { width, height } = sizeOf(image);
+		if ('close' in image) image.close();
+		const preview = URL.createObjectURL(file);
+		return { kind: 'photo', file, type: 'image/jpeg', width, height, preview, thumb: preview, focus };
+	}
+
+	async function addFiles() {
+		const files = [...(picker.files ?? [])].slice(0, MAX_SLIDES - slides.length);
 		picker.value = '';
 		if (files.length === 0) return;
 		reading = true;
 		problem = '';
-		try {
-			for (const file of files) {
-				// Decoded once for its size, and let go of: it is decoded again to be published.
-				const image = await load(file);
-				const { width, height } = sizeOf(image);
-				if ('close' in image) image.close();
-				if (photos.length === 0) aspect = closestAspect(width, height);
-				const preview = URL.createObjectURL(file);
-				photos.push({ file, width, height, preview, focus: { x: 0.5, y: 0.5 } });
+		for (const file of files) {
+			try {
+				const item = await read(file);
+				if (slides.length === 0) aspect = closestAspect(item.width, item.height);
+				slides.push(item);
+			} catch (thrown) {
+				// One that cannot be read is left out; the rest still come.
+				problem = thrown instanceof Error ? thrown.message : 'No se pudo leer uno de los archivos.';
 			}
-			current = Math.min(current, photos.length - 1);
-		} catch {
-			problem = 'No se pudo leer una de las fotos.';
-		} finally {
-			reading = false;
 		}
+		current = Math.min(current, Math.max(0, slides.length - 1));
+		reading = false;
 	}
 
-	function removePhoto(index: number) {
-		const [gone] = photos.splice(index, 1);
-		if (gone) URL.revokeObjectURL(gone.preview);
-		current = Math.max(0, Math.min(current, photos.length - 1));
+	function removeSlide(index: number) {
+		const [gone] = slides.splice(index, 1);
+		if (gone) letGo(gone);
+		current = Math.max(0, Math.min(current, slides.length - 1));
 	}
 
 	function move(index: number, by: number) {
 		const to = index + by;
-		if (to < 0 || to >= photos.length) return;
-		const [photo] = photos.splice(index, 1);
-		photos.splice(to, 0, photo);
+		if (to < 0 || to >= slides.length) return;
+		const [item] = slides.splice(index, 1);
+		slides.splice(to, 0, item);
 		current = to;
 	}
 
+	/** «Foto 2» or «Video 2». */
+	function named(item: DraftSlide, index: number) {
+		return `${item.kind === 'video' ? 'Video' : 'Foto'} ${index + 1}`;
+	}
+
+	const frameLabel = $derived.by(() => {
+		const item = slides[current];
+		if (!item) return undefined;
+		const drag = item.kind === 'video' ? 'arrástralo para encuadrarlo' : 'arrástrala para encuadrarla';
+		return `${named(item, current)} de ${slides.length}: ${drag}`;
+	});
+
 	/**
-	 * How far the photo reaches past the frame, in pixels across and down: what dragging can move
-	 * it by. A photo covers the frame, so it only overflows one way.
+	 * How far the slide reaches past the frame, in pixels across and down: what dragging can move
+	 * it by. It covers the frame, so it only overflows one way.
 	 */
-	function overflow(photo: DraftPhoto) {
+	function overflow(item: DraftSlide) {
 		if (!frame) return { x: 0, y: 0 };
-		const ratio = photo.width / photo.height;
+		const ratio = item.width / item.height;
 		const box = { width: frame.clientWidth, height: frame.clientHeight };
 		return ratio > ASPECTS[aspect]
 			? { x: box.height * ratio - box.width, y: 0 }
@@ -100,36 +159,36 @@
 	}
 
 	function onpointerdown(event: PointerEvent) {
-		const photo = photos[current];
-		if (!photo || !frame) return;
+		const item = slides[current];
+		if (!item || !frame) return;
 		frame.setPointerCapture(event.pointerId);
-		drag = { x: event.clientX, y: event.clientY, focusX: photo.focus.x, focusY: photo.focus.y };
+		drag = { x: event.clientX, y: event.clientY, focusX: item.focus.x, focusY: item.focus.y };
 	}
 
 	function onpointermove(event: PointerEvent) {
-		const photo = photos[current];
-		if (!drag || !photo) return;
-		const room = overflow(photo);
+		const item = slides[current];
+		if (!drag || !item) return;
+		const room = overflow(item);
 		const clamp = (value: number) => Math.min(1, Math.max(0, value));
-		// The photo follows the finger, so the frame moves the other way.
-		if (room.x > 0) photo.focus.x = clamp(drag.focusX - (event.clientX - drag.x) / room.x);
-		if (room.y > 0) photo.focus.y = clamp(drag.focusY - (event.clientY - drag.y) / room.y);
+		// The picture follows the finger, so the frame moves the other way.
+		if (room.x > 0) item.focus.x = clamp(drag.focusX - (event.clientX - drag.x) / room.x);
+		if (room.y > 0) item.focus.y = clamp(drag.focusY - (event.clientY - drag.y) / room.y);
 	}
 
 	function cancel() {
-		const touched = photos.length > 0 || caption.trim() !== '' || music !== null;
+		const touched = slides.length > 0 || caption.trim() !== '' || music !== null;
 		if (touched && !published && !confirm('¿Descartar la publicación?')) return;
 		history.back();
 	}
 
 	async function share() {
-		if (photos.length === 0 || progress !== undefined) return;
+		if (slides.length === 0 || progress !== undefined) return;
 		problem = '';
 		progress = 0;
 		try {
 			published = await posts.publish(
-				{ photos, aspect, caption: caption.trim(), music },
-				(done, total) => (progress = done / total)
+				{ slides, aspect, caption: caption.trim(), music },
+				(done) => (progress = done)
 			);
 		} catch (thrown) {
 			if (isExpired(thrown)) session.expire();
@@ -175,14 +234,14 @@
 				class="text-button blue side end"
 				type="button"
 				onclick={share}
-				disabled={photos.length === 0 || progress !== undefined || reading}
+				disabled={slides.length === 0 || progress !== undefined || reading}
 			>
 				Compartir
 			</button>
 		{/if}
 	</header>
 
-	<input bind:this={picker} type="file" accept="image/*" multiple hidden onchange={addPhotos} />
+	<input bind:this={picker} type="file" accept="image/*,video/*" multiple hidden onchange={addFiles} />
 
 	{#if published}
 		<div class="done">
@@ -207,11 +266,11 @@
 				</button>
 			</div>
 		</div>
-	{:else if photos.length === 0}
+	{:else if slides.length === 0}
 		<div class="empty">
 			<span class="circle"><Icon name="photo" size={44} stroke={1.5} /></span>
-			<h2>Elige las fotos</h2>
-			<p>Hasta {MAX_PHOTOS}, que se verán en carrusel.</p>
+			<h2>Elige fotos y videos</h2>
+			<p>Hasta {MAX_SLIDES}, que se verán en carrusel.</p>
 			<button class="primary" type="button" onclick={() => picker.click()} disabled={reading}>
 				{reading ? 'Leyendo…' : 'Seleccionar de la galería'}
 			</button>
@@ -228,19 +287,30 @@
 				onpointerup={() => (drag = undefined)}
 				onpointercancel={() => (drag = undefined)}
 				role="img"
-				aria-label="Foto {current + 1} de {photos.length}: arrástrala para encuadrarla"
+				aria-label={frameLabel}
 			>
-				{#if photos[current]}
-					{@const focus = photos[current].focus}
-					<img
-						src={photos[current].preview}
-						alt=""
-						draggable="false"
-						style:object-position="{focus.x * 100}% {focus.y * 100}%"
-					/>
+				{#if slides[current]}
+					{@const item = slides[current]}
+					{#if item.kind === 'video'}
+						<video
+							bind:this={video}
+							src={item.preview}
+							style:object-position="{item.focus.x * 100}% {item.focus.y * 100}%"
+							muted
+							loop
+							playsinline
+						></video>
+					{:else}
+						<img
+							src={item.preview}
+							alt=""
+							draggable="false"
+							style:object-position="{item.focus.x * 100}% {item.focus.y * 100}%"
+						/>
+					{/if}
 				{/if}
-				{#if photos.length > 1}
-					<span class="counter">{current + 1}/{photos.length}</span>
+				{#if slides.length > 1}
+					<span class="counter">{current + 1}/{slides.length}</span>
 				{/if}
 			</div>
 
@@ -272,7 +342,7 @@
 						class="icon-button"
 						type="button"
 						onclick={() => move(current, 1)}
-						disabled={current === photos.length - 1}
+						disabled={current === slides.length - 1}
 						aria-label="Mover después"
 					>
 						<Icon name="forward" size={20} />
@@ -280,8 +350,8 @@
 					<button
 						class="icon-button"
 						type="button"
-						onclick={() => removePhoto(current)}
-						aria-label="Quitar esta foto"
+						onclick={() => removeSlide(current)}
+						aria-label="Quitar de la publicación"
 					>
 						<Icon name="trash" size={20} />
 					</button>
@@ -289,26 +359,29 @@
 			</div>
 
 			<ul class="thumbs">
-				{#each photos as photo, i (photo.preview)}
+				{#each slides as item, i (item.preview)}
 					<li>
 						<button
 							type="button"
 							class:current={i === current}
 							onclick={() => (current = i)}
-							aria-label="Foto {i + 1}"
+							aria-label={named(item, i)}
 						>
-							<img src={photo.preview} alt="" />
+							<img src={item.thumb} alt="" />
+							{#if item.kind === 'video'}
+								<span class="kind"><Icon name="video" size={14} /></span>
+							{/if}
 						</button>
 					</li>
 				{/each}
-				{#if photos.length < MAX_PHOTOS}
+				{#if slides.length < MAX_SLIDES}
 					<li>
 						<button
 							class="add"
 							type="button"
 							onclick={() => picker.click()}
 							disabled={reading}
-							aria-label="Añadir fotos"
+							aria-label="Añadir fotos o videos"
 						>
 							{#if reading}<span class="spinner"></span>{:else}<Icon name="plus" size={22} />{/if}
 						</button>
@@ -434,7 +507,8 @@
 		cursor: grabbing;
 	}
 
-	.frame img {
+	.frame img,
+	.frame video {
 		display: block;
 		width: 100%;
 		height: 100%;
@@ -503,6 +577,7 @@
 
 	.thumbs button {
 		display: grid;
+		position: relative;
 		place-items: center;
 		width: 56px;
 		height: 56px;
@@ -521,6 +596,17 @@
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
+	}
+
+	.thumbs .kind {
+		display: grid;
+		position: absolute;
+		top: 3px;
+		right: 3px;
+		padding: 2px;
+		border-radius: 5px;
+		background: rgb(0 0 0 / 0.45);
+		color: #fff;
 	}
 
 	.caption {

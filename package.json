@@ -11,6 +11,7 @@
 		"db:generate": "pnpm --filter @leo-os/db generate",
 		"db:migrate": "pnpm --filter @leo-os/db migrate",
 		"db:preview": "pnpm --filter @leo-os/db preview",
+		"db:storage": "pnpm --filter @leo-os/db storage",
 		"prepare": "node scripts/icons.mjs"
 	},
 	"devDependencies": {

@@ -1,5 +1,6 @@
 <script lang="ts">
-	// A profile photo, round. Whoever has none shows the first letter of their username on grey.
+	// A profile photo, round. Whoever has none shows the first letter of their username on grey, and
+	// so does a photo that does not load: an address kept on the device from days ago, say.
 	let {
 		src = '',
 		username = '',
@@ -14,11 +15,13 @@
 	} = $props();
 
 	const letter = $derived((username.replace(/[^a-z0-9]/gi, '')[0] ?? '').toUpperCase());
+	/** The address that did not load. */
+	let failed = $state('');
 </script>
 
 <span class="avatar" class:ring style:--size="{size}px">
-	{#if src}
-		<img {src} alt="" />
+	{#if src && src !== failed}
+		<img {src} alt="" onerror={() => (failed = src)} />
 	{:else}
 		<span class="letter" aria-hidden="true">{letter}</span>
 	{/if}

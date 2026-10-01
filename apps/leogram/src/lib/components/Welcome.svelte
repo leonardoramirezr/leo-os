@@ -8,6 +8,7 @@
 
 	let username = $state(suggestUsername(session.account?.name ?? '', session.account?.email ?? ''));
 	let avatar = $state('');
+	let photo = $state<Blob | null>();
 	let problem = $state('');
 	let saving = $state(false);
 
@@ -19,7 +20,7 @@
 		}
 		saving = true;
 		try {
-			await profile.save(username, avatar);
+			await profile.save(username, photo);
 		} catch (thrown) {
 			problem = thrown instanceof Error ? thrown.message : 'No se pudo guardar el perfil.';
 		} finally {
@@ -36,7 +37,7 @@
 		después.
 	</p>
 
-	<ProfileFields bind:username bind:avatar bind:problem />
+	<ProfileFields bind:username bind:avatar bind:photo bind:problem />
 	{#if problem}
 		<p class="error">{problem}</p>
 	{/if}

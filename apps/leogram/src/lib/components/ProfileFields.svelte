@@ -1,16 +1,32 @@
 <script lang="ts">
 	// A profile's photo and username, as they are picked for the first time and as they are edited.
+	// A new photo stays here until the form is saved, which is when it goes to the bucket.
+	import { onDestroy } from 'svelte';
 	import { avatar as shrink } from '$lib/images';
 	import Avatar from './Avatar.svelte';
 
 	let {
 		username = $bindable(),
 		avatar = $bindable(),
+		photo = $bindable(),
 		problem = $bindable()
-	}: { username: string; avatar: string; problem: string } = $props();
+	}: {
+		username: string;
+		/** What shows as the photo: the saved one's address, or the new one's on the device. */
+		avatar: string;
+		/** A new photo, or null to take the saved one off; undefined while it stays as it is. */
+		photo: Blob | null | undefined;
+		problem: string;
+	} = $props();
 
 	let picker: HTMLInputElement;
 	let reading = $state(false);
+	/** The addresses made here for photos on the device, given back when the form goes. */
+	const made: string[] = [];
+
+	onDestroy(() => {
+		for (const url of made) URL.revokeObjectURL(url);
+	});
 
 	async function pick() {
 		const file = picker.files?.[0];
@@ -18,7 +34,10 @@
 		if (!file) return;
 		reading = true;
 		try {
-			avatar = await shrink(file);
+			const shrunk = await shrink(file);
+			photo = shrunk;
+			avatar = URL.createObjectURL(shrunk);
+			made.push(avatar);
 		} catch {
 			problem = 'No se pudo leer esa foto.';
 		} finally {
@@ -47,7 +66,16 @@
 		<span>{reading ? 'Leyendo…' : avatar ? 'Cambiar foto' : 'Elegir foto de perfil'}</span>
 	</button>
 	{#if avatar}
-		<button class="remove" type="button" onclick={() => (avatar = '')}>Quitar foto</button>
+		<button
+			class="remove"
+			type="button"
+			onclick={() => {
+				avatar = '';
+				photo = null;
+			}}
+		>
+			Quitar foto
+		</button>
 	{/if}
 	<input bind:this={picker} type="file" accept="image/*" hidden onchange={pick} />
 

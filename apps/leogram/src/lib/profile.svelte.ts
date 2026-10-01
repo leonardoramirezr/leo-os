@@ -1,6 +1,6 @@
 // Who the account is on Leogram: the username and photo shown with its posts and its comments, to
 // everyone who opens them. Unlike the rest of Leo OS, it is seen by others: no email, no real name
-// unless it is typed in as the username.
+// unless it is typed in as the username. The photo is in the bucket, like the posts' files.
 import {
 	insert,
 	pull,
@@ -10,6 +10,9 @@ import {
 	writeCache,
 	type LeogramProfileRow
 } from '@leo-os/shared';
+import { drop, send, type Signed } from './bucket';
+import { readMine, type Mine } from './mine';
+import { call } from './post';
 
 const TABLE = 'leogram_profiles';
 const CACHE = 'leogram-profile';
@@ -42,42 +45,58 @@ export function suggestUsername(name: string, email: string): string {
 
 class Profile {
 	username = $state('');
+	/** The photo's address, signed for a day at least; '' for none. */
 	avatar = $state('');
-	/** Whether the database (or the device's copy of it) has been read. */
-	known = $state(false);
 
 	#account = '';
 
-	async load(userId: string) {
+	/** Shows what the device kept from the last time, until the database is read. */
+	restore(userId: string) {
 		this.#account = userId;
-
 		const cached = readCache<{ username: string; avatar: string }>(CACHE, userId);
 		if (cached) this.#adopt(cached);
-
-		const rows = await pull(() =>
-			select<Pick<LeogramProfileRow, 'username' | 'avatar'>>(TABLE, 'username,avatar')
-		);
-		if (rows) {
-			this.#adopt(rows[0] ?? { username: '', avatar: '' });
-			this.#save();
-		}
 	}
 
-	/** Saves the username and photo. What the database refuses comes back as a sentence to show. */
-	async save(username: string, avatar: string) {
+	/** The profile as the database has it. */
+	adopt(mine: Mine) {
+		this.#adopt({ username: mine.username ?? '', avatar: mine.avatar ?? '' });
+		this.#save();
+	}
+
+	/**
+	 * Saves the username, and the photo when it changed: a new one, or null to take it off. What
+	 * the database refuses comes back as a sentence to show.
+	 */
+	async save(username: string, photo?: Blob | null) {
 		try {
-			await upsert(TABLE, { user_id: this.#account, username, avatar });
+			await upsert(TABLE, { user_id: this.#account, username });
 		} catch (thrown) {
 			throw new Error(reason(thrown));
 		}
-		this.#adopt({ username, avatar });
-		this.#save();
+
+		// After the username: there is no photo without a profile to show it with.
+		if (photo) {
+			const signed = await call<Signed>('leogram_upload_avatar', { size: photo.size });
+			await send(signed, photo);
+			drop([signed.drop]);
+		} else if (photo === null) {
+			drop([await call<string | null>('leogram_remove_avatar')]);
+		}
+
+		// The photo's address is the database's to sign. Without it, the one on the device shows
+		// until the next time.
+		const mine = await pull(readMine);
+		if (mine) {
+			this.adopt(mine);
+		} else {
+			const avatar = photo ? URL.createObjectURL(photo) : photo === null ? '' : this.avatar;
+			this.#adopt({ username, avatar });
+		}
 	}
 
 	#adopt(row: { username: string; avatar: string }) {
 		this.username = row.username;
 		this.avatar = row.avatar;
-		this.known = true;
 	}
 
 	#save() {

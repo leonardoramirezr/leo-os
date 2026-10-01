@@ -1,6 +1,7 @@
 name: Drop the preview
 
-# A deleted branch leaves its preview behind: its folder in gh-pages and its database schema.
+# A deleted branch leaves its preview behind: its folder in gh-pages, its database schema, and what
+# it uploaded to Leogram's bucket.
 on:
   delete:
 
@@ -49,3 +50,18 @@ jobs:
           NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
           VITE_NEON_DATA_API_URL: ${{ vars.NEON_DATA_API_URL }}
         run: pnpm db:preview drop "$SLUG"
+
+      # Once the schema is gone, nothing points to the preview's files: they go with the others
+      # nothing points to, as soon as they are an hour old — this run, or the next deploy.
+      - name: Delete its files
+        if: steps.target.outputs.slug != ''
+        continue-on-error: true
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          VITE_NEON_DATA_API_URL: ${{ vars.NEON_DATA_API_URL }}
+          LEOGRAM_BUCKET: ${{ vars.LEOGRAM_BUCKET }}
+          LEOGRAM_STORAGE_ACCESS_KEY_ID: ${{ secrets.LEOGRAM_STORAGE_ACCESS_KEY_ID }}
+          LEOGRAM_STORAGE_SECRET_ACCESS_KEY: ${{ secrets.LEOGRAM_STORAGE_SECRET_ACCESS_KEY }}
+        run: pnpm db:storage

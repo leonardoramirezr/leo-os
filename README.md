@@ -25,7 +25,8 @@ phone home screen: every app is an icon.
 ├── db/
 │   ├── schema.ts            # The models: the tables and their row level security policies
 │   ├── migrations/          # Generated from the models; the deploy applies them
-│   └── preview.mjs          # Gives each preview a copy of the database of its own
+│   ├── preview.mjs          # Gives each preview a copy of the database of its own
+│   └── storage.mjs          # Gets Leogram's bucket ready (see «Leogram»)
 ├── neon/
 │   └── auth-proxy.ts        # Stands Neon Auth on an own domain (see «Own domain»)
 ├── scripts/
@@ -114,8 +115,9 @@ Neon Auth on that domain.
 - **Images stay on the device.** The wallpaper and WillChat's conversation are far too large for
   rows read on every open, so they stay in `localStorage` and IndexedDB. Their keys carry the
   account too: two people using the same phone do not see each other's, and signing out drops the
-  lot. A Leogram post's photos are the exception: they are meant to be seen on other devices, so
-  they go to the database, in rows of their own that are only read when the post is opened.
+  lot. A Leogram post's photos and videos are the exception: they are meant to be seen on other
+  devices, so they go to a bucket of the project's Object Storage, which the database signs the way
+  into ([Leogram](#leogram)).
 - **Offline.** Each app keeps a copy of its rows on the device, so it opens with something on
   screen and still shows it with no connection. The database is what counts: the copy is replaced
   whole every time a query comes back. A change is applied on screen first and sent right after; if
@@ -187,7 +189,9 @@ Then, in this repository under **Settings → Secrets and variables → Actions*
 | **Variables** | `NEON_DATA_API_URL` | The Data API URL from step 2 |
 | **Variables** | `NEON_PROJECT_ID` | The project's ID, from its settings in the console |
 | **Secrets** | `DATABASE_URL` | The project's connection string, for the migrations and the previews |
-| **Secrets** | `NEON_API_KEY` | A Neon API key, to tell the Data API what to serve and when to look again |
+| **Secrets** | `NEON_API_KEY` | A Neon API key, to tell the Data API what to serve and when to look again, and to make Leogram's bucket |
+| **Variables** | `LEOGRAM_BUCKET` | Optional: the name of [Leogram's bucket](#leograms-bucket), `leogram` if unset |
+| **Secrets** | `LEOGRAM_STORAGE_ACCESS_KEY_ID`, `LEOGRAM_STORAGE_SECRET_ACCESS_KEY` | Optional: a key of your own to that bucket; without them the deploy makes one |
 
 The two URLs are not secrets: they are the public addresses of services that decide for themselves
 what the caller may see, and they end up in the published JavaScript either way. The connection
@@ -283,9 +287,9 @@ it is merged.
 - If the branch has an open PR, the workflow leaves a comment there with the link and keeps it
   updated. The link also shows up in each run's summary, even before there is a PR.
 - `…/leo-os/previews/` lists the ones that exist, newest to oldest.
-- When the branch is deleted, `preview-cleanup.yml` drops its folder and its schema. Once none are
-  left, `previews/` disappears. GitHub runs that workflow from `main`, so the cleanup starts working
-  once the file lands there.
+- When the branch is deleted, `preview-cleanup.yml` drops its folder, its schema and what it
+  uploaded to [Leogram's bucket](#leograms-bucket). Once none are left, `previews/` disappears.
+  GitHub runs that workflow from `main`, so the cleanup starts working once the file lands there.
 - GitHub Pages takes about a minute to serve what was just published.
 
 Each preview has a database of its own: a schema in the same Neon database, named after it
@@ -603,10 +607,14 @@ or not.
   and comments will carry, suggested out of the account's name; «Editar perfil» changes it and the
   photo later. Usernames are Instagram's: lowercase letters, digits, dots and underscores, and no two
   accounts share one.
-- A post is up to ten photos, cut to one of Instagram's shapes — 1:1, 4:5 or 1.91:1, whichever crops
-  the first photo least until another is picked — and framed by dragging each one. They are kept
-  1080 pixels wide, as JPEG; the arrows and the bin under them reorder them and drop one. Then a
-  caption and a song.
+- A post is up to ten photos and videos, in one of Instagram's shapes — 1:1, 4:5 or 1.91:1,
+  whichever crops the first one least until another is picked — and framed by dragging each one;
+  the arrows and the bin under them reorder them and drop one. Then a caption and a song.
+- A photo is kept cut to its frame, 1080 pixels wide, as JPEG. A video goes as it was recorded —
+  MP4, MOV or WebM, up to 300 MB, with its sound —, since a browser cannot cut one: it is framed
+  when it is shown, and its first frame, cut like a photo, is its poster and, if it comes first,
+  the grid's thumbnail. One the browser cannot play is left out, saying so: most of those who open
+  the post could not play it either.
 - **The song** comes from Apple's catalog or from the device. The catalog is Apple's open search
   (`itunes.apple.com/search`), which needs no key: any song anyone knows, with the 30-second preview
   Apple serves of it, which the post plays from Apple. From the device, an MP3 (or anything else the
@@ -622,29 +630,63 @@ or not.
   other step to make it public. Nobody comes across a post without its link, whose code is eleven
   random characters, and nothing lists posts but their author's own grid. The link is copied or
   shared from there, from the post's «⋯», or from the paper plane under it.
-- **The link opens for anybody**, with Leogram's name on top as Instagram has its own: the photos to
-  swipe through, the song, who posted it, the likes, the caption and the comments. A browser lets no
-  page make sound before it is touched, so when the song cannot start on its own it says so on the
-  photo, and starts with the first tap anywhere.
+- **The link opens for anybody**, with Leogram's name on top as Instagram has its own: the photos
+  and videos to swipe through, the song, who posted it, the likes, the caption and the comments. A
+  browser lets no page make sound before it is touched, so when the song cannot start on its own it
+  says so on the photo, and starts with the first tap anywhere. The video showing plays on a loop,
+  without sound: under the song if the post has one, and otherwise until its speaker is tapped.
 - **Liking and commenting take an account.** Signed out, the heart, a double tap on a photo or the
   comment box put up the same door as every app of Leo OS, with «Ahora no» to go back to the post;
   once signed in, the like is given, or the box is ready. An account's first comment gives it a
   Leogram username out of its name. A comment can be deleted by whoever wrote it and by the post's
-  author, and a post by its author, which takes its photos, song, likes and comments with it.
-- Everything lives in the database, since it is meant for others: `leogram_profiles`,
-  `leogram_posts`, `leogram_media` (each photo and song as a data URL, sent in parts of under a
-  megabyte), `leogram_likes` and `leogram_comments`. The author's grid reads only `leogram_posts`,
-  which carries a small copy of each post's first photo, and keeps a copy of it on the device.
+  author, and a post by its author, which takes its files, likes and comments with it.
+- **What is said goes to the database, the files to a bucket.** The database has
+  `leogram_profiles`, `leogram_posts`, `leogram_likes` and `leogram_comments`, and
+  `leogram_media` and `leogram_avatars`, which only say where each file is. The files — photos,
+  videos and their posters, the songs' clips, the grid's thumbnails and the profile photos — go
+  straight from the browser to a private bucket of the project's
+  [Object Storage](https://neon.com/docs/storage), with nothing in between. The bucket only lets
+  through requests signed with its key, which the browser never sees: the database keeps it in
+  `leogram_private`, a schema the Data API does not serve, and signs with it. `leogram_upload()`
+  hands over an address that takes one file of one's own post, of the type and the exact size it
+  was told; `leogram_post()`, to whoever opens the link, addresses that read the post's files for a
+  day at least; deleting a post, where to delete its files. It is AWS Signature Version 4, worked
+  out in SQL (`db/migrations/0007_leogram_public.sql`).
 - **How a link opens with no account.** The Data API turns away a request with no token, so a
   visitor's page asks Neon Auth for the anonymous token it hands anybody (`/token/anonymous`), which
   the Data API runs as the `anonymous` role. That role reaches no table: all it may do is call
-  `leogram_post(code)` and `leogram_file(code, slot)` (`db/migrations/0007_leogram_public.sql`),
-  which run as their owner and hand over the one post whose code they are given, never a list. Signed
-  in, the same two also say whether the post is one's own and whether one liked it. It takes the Data
-  API's anonymous role to be `anonymous`, which is its default.
-- A post of ten photos and a song takes up to some 4 MB of the database, and every visit downloads
-  it; Neon's free plan keeps half a gigabyte per project. A song from Apple takes nothing: it plays
+  `leogram_post(code)`, which runs as its owner and hands over the one post whose code it is given,
+  never a list. Signed in, it also says whether the post is one's own and whether one liked it. It
+  takes the Data API's anonymous role to be `anonymous`, which is its default.
+- Neon's free plan has 5 GB of Object Storage per project, and each account may fill 2 GB of it.
+  Every visit downloads what it shows from the bucket; a song from Apple takes nothing: it plays
   from Apple.
 - Apple is sent what is typed in the search box, and serves its previews and covers to whoever
-  plays them; the photos, the songs from the device and everything else go nowhere but the
-  database.
+  plays them; the photos, the videos, the songs from the device and everything else go nowhere but
+  the project's database and its bucket.
+
+### Leogram's bucket
+
+The deploy sets it up on its own: on every push, after the migrations, `db/storage.mjs` makes the
+bucket if it is not there (private, named `leogram` unless `LEOGRAM_BUCKET` says otherwise), hands
+the database the key it signs with, sets the bucket's CORS rules so that pages can upload, and
+deletes the files nothing points to any more. Nothing has to be done in the console, and the only
+thing it needs is what the previews already need: `DATABASE_URL`, `NEON_API_KEY`,
+`NEON_PROJECT_ID` and `NEON_DATA_API_URL` ([Setting it up](#setting-it-up)). Locally,
+`pnpm db:storage` does the same with the values in `.env`.
+
+- **The key.** Unless `LEOGRAM_STORAGE_ACCESS_KEY_ID` and `LEOGRAM_STORAGE_SECRET_ACCESS_KEY` give
+  one (a credential with `storage:read` and `storage:write`, made in the console or with
+  `neon credentials create`), the script makes one of its own on the bucket's branch,
+  `leo-os-leogram`, and keeps it in `leogram_private.bucket`. The Neon API shows a secret only
+  once: when the database lacks the one it has, or it stops working, the credential is given a new
+  one, and the database keeps that.
+- **Leftovers.** A post's files are deleted by the browser that deletes the post. What it does not
+  get to — it was closed, or it lost its connection — and what a deleted preview uploaded are
+  deleted by the next deploy: any file no row of any schema points to, once it is an hour old.
+- **Previews.** One bucket serves the site and every preview, each under its own schema's name:
+  `public/…` for the site, `preview_…/…` for a preview. A preview's copy of a published post shows
+  the published files, and deleting it there deletes none of them.
+- Object Storage is in beta and only in some of Neon's regions. Where the branch has none, the step
+  says so and the site is published all the same: Leogram shows its posts, and says it cannot
+  upload yet.

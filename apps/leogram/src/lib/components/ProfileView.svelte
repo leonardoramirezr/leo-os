@@ -64,9 +64,13 @@
 						onclick={() => pushState('', { post: post.id })}
 						aria-label="Abrir la publicación"
 					>
-						<img src={post.thumb} alt="" />
+						{#if post.thumb}
+							<img src={post.thumb} alt="" onerror={(event) => event.currentTarget.remove()} />
+						{/if}
 						{#if post.slides > 1}
 							<span class="badge"><Icon name="carousel" size={20} /></span>
+						{:else if post.video}
+							<span class="badge"><Icon name="video" size={20} /></span>
 						{:else if post.music}
 							<span class="badge"><Icon name="music" size={18} stroke={2.4} /></span>
 						{/if}

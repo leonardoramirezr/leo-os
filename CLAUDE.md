@@ -121,11 +121,12 @@ to register it.
   decisions here. Read them before "simplifying" something.
 - **Storage**: data goes to Neon through `shared/` — `setting(…)` for a preference, a table of its
   own for anything bigger — and every row carries the account it belongs to. Only images stay on
-  the device (`local(…)`, IndexedDB) — but Leogram's photos, which are meant for other people's
-  devices and go to its tables —, under keys that carry the account too, and every read and
-  write of those is wrapped in `try`/`catch`: the browser may have site data blocked. Keys keep
-  their app's prefix either way (`home:wallpaper`, `me-deben:*`, `willchat:*`), except what several
-  apps share: the Groq API key is `groq:api-key`, and any app that talks to Groq reads that one.
+  the device (`local(…)`, IndexedDB) — but Leogram's photos and videos, which are meant for other
+  people's devices and go to the project's bucket, at addresses the database signs —, under keys
+  that carry the account too, and every read and write of those is wrapped in `try`/`catch`: the
+  browser may have site data blocked. Keys keep their app's prefix either way (`home:wallpaper`,
+  `me-deben:*`, `willchat:*`), except what several apps share: the Groq API key is `groq:api-key`,
+  and any app that talks to Groq reads that one.
 - **A change to the database starts in `db/schema.ts`**, never in the database and never in a
   migration by hand: edit the models, run `pnpm db:generate`, and commit the migration it writes
   next to them. The row types the apps use come from the same models. `pnpm check` fails when the
@@ -144,9 +145,9 @@ to register it.
   (README.md, «Home»).
 - **Dependencies**: as few as possible. No UI or styling frameworks; CSS is written by hand inside
   each component.
-- **Nothing leaves the browser** but the user's own data, to the user's own database, and what they
-  asked for: no telemetry, nobody in the middle (WillChat talks straight to `api.openai.com` with
-  the user's own key).
+- **Nothing leaves the browser** but the user's own data, to the user's own database (and its
+  bucket, for Leogram's files), and what they asked for: no telemetry, nobody in the middle
+  (WillChat talks straight to `api.openai.com` with the user's own key).
 - The `apple-touch-icon.png` files are generated, never committed. `icon.svg` is the only source.
 
 ## Commits

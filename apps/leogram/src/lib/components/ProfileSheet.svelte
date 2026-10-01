@@ -8,6 +8,7 @@
 
 	let username = $state('');
 	let avatar = $state('');
+	let photo = $state<Blob | null>();
 	let problem = $state('');
 	let saving = $state(false);
 
@@ -16,6 +17,7 @@
 		if (!open) return;
 		username = profile.username;
 		avatar = profile.avatar;
+		photo = undefined;
 		problem = '';
 	});
 
@@ -26,7 +28,7 @@
 		}
 		saving = true;
 		try {
-			await profile.save(username, avatar);
+			await profile.save(username, photo);
 			open = false;
 		} catch (thrown) {
 			problem = thrown instanceof Error ? thrown.message : 'No se pudo guardar el perfil.';
@@ -46,7 +48,7 @@
 		</button>
 	{/snippet}
 
-	<ProfileFields bind:username bind:avatar bind:problem />
+	<ProfileFields bind:username bind:avatar bind:photo bind:problem />
 	{#if problem}
 		<p class="error center">{problem}</p>
 	{/if}

@@ -1,6 +1,6 @@
 {
-  "id": "c80e79f0-de8f-4b47-9fef-cd30303f4bb6",
-  "prevId": "e3c1d845-e8be-48df-9af1-e39d7b099765",
+  "id": "09e0ddbe-36a2-49df-b7c7-db082d05eea9",
+  "prevId": "179032cc-8c15-4a3f-83a6-38b991547d15",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -261,6 +261,60 @@
       "checkConstraints": {},
       "isRLSEnabled": true
     },
+    "public.leogram_avatars": {
+      "name": "leogram_avatars",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "auth.user_id()"
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "size": {
+          "name": "size",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "leogram_avatars_user_id_leogram_profiles_user_id_fk": {
+          "name": "leogram_avatars_user_id_leogram_profiles_user_id_fk",
+          "tableFrom": "leogram_avatars",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "tableTo": "leogram_profiles",
+          "columnsTo": [
+            "user_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "leogram_avatars_key_unique": {
+          "name": "leogram_avatars_key_unique",
+          "columns": [
+            "key"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
     "public.leogram_comments": {
       "name": "leogram_comments",
       "schema": "",
@@ -496,17 +550,43 @@
           "primaryKey": false,
           "notNull": true
         },
-        "part": {
-          "name": "part",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "data": {
-          "name": "data",
+        "kind": {
+          "name": "kind",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "size": {
+          "name": "size",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "focus_x": {
+          "name": "focus_x",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 50
+        },
+        "focus_y": {
+          "name": "focus_y",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 50
         }
       },
       "indexes": {
@@ -542,32 +622,45 @@
         }
       },
       "compositePrimaryKeys": {
-        "leogram_media_post_id_slot_part_pk": {
-          "name": "leogram_media_post_id_slot_part_pk",
+        "leogram_media_post_id_slot_kind_pk": {
+          "name": "leogram_media_post_id_slot_kind_pk",
           "columns": [
             "post_id",
             "slot",
-            "part"
+            "kind"
           ]
         }
       },
-      "uniqueConstraints": {},
-      "policies": {
-        "leogram_media_own": {
-          "name": "leogram_media_own",
-          "as": "PERMISSIVE",
-          "for": "ALL",
-          "to": [
-            "authenticated"
+      "uniqueConstraints": {
+        "leogram_media_key_unique": {
+          "name": "leogram_media_key_unique",
+          "columns": [
+            "key"
           ],
-          "using": "user_id = auth.user_id()",
-          "withCheck": "user_id = auth.user_id()"
+          "nullsNotDistinct": false
         }
       },
+      "policies": {},
       "checkConstraints": {
         "leogram_media_slot": {
           "name": "leogram_media_slot",
           "value": "\"leogram_media\".\"slot\" between -1 and 9"
+        },
+        "leogram_media_kind": {
+          "name": "leogram_media_kind",
+          "value": "\"leogram_media\".\"kind\" in ('photo', 'video', 'poster', 'thumb', 'song')"
+        },
+        "leogram_media_song": {
+          "name": "leogram_media_song",
+          "value": "(\"leogram_media\".\"kind\" = 'song') = (\"leogram_media\".\"slot\" = -1)"
+        },
+        "leogram_media_focus_x": {
+          "name": "leogram_media_focus_x",
+          "value": "\"leogram_media\".\"focus_x\" between 0 and 100"
+        },
+        "leogram_media_focus_y": {
+          "name": "leogram_media_focus_y",
+          "value": "\"leogram_media\".\"focus_y\" between 0 and 100"
         }
       },
       "isRLSEnabled": true
@@ -613,12 +706,6 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
-        },
-        "thumb": {
-          "name": "thumb",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -710,13 +797,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "avatar": {
-          "name": "avatar",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
         }
       },
       "indexes": {

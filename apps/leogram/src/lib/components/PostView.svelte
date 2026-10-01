@@ -1,8 +1,9 @@
 <script lang="ts">
-	// A post as Instagram shows one: who posted it and their song, the photos, the likes, the caption
-	// and the comments. It is the same for its author, for someone signed in, and for whoever opened
-	// the link with no account at all; liking and commenting are what take an account, and asking
-	// for them signed out puts the door up (`onaccount`).
+	// A post as Instagram shows one: who posted it and their song, the photos and videos, the likes,
+	// the caption and the comments. It is the same for its author, for someone signed in, and for
+	// whoever opened the link with no account at all; liking and commenting are what take an
+	// account, and asking for them signed out puts the door up (`onaccount`). Its files come straight
+	// from the bucket, at the addresses the database signed for them.
 	import { isExpired, session } from '@leo-os/shared';
 	import { onDestroy, untrack } from 'svelte';
 	import { isCode, linkOf } from '$lib/code';
@@ -10,13 +11,10 @@
 	import { Player } from '$lib/music/player.svelte';
 	import {
 		addComment,
+		deletePost,
 		like,
-		objectUrl,
-		readFile,
 		readPost,
 		removeComment,
-		removePost,
-		SONG,
 		unlike,
 		type CommentView,
 		type PostView
@@ -43,9 +41,12 @@
 	let post = $state<PostView | null>();
 	/** Why it could not be read. */
 	let problem = $state('');
-	let slides = $state<(string | null)[]>([]);
 	let index = $state(0);
 	let player = $state<Player>();
+	/** The carousel's videos, by slot. */
+	let videos = $state<HTMLVideoElement[]>([]);
+	/** Whether the videos play with their sound: only once asked for, and never over a song. */
+	let videoSound = $state(false);
 	let draft = $state('');
 	let sending = $state(false);
 	let everyComment = $state(false);
@@ -58,10 +59,8 @@
 
 	/** What was asked for signed out, to be done once signed in and the post read again. */
 	let pending: 'like' | 'comment' | undefined;
-	/** The post whose files are on screen. */
-	let filesOf = '';
-	/** Object URLs made here, given back when the post closes. */
-	const made: string[] = [];
+	/** The post whose song is playing. */
+	let musicOf = '';
 	let toastTimer: ReturnType<typeof setTimeout> | undefined;
 
 	// Read again whenever whoever is looking changes: signing in brings back their like and their
@@ -75,7 +74,18 @@
 	onDestroy(() => {
 		player?.destroy();
 		clearTimeout(toastTimer);
-		for (const url of made) URL.revokeObjectURL(url);
+	});
+
+	// The video showing plays, from where it was, and the others wait. Without sound until it is
+	// asked for, which is also what lets it start on its own.
+	$effect(() => {
+		const sound = videoSound && !post?.music;
+		for (const [slot, video] of videos.entries()) {
+			if (!video) continue;
+			video.muted = !sound;
+			if (slot === index) video.play().catch(() => {});
+			else video.pause();
+		}
 	});
 
 	function message(thrown: unknown, fallback: string): string {
@@ -94,7 +104,7 @@
 			post = found;
 			problem = '';
 			if (!found) return;
-			if (filesOf !== current) loadFiles(found);
+			if (musicOf !== found.id) startMusic(found);
 			if (pending && session.status === 'in') {
 				const action = pending;
 				pending = undefined;
@@ -109,46 +119,25 @@
 		}
 	}
 
-	/**
-	 * The photos one by one, the first before any other so that something shows soon, and the
-	 * song's clip right after it. A catalog song needs nothing read: it plays from Apple.
-	 */
-	async function loadFiles(found: PostView) {
-		filesOf = found.id;
+	/** The song, from its moment: Apple's preview of a catalog song, or the clip in the bucket. */
+	function startMusic(found: PostView) {
+		musicOf = found.id;
 		player?.destroy();
 		player = undefined;
-		slides = Array.from({ length: found.slides }, () => null);
-
 		const music = found.music;
-		if (music?.source === 'catalog') play(music.url, music.start, music.length);
-
-		const fetchSlot = async (slot: number) => {
-			const url = await readFile(found.id, slot).catch(() => null);
-			if (filesOf !== found.id || !url) return;
-			if (slot !== SONG) {
-				slides[slot] = url;
-			} else if (music) {
-				const src = await objectUrl(url);
-				made.push(src);
-				play(src, music.start, music.length);
-			}
-		};
-
-		await fetchSlot(0);
-		const rest = [...(music?.source === 'upload' ? [SONG] : [])];
-		for (let slot = 1; slot < found.slides; slot++) rest.push(slot);
-		// Three at a time: fast, without one post taking all of a slow connection.
-		await Promise.all(
-			Array.from({ length: 3 }, async () => {
-				for (let slot = rest.shift(); slot !== undefined; slot = rest.shift()) await fetchSlot(slot);
-			})
-		);
+		const src = music?.source === 'catalog' ? music.url : found.song;
+		if (!music || !src) return;
+		player = new Player(src, music.start, music.length);
+		player.play();
 	}
 
-	function play(src: string, start: number, length: number) {
-		player?.destroy();
-		player = new Player(src, start, length);
-		player.play();
+	function toggleVideoSound() {
+		videoSound = !videoSound;
+		// Right here, within the tap: Safari only lets a video sound when asked from one.
+		const video = videos[index];
+		if (!video) return;
+		video.muted = !videoSound;
+		video.play().catch(() => {});
 	}
 
 	function say(text: string) {
@@ -261,11 +250,11 @@
 		}
 	}
 
-	async function deletePost() {
+	async function confirmDelete() {
 		if (!post) return;
 		if (!confirm('¿Eliminar esta publicación? Quien tenga el enlace ya no podrá verla.')) return;
 		try {
-			await removePost(post.id);
+			await deletePost(post.id);
 			player?.destroy();
 			player = undefined;
 			ondeleted?.();
@@ -279,7 +268,7 @@
 		if (typeof navigator !== 'undefined' && 'share' in navigator) {
 			list.push({ label: 'Compartir…', run: share });
 		}
-		if (post?.mine) list.push({ label: 'Eliminar', run: deletePost, danger: true });
+		if (post?.mine) list.push({ label: 'Eliminar', run: confirmDelete, danger: true });
 		return list;
 	});
 
@@ -290,6 +279,10 @@
 		if (fullCaption || (text.length <= 125 && lines.length <= 2)) return { text, cut: false };
 		return { text: lines.slice(0, 2).join('\n').slice(0, 125).trimEnd(), cut: true };
 	});
+
+	/** The photo or video at each place of the carousel; a file that never got there leaves a gap. */
+	const items = $derived(new Map(post?.items.map((item) => [item.slot, item]) ?? []));
+	const showingVideo = $derived(items.get(index)?.kind === 'video');
 
 	const shownComments = $derived(
 		!post ? [] : everyComment || post.comments.length <= 2 ? post.comments : post.comments.slice(-2)
@@ -335,8 +328,23 @@
 
 		<Carousel count={post.slides} aspect={post.aspect} bind:index ondoubletap={doubleTap}>
 			{#snippet slide(i)}
-				{#if slides[i]}
-					<img class="photo" src={slides[i]} alt="Foto {i + 1} de {post?.slides}" draggable="false" />
+				{@const item = items.get(i)}
+				{#if item?.kind === 'video'}
+					<!-- Framed as its author framed it: the file is the whole video, as recorded. -->
+					<video
+						class="photo"
+						bind:this={videos[i]}
+						src={item.url}
+						poster={item.poster ?? undefined}
+						style:object-position="{item.focus_x}% {item.focus_y}%"
+						muted
+						loop
+						playsinline
+						preload={i === index ? 'auto' : 'metadata'}
+						aria-label="Video {i + 1} de {post?.slides}"
+					></video>
+				{:else if item}
+					<img class="photo" src={item.url} alt="Foto {i + 1} de {post?.slides}" draggable={false} />
 				{:else}
 					<span class="bone fill" aria-hidden="true"></span>
 				{/if}
@@ -362,6 +370,18 @@
 						aria-label={player.playing ? 'Silenciar la música' : 'Escuchar la música'}
 					>
 						<Icon name={player.playing ? 'sound' : 'muted'} size={12} stroke={2.4} />
+					</button>
+				{:else if showingVideo}
+					<button
+						class="sound"
+						type="button"
+						onclick={(event) => {
+							event.stopPropagation();
+							toggleVideoSound();
+						}}
+						aria-label={videoSound ? 'Silenciar el video' : 'Escuchar el video'}
+					>
+						<Icon name={videoSound ? 'sound' : 'muted'} size={12} stroke={2.4} />
 					</button>
 				{/if}
 			{/snippet}

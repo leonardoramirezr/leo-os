@@ -24,6 +24,8 @@
 		camera: '<rect x="2.5" y="6" width="19" height="14" rx="3"/><circle cx="12" cy="13" r="4"/><path d="m8.5 6 1.5-2.5h4L15.5 6"/>',
 		photo: '<rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.8"/><path d="m21 15-5-5L5 21"/>',
 		play: '<path d="M7 4.5v15l12-7.5Z" fill="currentColor"/>',
+		video:
+			'<rect x="3" y="3" width="18" height="18" rx="5"/><path d="M3 8.5h18M8.5 3l2.5 5.5M14 3l2.5 5.5"/><path d="M10 12v5.5l4.75-2.75Z" fill="currentColor"/>',
 		pause: '<path d="M8 5v14M16 5v14"/>',
 		search: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
 		upload: '<path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 20h14"/>',
