@@ -10,6 +10,7 @@
 		"generate": "drizzle-kit generate",
 		"migrate": "node migrate.mjs",
 		"preview": "node preview.mjs",
+		"storage": "node storage.mjs",
 		"check": "node drift.mjs"
 	},
 	"dependencies": {

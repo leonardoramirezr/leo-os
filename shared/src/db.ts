@@ -2,10 +2,11 @@
 // backend of ours in between — what stands between one account and another's rows are the row
 // level security policies in `db/schema.ts`. The token says who is asking; Postgres decides.
 //
-// Only what the apps need is here: read a table whole, add rows, change them, drop them. Every
-// table these apps use is small enough to read in one go.
-import { AuthError, token } from './auth';
+// Only what the apps need is here: read a table whole, add rows, change them, drop them, and call
+// a function. Every table these apps use is small enough to read in one go.
+import { anonymousToken, AuthError, token } from './auth';
 import { dataApiSchema, dataApiUrl } from './config';
+import { session } from './session.svelte';
 
 export class DbError extends Error {
 	/** PostgREST's code, e.g. PGRST301 for a token that ran out. Empty when it never answered. */
@@ -40,15 +41,22 @@ export function oneOf(column: string, values: string[]): string {
 	return `${column}=in.(${quoted.map(encodeURIComponent).join(',')})`;
 }
 
-async function request(method: string, path: string, body?: unknown, prefer?: string) {
-	const bearer = await token();
+/** `bearer` is the session's token unless given; '' sends none. */
+async function request(
+	method: string,
+	path: string,
+	body?: unknown,
+	prefer?: string,
+	bearer?: string
+) {
+	bearer ??= await token();
 
 	let response: Response;
 	try {
 		response = await fetch(`${dataApiUrl}/${path}`, {
 			method,
 			headers: {
-				authorization: `Bearer ${bearer}`,
+				...(bearer && { authorization: `Bearer ${bearer}` }),
 				// PostgREST's way of naming a schema: a read asks for it, a write says it is sending to it.
 				...(dataApiSchema && { [method === 'GET' ? 'accept-profile' : 'content-profile']: dataApiSchema }),
 				...(body === undefined ? undefined : { 'content-type': 'application/json' }),
@@ -94,4 +102,19 @@ export async function update(table: string, filter: string, changes: unknown): P
 
 export async function remove(table: string, filter: string): Promise<void> {
 	await request('DELETE', `${table}?${filter}`, undefined, 'return=minimal');
+}
+
+/**
+ * Calls a function of the database (`/rpc/<name>`), for what a policy cannot say: a Leogram post,
+ * which anyone with its link may see. `visitor` lets the call go out signed out as well, with the
+ * anonymous token; signed in it carries the session's, so the function knows who is asking.
+ */
+export async function rpc<T>(
+	name: string,
+	args: Record<string, unknown>,
+	{ visitor = false } = {}
+): Promise<T> {
+	const bearer = visitor && session.status !== 'in' ? await anonymousToken() : undefined;
+	const response = await request('POST', `rpc/${name}`, args, undefined, bearer);
+	return (await response.json()) as T;
 }

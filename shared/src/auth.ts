@@ -152,3 +152,22 @@ export async function token(): Promise<string> {
 	if (!jwt.value) throw new AuthError('La sesión caducó.', 'NO_SESSION');
 	return jwt.value;
 }
+
+/** The token for whoever is not signed in, kept until it runs out like the session's. */
+let anonymous = { value: '', expiresAt: 0 };
+
+/**
+ * What someone with no account shows the Data API, which turns away a request with no token at
+ * all: the anonymous token Neon Auth hands anybody. The Data API runs it as the `anonymous` role,
+ * which reaches no table and may only call the functions granted to it. Empty when Neon Auth
+ * hands none out, and the request goes without.
+ */
+export async function anonymousToken(): Promise<string> {
+	if (anonymous.value && Date.now() < anonymous.expiresAt - MARGIN) return anonymous.value;
+
+	const answer = await call('/token/anonymous').catch(() => null);
+	const value = (answer as { token?: unknown } | null)?.token;
+	anonymous =
+		typeof value === 'string' ? { value, expiresAt: expiryOf(value) } : { value: '', expiresAt: 0 };
+	return anonymous.value;
+}

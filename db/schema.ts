@@ -5,12 +5,15 @@
 //
 // Every table is reached straight from the browser through the Data API, so row level security is
 // the whole of the protection: each row carries the account it belongs to and every policy checks
-// it against `auth.user_id()`, the `sub` of the Neon Auth session behind the request. Without a
-// session there is no token, without a token the Data API uses the `anonymous` role, and
-// `anonymous` is granted nothing at all.
+// it against `auth.user_id()`, the `sub` of the Neon Auth session behind the request. Signed out,
+// the token is the anonymous one Neon Auth hands anybody, which the Data API runs as the
+// `anonymous` role: it reaches no table at all, and may only call the functions that show a
+// Leogram post to whoever has its link (`migrations/0007_leogram_public.sql`).
 //
 // Images never come here. The wallpaper and WillChat's conversation are far too large for rows
-// read on every open, and they stay in the browser's localStorage and IndexedDB.
+// read on every open, and they stay in the browser's localStorage and IndexedDB; a Leogram post's
+// photos and videos, which open on any device with its link, go to the project's Neon bucket, and
+// here only where they are.
 //
 // Fields are named after their columns, not in camelCase: the Data API hands rows over as the
 // columns are spelled, and `shared/` re-exports `$inferSelect` as the shape the browser works in.
@@ -27,7 +30,9 @@ import {
 	pgPolicy,
 	pgTable,
 	primaryKey,
+	smallint,
 	text,
+	uniqueIndex,
 	uuid
 } from 'drizzle-orm/pg-core';
 
@@ -191,6 +196,173 @@ export const dictations = pgTable(
 	() => [ownRows('dictado_texts_own')]
 ).enableRLS();
 
+/**
+ * «Leogram»: the name shown with a post and with every comment, to whoever opens the post. An
+ * account gets one before it first posts, likes or comments.
+ */
+export const leogramProfiles = pgTable(
+	'leogram_profiles',
+	{
+		user_id: account().primaryKey(),
+		/** As Instagram spells them: lowercase letters, digits, dots and underscores, up to 30. */
+		username: text().notNull()
+	},
+	(table) => [
+		check('leogram_profiles_username', sql`${table.username} ~ '^[a-z0-9._]{1,30}$'`),
+		uniqueIndex('leogram_profiles_username_unique').on(table.username),
+		ownRows('leogram_profiles_own')
+	]
+).enableRLS();
+
+/**
+ * Where a profile's photo is in the bucket. It has no policy: only the functions in
+ * `migrations/0007_leogram_public.sql`, which sign the upload, write it — a key written by hand
+ * could point at someone else's photo, which the next change of photo would then delete.
+ */
+export const leogramAvatars = pgTable('leogram_avatars', {
+	user_id: account()
+		.primaryKey()
+		.references(() => leogramProfiles.user_id, { onDelete: 'cascade' }),
+	key: text().notNull().unique(),
+	/** Bytes: the upload is signed for exactly this many. */
+	size: bigint({ mode: 'number' }).notNull()
+}).enableRLS();
+
+/** A post's song: where it plays from, and the moment of it that plays. */
+export interface LeogramMusic {
+	/**
+	 * `catalog`: the 30-second preview Apple serves of a song of its catalog, played from `url`.
+	 * `upload`: a clip cut from a file of the author's own, kept in the bucket at slot -1.
+	 */
+	source: 'catalog' | 'upload';
+	title: string;
+	artist: string;
+	/** The album cover, from Apple; '' for an uploaded song. */
+	artwork: string;
+	/** The preview's address; '' for an uploaded song. */
+	url: string;
+	/** Seconds into that audio where the post's music starts… */
+	start: number;
+	/** …and how many it plays before it starts over. */
+	length: number;
+}
+
+/**
+ * A post: a carousel of photos and videos with a caption and a song. Only its author can list them;
+ * anyone else reaches one by its link, whose code is its key (`leogram_post()` in the migrations).
+ */
+export const leogramPosts = pgTable(
+	'leogram_posts',
+	{
+		/** The code in its link (`?p=`): eleven random characters, short and still unguessable. */
+		id: text().primaryKey(),
+		// A post is shown with its author's name and face, so there has to be a profile behind it.
+		user_id: account().references(() => leogramProfiles.user_id, { onDelete: 'cascade' }),
+		caption: text().notNull().default(''),
+		/** The shape every photo is cut to, as Instagram has them: 1:1, 4:5 or 1.91:1. */
+		aspect: text().$type<'square' | 'portrait' | 'landscape'>().notNull(),
+		/** How many photos and videos it has, in `leogram_media` at slots 0 to slides − 1. */
+		slides: integer().notNull(),
+		music: jsonb().$type<LeogramMusic>(),
+		/** Epoch milliseconds. */
+		created_at: bigint({ mode: 'number' }).notNull().default(0)
+	},
+	(table) => [
+		check('leogram_posts_id', sql`${table.id} ~ '^[A-Za-z0-9_-]{11}$'`),
+		check('leogram_posts_aspect', sql`${table.aspect} in ('square', 'portrait', 'landscape')`),
+		check('leogram_posts_slides', sql`${table.slides} between 1 and 10`),
+		check('leogram_posts_caption', sql`char_length(${table.caption}) <= 2200`),
+		index('leogram_posts_user').on(table.user_id),
+		ownRows('leogram_posts_own')
+	]
+).enableRLS();
+
+/**
+ * A post's files, kept in the project's Neon bucket: a row is where one is and what it is. The
+ * browser sends each one straight to the bucket, to an address `leogram_upload()` signs, and reads
+ * them from addresses `leogram_post()` signs; the bucket itself is private. Like `leogram_avatars`,
+ * it has no policy: only those functions write it, so that every key in it is one they made.
+ */
+export const leogramMedia = pgTable(
+	'leogram_media',
+	{
+		post_id: text()
+			.notNull()
+			.references(() => leogramPosts.id, { onDelete: 'cascade' }),
+		user_id: account(),
+		/** 0 to slides − 1 for the carousel, in its order; -1 for the song's clip. */
+		slot: integer().notNull(),
+		/**
+		 * An item of the carousel, `photo` or `video`; a video's `poster`, the frame it shows before
+		 * it plays; `thumb`, the grid's square of slot 0; or the `song`'s clip.
+		 */
+		kind: text().$type<'photo' | 'video' | 'poster' | 'thumb' | 'song'>().notNull(),
+		/** Where it is in the bucket: `<schema>/<post>/<kind><slot>-<random>.<extension>`. */
+		key: text().notNull().unique(),
+		/** Its MIME type, and its size in bytes: the upload is signed for exactly these. */
+		type: text().notNull(),
+		size: bigint({ mode: 'number' }).notNull(),
+		/** Where a video sits in its frame, from 0 to 100 across and down; a photo comes cut already. */
+		focus_x: smallint().notNull().default(50),
+		focus_y: smallint().notNull().default(50)
+	},
+	(table) => [
+		primaryKey({ columns: [table.post_id, table.slot, table.kind] }),
+		check('leogram_media_slot', sql`${table.slot} between -1 and 9`),
+		check('leogram_media_kind', sql`${table.kind} in ('photo', 'video', 'poster', 'thumb', 'song')`),
+		check('leogram_media_song', sql`(${table.kind} = 'song') = (${table.slot} = -1)`),
+		check('leogram_media_focus_x', sql`${table.focus_x} between 0 and 100`),
+		check('leogram_media_focus_y', sql`${table.focus_y} between 0 and 100`),
+		index('leogram_media_user').on(table.user_id)
+	]
+).enableRLS();
+
+/** One row per account that likes a post. Liking takes an account, which is what makes it one each. */
+export const leogramLikes = pgTable(
+	'leogram_likes',
+	{
+		post_id: text()
+			.notNull()
+			.references(() => leogramPosts.id, { onDelete: 'cascade' }),
+		user_id: account()
+	},
+	(table) => [
+		primaryKey({ columns: [table.post_id, table.user_id] }),
+		index('leogram_likes_user').on(table.user_id),
+		ownRows('leogram_likes_own')
+	]
+).enableRLS();
+
+export const leogramComments = pgTable(
+	'leogram_comments',
+	{
+		id: uuid().primaryKey(),
+		post_id: text()
+			.notNull()
+			.references(() => leogramPosts.id, { onDelete: 'cascade' }),
+		// Shown with its author's name and face, like a post.
+		user_id: account().references(() => leogramProfiles.user_id, { onDelete: 'cascade' }),
+		text: text().notNull(),
+		/** Epoch milliseconds. */
+		created_at: bigint({ mode: 'number' }).notNull().default(0)
+	},
+	(table) => [
+		check('leogram_comments_text', sql`char_length(${table.text}) between 1 and 2200`),
+		index('leogram_comments_post').on(table.post_id),
+		index('leogram_comments_user').on(table.user_id),
+		ownRows('leogram_comments_own'),
+		// Whoever wrote the post may take any comment off it, as on Instagram. A delete only finds
+		// the rows it may also read, hence the two.
+		...(['select', 'delete'] as const).map((command) =>
+			pgPolicy(`leogram_comments_post_author_${command}`, {
+				for: command,
+				to: authenticatedRole,
+				using: sql`exists (select from leogram_posts p where p.id = ${table.post_id} and p.user_id = auth.user_id())`
+			})
+		)
+	]
+).enableRLS();
+
 // What the browser reads and writes. `shared/` re-exports these, so a column is described once:
 // rename one here and the apps stop typechecking until they follow.
 export type SettingRow = typeof settings.$inferSelect;
@@ -200,3 +372,9 @@ export type ListItemRow = typeof listItems.$inferSelect;
 export type DeckRow = typeof decks.$inferSelect;
 export type CardRow = typeof cards.$inferSelect;
 export type DictationRow = typeof dictations.$inferSelect;
+export type LeogramProfileRow = typeof leogramProfiles.$inferSelect;
+export type LeogramAvatarRow = typeof leogramAvatars.$inferSelect;
+export type LeogramPostRow = typeof leogramPosts.$inferSelect;
+export type LeogramMediaRow = typeof leogramMedia.$inferSelect;
+export type LeogramLikeRow = typeof leogramLikes.$inferSelect;
+export type LeogramCommentRow = typeof leogramComments.$inferSelect;

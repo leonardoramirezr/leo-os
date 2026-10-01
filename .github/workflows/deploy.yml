@@ -103,6 +103,22 @@ jobs:
           VITE_NEON_DATA_API_URL: ${{ vars.NEON_DATA_API_URL }}
         run: pnpm db:preview create "$SLUG"
 
+      # Leogram's photos, videos and songs live in a bucket of the project's Object Storage, and the
+      # database signs the addresses that reach it. This makes the bucket if it is not there, gives
+      # the database its key and deletes the files nothing points to any more. It concerns Leogram
+      # alone: when it fails, the site is published all the same. «Leogram» in README.md.
+      - name: Get Leogram's bucket ready
+        continue-on-error: true
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          VITE_NEON_DATA_API_URL: ${{ vars.NEON_DATA_API_URL }}
+          LEOGRAM_BUCKET: ${{ vars.LEOGRAM_BUCKET }}
+          LEOGRAM_STORAGE_ACCESS_KEY_ID: ${{ secrets.LEOGRAM_STORAGE_ACCESS_KEY_ID }}
+          LEOGRAM_STORAGE_SECRET_ACCESS_KEY: ${{ secrets.LEOGRAM_STORAGE_SECRET_ACCESS_KEY }}
+        run: pnpm db:storage
+
       - run: pnpm build
         env:
           BASE_PATH: ${{ steps.target.outputs.base }}

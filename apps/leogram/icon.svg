@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<!-- Instagram's colours: blue going purple from the top left, under a warm glow rising from
+		     the bottom left. -->
+		<linearGradient id="leogram-base" x1="0.12" y1="0.12" x2="0.88" y2="0.88">
+			<stop offset="0.12" stop-color="#234bd7" />
+			<stop offset="0.58" stop-color="#c33cbe" />
+		</linearGradient>
+		<radialGradient id="leogram-glow" cx="0.32" cy="1.06" r="1.2">
+			<stop offset="0" stop-color="#ffe17d" />
+			<stop offset="0.1" stop-color="#ffcd69" />
+			<stop offset="0.28" stop-color="#fa9137" />
+			<stop offset="0.42" stop-color="#eb4141" />
+			<stop offset="0.82" stop-color="#eb4141" stop-opacity="0" />
+		</radialGradient>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#leogram-base)" />
+	<rect width="1024" height="1024" fill="url(#leogram-glow)" />
+	<g fill="none" stroke="#fff">
+		<!-- The camera… -->
+		<rect x="212" y="212" width="600" height="600" rx="170" stroke-width="76" />
+		<!-- …with a lion where its lens would be: Leo's -->
+		<path
+			d="M512 380A41 41 0 0 1 578 397.7A41 41 0 0 1 626.3 446A41 41 0 0 1 644 512A41 41 0 0 1 626.3 578A41 41 0 0 1 578 626.3A41 41 0 0 1 512 644A41 41 0 0 1 446 626.3A41 41 0 0 1 397.7 578A41 41 0 0 1 380 512A41 41 0 0 1 397.7 446A41 41 0 0 1 446 397.7A41 41 0 0 1 512 380Z"
+			stroke-width="56"
+			stroke-linejoin="round"
+		/>
+		<path d="M498 530h28l-14 15z" fill="#fff" stroke-width="14" stroke-linejoin="round" />
+		<path d="M512 548q-10 18-30 12M512 548q10 18 30 12" stroke-width="14" stroke-linecap="round" />
+	</g>
+	<!-- Its flash, and the lion's eyes -->
+	<g fill="#fff">
+		<circle cx="690" cy="334" r="40" />
+		<circle cx="474" cy="490" r="18" />
+		<circle cx="550" cy="490" r="18" />
+	</g>
+</svg>

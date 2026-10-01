@@ -106,7 +106,8 @@ to register it.
   in `vite.config.ts` and `ssr = false` + `prerender = true` in `src/routes/+layout.ts`.
 - `@leo-os/shared` as a `workspace:*` dependency, and a `+layout.svelte` that wraps
   `{@render children()}` in its `<Account load={…}>`: nothing of the app draws until there is an
-  account and its rows have been read.
+  account and its rows have been read. The one screen outside it is a Leogram post's link (`?p=`),
+  on purpose: it opens for anybody.
 - Colours that change with the theme are `light-dark(light, dark)` under `color-scheme: light dark`,
   never an `@media (prefers-color-scheme)` block: only that way does the theme picked in the home
   screen's Ajustes reach the app (`shared/src/theme.ts`).
@@ -120,10 +121,12 @@ to register it.
   decisions here. Read them before "simplifying" something.
 - **Storage**: data goes to Neon through `shared/` — `setting(…)` for a preference, a table of its
   own for anything bigger — and every row carries the account it belongs to. Only images stay on
-  the device (`local(…)`, IndexedDB), under keys that carry the account too, and every read and
-  write of those is wrapped in `try`/`catch`: the browser may have site data blocked. Keys keep
-  their app's prefix either way (`home:wallpaper`, `me-deben:*`, `willchat:*`), except what several
-  apps share: the Groq API key is `groq:api-key`, and any app that talks to Groq reads that one.
+  the device (`local(…)`, IndexedDB) — but Leogram's photos and videos, which are meant for other
+  people's devices and go to the project's bucket, at addresses the database signs —, under keys
+  that carry the account too, and every read and write of those is wrapped in `try`/`catch`: the
+  browser may have site data blocked. Keys keep their app's prefix either way (`home:wallpaper`,
+  `me-deben:*`, `willchat:*`), except what several apps share: the Groq API key is `groq:api-key`,
+  and any app that talks to Groq reads that one.
 - **A change to the database starts in `db/schema.ts`**, never in the database and never in a
   migration by hand: edit the models, run `pnpm db:generate`, and commit the migration it writes
   next to them. The row types the apps use come from the same models. `pnpm check` fails when the
@@ -131,18 +134,20 @@ to register it.
 - **Only the default branch migrates `public`.** A branch's migrations run in its preview's own
   schema (`db/preview.mjs`): a copy of `public` made by the first push that finds none, which later
   pushes keep and only migrate. Changing a migration the preview already applied makes it copy
-  `public` again, and a migration older than `public`'s last is refused. Grants are the one thing
-  the models do not carry: they live in `db/migrations/0001_grants.sql`, which covers the tables of
-  every migration still to come.
+  `public` again, and a migration older than `public`'s last is refused. Grants and functions are
+  what the models do not carry, so they go in a migration written by hand (`pnpm db:generate
+  --custom`): `0001_grants.sql` covers the tables of every migration still to come, while a function
+  is closed until granted, and has a SQL-standard body (`BEGIN ATOMIC`) and no `search_path` of its
+  own, which is what lets a preview's copy read the preview's tables (`0007_leogram_public.sql`).
 - **The status bar's colour on iOS 26** is what `--status-bar`, or else `--bg`, holds: `Account`
   paints it on an invisible strip along the top edge, the one thing there WebKit keeps reading.
   `theme-color` does nothing, and neither does colouring anything that fills the screen
   (README.md, «Home»).
 - **Dependencies**: as few as possible. No UI or styling frameworks; CSS is written by hand inside
   each component.
-- **Nothing leaves the browser** but the user's own data, to the user's own database, and what they
-  asked for: no telemetry, nobody in the middle (WillChat talks straight to `api.openai.com` with
-  the user's own key).
+- **Nothing leaves the browser** but the user's own data, to the user's own database (and its
+  bucket, for Leogram's files), and what they asked for: no telemetry, nobody in the middle
+  (WillChat talks straight to `api.openai.com` with the user's own key).
 - The `apple-touch-icon.png` files are generated, never committed. `icon.svg` is the only source.
 
 ## Commits

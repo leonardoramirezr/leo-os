@@ -15,12 +15,18 @@
 	let {
 		children,
 		load,
-		lang = 'es'
+		lang = 'es',
+		oncancel
 	}: {
 		children: import('svelte').Snippet;
 		/** The app's own data, read once the account is known. Must not throw. */
 		load?: (userId: string) => Promise<void>;
 		lang?: Lang;
+		/**
+		 * For a door that can be left without signing in, put up in front of something anybody may
+		 * see — a Leogram post, before liking it. Signing in stays the way to everything else.
+		 */
+		oncancel?: () => void;
 	} = $props();
 
 	const t = $derived(text[lang]);
@@ -179,6 +185,9 @@
 			>
 				{mode === 'in' ? t.toSignUp : t.toSignIn}
 			</button>
+			{#if oncancel}
+				<button class="switch" type="button" onclick={oncancel}>{t.notNow}</button>
+			{/if}
 		</form>
 	</div>
 {:else if !ready}

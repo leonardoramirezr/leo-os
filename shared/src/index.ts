@@ -11,12 +11,18 @@ export type {
 	DeckRow,
 	DictationRow,
 	Json,
+	LeogramCommentRow,
+	LeogramLikeRow,
+	LeogramMediaRow,
+	LeogramMusic,
+	LeogramPostRow,
+	LeogramProfileRow,
 	ListItemRow,
 	MovementRow,
 	PersonRow,
 	SettingRow
 } from './database';
-export { eq, insert, oneOf, remove, select, update, upsert } from './db';
+export { eq, insert, isExpired, oneOf, remove, rpc, select, update, upsert } from './db';
 export { local } from './local.svelte';
 export { session } from './session.svelte';
 export { setting } from './settings.svelte';
