@@ -24,9 +24,11 @@ interface Result {
 }
 
 export async function searchCatalog(term: string, signal?: AbortSignal): Promise<CatalogSong[]> {
+	// No `media=music`: asked with it by a browser on an iPhone or iPad, Apple answers with a redirect
+	// to `musics://`, for the Music app to open the search, which fetch cannot follow: every search
+	// failed there. `entity=song` alone brings the same songs, in the same order.
 	const query = new URLSearchParams({
 		term,
-		media: 'music',
 		entity: 'song',
 		limit: '30',
 		country: COUNTRY
