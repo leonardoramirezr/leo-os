@@ -43,6 +43,20 @@
       "when": 1790659422464,
       "tag": "0005_repaso_new_per_day",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790815730014,
+      "tag": "0006_leogram",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790815731662,
+      "tag": "0007_leogram_public",
+      "breakpoints": true
     }
   ]
 }

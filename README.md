@@ -9,6 +9,7 @@ phone home screen: every app is an icon.
 - Lista: https://leonardoramirezr.github.io/leo-os/lista/
 - Repaso: https://leonardoramirezr.github.io/leo-os/repaso/
 - Dictado: https://leonardoramirezr.github.io/leo-os/dictado/
+- Leogram: https://leonardoramirezr.github.io/leo-os/leogram/
 
 ## Layout
 
@@ -107,11 +108,14 @@ Neon Auth on that domain.
   email asks for it again. «Enviar otro código» emails a new one, and the one before stops working.
 - **One account, one set of rows.** Every table carries the account a row belongs to, and the
   policies in `db/schema.ts` only ever let `auth.user_id()` — the account behind the request's
-  token — see its own. Signed out there is no token, and the `anonymous` role is granted nothing.
+  token — see its own. Signed out, the Data API sees the anonymous token Neon Auth hands anybody
+  and runs it as the `anonymous` role, which reaches no table: all it may do is open a Leogram post
+  whose link it has ([Leogram](#leogram)).
 - **Images stay on the device.** The wallpaper and WillChat's conversation are far too large for
   rows read on every open, so they stay in `localStorage` and IndexedDB. Their keys carry the
   account too: two people using the same phone do not see each other's, and signing out drops the
-  lot.
+  lot. A Leogram post's photos are the exception: they are meant to be seen on other devices, so
+  they go to the database, in rows of their own that are only read when the post is opened.
 - **Offline.** Each app keeps a copy of its rows on the device, so it opens with something on
   screen and still shows it with no connection. The database is what counts: the copy is replaced
   whole every time a query comes back. A change is applied on screen first and sent right after; if
@@ -287,8 +291,8 @@ it is merged.
 Each preview has a database of its own: a schema in the same Neon database, named after it
 (`preview_claude_wizardly_euler`), which `db/preview.mjs` keeps up to date. A push that finds none
 — the branch's first, or the next one after a run that did not get to finish — makes it a copy of
-`public` as it is at that moment (tables, rows, policies and grants), with the branch's own
-migrations applied on top. Every push after that keeps it, rows included, and only
+`public` as it is at that moment (tables, rows, functions, policies and grants), with the branch's
+own migrations applied on top. Every push after that keeps it, rows included, and only
 applies the migrations it brings: a branch that adds a column can be tried before it is merged,
 with whatever was typed into the preview still there. The Data API serves every preview's schema
 next to `public`; the preview's queries name theirs, and the published site's name none, which keeps
@@ -588,3 +592,59 @@ Voice to text: say something and it is written down, then go on dictating, or sa
   the device says so: the next time the app opens, that copy is sent rather than read over, so a
   dictation is not lost to a moment without signal. Coming back to the app reads the text again, in
   case it changed on another device.
+
+## Leogram
+
+A parody of Instagram: carousel posts with a song, each with a link that opens for anybody, signed in
+or not.
+
+- Opening it shows the account's profile as Instagram has one: its photo, its username and its posts
+  in a grid of three, and «+» to write a new one. The first time, it asks for the username its posts
+  and comments will carry, suggested out of the account's name; «Editar perfil» changes it and the
+  photo later. Usernames are Instagram's: lowercase letters, digits, dots and underscores, and no two
+  accounts share one.
+- A post is up to ten photos, cut to one of Instagram's shapes — 1:1, 4:5 or 1.91:1, whichever crops
+  the first photo least until another is picked — and framed by dragging each one. They are kept
+  1080 pixels wide, as JPEG; the arrows and the bin under them reorder them and drop one. Then a
+  caption and a song.
+- **The song** comes from Apple's catalog or from the device. The catalog is Apple's open search
+  (`itunes.apple.com/search`), which needs no key: any song anyone knows, with the 30-second preview
+  Apple serves of it, which the post plays from Apple. From the device, an MP3 (or anything else the
+  browser can play). Either way the song is drawn as bars, and its moment is picked by dragging the
+  lit-up stretch or tapping where it should start: up to 30 seconds, which start over at the end for
+  as long as the post is open. A song from the device starts out on its loudest 30 seconds, more
+  often than not its chorus.
+- Only that moment of a song from the device is kept, never the whole song. `src/lib/music/mp3.ts`
+  cuts it out of the MP3's frames byte for byte, so it sounds exactly as the song did, with nothing
+  decoded or encoded. What is not an MP3 is decoded and kept as a WAV of one channel at 22 kHz,
+  which is what a browser can write by itself.
+- **«Compartir» publishes it, and its link is ready right away** (`…/leogram/?p=<code>`): there is no
+  other step to make it public. Nobody comes across a post without its link, whose code is eleven
+  random characters, and nothing lists posts but their author's own grid. The link is copied or
+  shared from there, from the post's «⋯», or from the paper plane under it.
+- **The link opens for anybody**, with Leogram's name on top as Instagram has its own: the photos to
+  swipe through, the song, who posted it, the likes, the caption and the comments. A browser lets no
+  page make sound before it is touched, so when the song cannot start on its own it says so on the
+  photo, and starts with the first tap anywhere.
+- **Liking and commenting take an account.** Signed out, the heart, a double tap on a photo or the
+  comment box put up the same door as every app of Leo OS, with «Ahora no» to go back to the post;
+  once signed in, the like is given, or the box is ready. An account's first comment gives it a
+  Leogram username out of its name. A comment can be deleted by whoever wrote it and by the post's
+  author, and a post by its author, which takes its photos, song, likes and comments with it.
+- Everything lives in the database, since it is meant for others: `leogram_profiles`,
+  `leogram_posts`, `leogram_media` (each photo and song as a data URL, sent in parts of under a
+  megabyte), `leogram_likes` and `leogram_comments`. The author's grid reads only `leogram_posts`,
+  which carries a small copy of each post's first photo, and keeps a copy of it on the device.
+- **How a link opens with no account.** The Data API turns away a request with no token, so a
+  visitor's page asks Neon Auth for the anonymous token it hands anybody (`/token/anonymous`), which
+  the Data API runs as the `anonymous` role. That role reaches no table: all it may do is call
+  `leogram_post(code)` and `leogram_file(code, slot)` (`db/migrations/0007_leogram_public.sql`),
+  which run as their owner and hand over the one post whose code they are given, never a list. Signed
+  in, the same two also say whether the post is one's own and whether one liked it. It takes the Data
+  API's anonymous role to be `anonymous`, which is its default.
+- A post of ten photos and a song takes up to some 4 MB of the database, and every visit downloads
+  it; Neon's free plan keeps half a gigabyte per project. A song from Apple takes nothing: it plays
+  from Apple.
+- Apple is sent what is typed in the search box, and serves its previews and covers to whoever
+  plays them; the photos, the songs from the device and everything else go nowhere but the
+  database.

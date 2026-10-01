@@ -9,12 +9,12 @@
 //
 // A push that finds no schema — the branch's first, or the next one after a run that never got to
 // commit, or after the schema was dropped — makes it a copy of `public`: its tables with their rows,
-// sequences, enums, policies and grants. From then on it is kept, rows and all, and each push only
-// applies the migrations it has not seen yet: the branch's own, and whatever the branch brings over
-// from main. Which ones it has seen is its own migrations log, next to `public`'s in the `drizzle`
-// schema. The Data API is told to serve the schema next to `public`; the preview is built to ask for
-// it by name (VITE_NEON_DATA_API_SCHEMA), and the published site asks for none and keeps getting
-// `public`.
+// sequences, enums, functions, policies and grants. From then on it is kept, rows and all, and each
+// push only applies the migrations it has not seen yet: the branch's own, and whatever the branch
+// brings over from main. Which ones it has seen is its own migrations log, next to `public`'s in the
+// `drizzle` schema. The Data API is told to serve the schema next to `public`; the preview is built
+// to ask for it by name (VITE_NEON_DATA_API_SCHEMA), and the published site asks for none and keeps
+// getting `public`.
 //
 // Each push is one transaction: a migration that fails leaves the schema as the push before left
 // it. `public` is only ever read.
@@ -231,6 +231,27 @@ const COPY = {
 			where k.conindid = i.indexrelid and k.conrelid = c.oid and k.contype in ('p', 'u', 'x')
 		)`,
 
+	// Once the tables are there, and before the policies, which may call them. A SQL-standard body
+	// comes out naming `public`'s tables unqualified, so replayed it reads the preview's; the function
+	// itself is printed as `public.name`, which `copyPublic` points at the preview's schema. Each is
+	// followed by who may call it: a new function is everyone's until that is taken back.
+	functions: `
+		select s.ddl
+		from pg_proc p
+		cross join lateral (
+			select 0 as step, pg_get_functiondef(p.oid) as ddl
+			union all
+			select 1, format('revoke all on function %I.%I(%s) from public',
+				$1::text, p.proname, pg_get_function_identity_arguments(p.oid))
+			union all
+			select 2, format('grant %s on function %I.%I(%s) to %s', a.privilege_type,
+				$1::text, p.proname, pg_get_function_identity_arguments(p.oid), ${GRANTEE})
+			from aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
+			where a.grantee <> p.proowner
+		) s
+		where p.pronamespace = 'public'::regnamespace and not ${theirs("'pg_proc'::regclass", 'p.oid')}
+		order by p.oid, s.step`,
+
 	security: `
 		select format('alter table %I.%I enable row level security', $1::text, c.relname)
 		from pg_class c where ${TABLES} and c.relrowsecurity
@@ -287,8 +308,12 @@ const UNSUPPORTED = `
 		from pg_inherits i join pg_class c on c.oid = i.inhrelid
 		where c.relnamespace = 'public'::regnamespace
 		union all
-		select 'pg_proc'::regclass, p.oid, p.oid::regprocedure::text, 'function'
-		from pg_proc p where p.pronamespace = 'public'::regnamespace
+		-- Plain functions are copied; a procedure, an aggregate or one in C is not.
+		select 'pg_proc'::regclass, p.oid, p.oid::regprocedure::text,
+			case when p.prokind = 'f' then 'function in ' || l.lanname else 'routine' end
+		from pg_proc p join pg_language l on l.oid = p.prolang
+		where p.pronamespace = 'public'::regnamespace
+			and (p.prokind <> 'f' or l.lanname not in ('sql', 'plpgsql'))
 		union all
 		select 'pg_trigger'::regclass, t.oid, t.tgname || ' on ' || c.relname, 'trigger'
 		from pg_trigger t join pg_class c on c.oid = t.tgrelid
@@ -337,7 +362,8 @@ async function copyPublic(tx) {
 		await tx.unsafe(`set local row_security = ${step === 'rows' ? 'off' : 'on'}`);
 		for (const [ddl] of statements) {
 			try {
-				await tx.unsafe(ddl);
+				// A function is printed under `public`'s name, as a migration would name it.
+				await tx.unsafe(step === 'functions' ? redirect(ddl) : ddl);
 			} catch (error) {
 				throw new Error(`Copying public (${step}): ${error.message}\n\n${ddl}\n`);
 			}
