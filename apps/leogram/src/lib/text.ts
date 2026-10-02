@@ -50,7 +50,7 @@ export interface TextLayer {
 }
 
 interface Font {
-	/** What its button says, written in the font itself. */
+	/** What its button says, written in the font itself, with the font iOS draws it in. */
 	name: string;
 	family: string;
 	weight: number;
@@ -70,13 +70,13 @@ interface Font {
 /** In the order Instagram lists its own, then the ones TikTok and Instagram added since. */
 export const FONTS: Record<FontId, Font> = {
 	classic: {
-		name: 'Clásica',
+		name: 'Clásica (SF Pro)',
 		family: "system-ui, -apple-system, 'Helvetica Neue', 'Segoe UI', Roboto, Arial, sans-serif",
 		weight: 700,
 		leading: 1.2
 	},
 	modern: {
-		name: 'Moderna',
+		name: 'Moderna (Avenir Next)',
 		family: "'Avenir Next', Avenir, Futura, 'Century Gothic', Montserrat, 'Segoe UI', Roboto, sans-serif",
 		weight: 600,
 		caps: true,
@@ -85,7 +85,7 @@ export const FONTS: Record<FontId, Font> = {
 		zoom: 0.9
 	},
 	neon: {
-		name: 'Neón',
+		name: 'Neón (Snell Roundhand)',
 		family: "'Snell Roundhand', 'Brush Script MT', 'Segoe Script', 'Dancing Script', cursive",
 		weight: 700,
 		leading: 1.3,
@@ -93,13 +93,13 @@ export const FONTS: Record<FontId, Font> = {
 		glow: true
 	},
 	typewriter: {
-		name: 'Máquina de escribir',
+		name: 'Máquina de escribir (American Typewriter)',
 		family: "'American Typewriter', 'Courier New', Courier, 'Cutive Mono', monospace",
 		weight: 600,
 		leading: 1.25
 	},
 	strong: {
-		name: 'Fuerte',
+		name: 'Fuerte (Avenir Next Condensed)',
 		family:
 			"'Avenir Next Condensed', 'Bahnschrift Condensed', Impact, 'Arial Narrow', sans-serif-condensed, sans-serif",
 		weight: 800,
@@ -109,34 +109,34 @@ export const FONTS: Record<FontId, Font> = {
 		zoom: 1.1
 	},
 	literature: {
-		name: 'Literatura',
+		name: 'Literatura (Iowan Old Style)',
 		family: "'Iowan Old Style', Georgia, 'Times New Roman', serif",
 		weight: 500,
 		leading: 1.25,
 		zoom: 1.05
 	},
 	hand: {
-		name: 'A mano',
+		name: 'A mano (Bradley Hand)',
 		family: "'Bradley Hand', Noteworthy, 'Segoe Print', 'Ink Free', casual, cursive",
 		weight: 700,
 		leading: 1.25,
 		zoom: 1.1
 	},
 	bubble: {
-		name: 'Burbuja',
+		name: 'Burbuja (SF Pro Rounded)',
 		family: "ui-rounded, 'SF Pro Rounded', 'Arial Rounded MT Bold', 'Varela Round', Nunito, sans-serif",
 		weight: 800,
 		leading: 1.15
 	},
 	poster: {
-		name: 'Póster',
+		name: 'Póster (Didot)',
 		family: "Didot, 'Bodoni 72', 'Bodoni MT', 'Playfair Display', Georgia, serif",
 		weight: 700,
 		leading: 1.1,
 		zoom: 1.05
 	},
 	headline: {
-		name: 'Titular',
+		name: 'Titular (DIN Condensed)',
 		family:
 			"'DIN Condensed', 'Bahnschrift Condensed', 'Arial Narrow', sans-serif-condensed, Impact, sans-serif",
 		weight: 700,
