@@ -10,6 +10,7 @@ phone home screen: every app is an icon.
 - Repaso: https://leonardoramirezr.github.io/leo-os/repaso/
 - Dictado: https://leonardoramirezr.github.io/leo-os/dictado/
 - Leogram: https://leonardoramirezr.github.io/leo-os/leogram/
+- Transforma: https://leonardoramirezr.github.io/leo-os/transforma/
 
 ## Layout
 
@@ -690,3 +691,45 @@ thing it needs is what the previews already need: `DATABASE_URL`, `NEON_API_KEY`
 - Object Storage is in beta and only in some of Neon's regions. Where the branch has none, the step
   says so and the site is published all the same: Leogram shows its posts, and says it cannot
   upload yet.
+
+## Transforma
+
+Texts rewritten with prompts of one's own: one turns a message into a notice for the pastoral school,
+another makes it formal, another corrects it — whatever each one's instructions say.
+
+- Opening it shows the prompts in alphabetical order of their names, each with the start of its
+  instructions, and **Nuevo prompt**. A prompt is its instructions, which are what the chat model is
+  told, and a name, which is optional: one left without it is named by the chat model out of its
+  instructions, in two to four words, and goes by their first words until then, or if that does not
+  work out, in which case the next visit asks again. Rewriting the instructions of a prompt named
+  that way names it again.
+- Tapping a prompt opens the text, to type in or paste: **Pegar**, there while it is empty, reads
+  what was copied. **Transformar** sends it with the prompt's instructions, and what comes back takes
+  its place.
+- **Deshacer** and **Rehacer** walk through every version the text has had: typed, where typing
+  counts as one change until it pauses, pasted, transformed, or emptied with **Borrar**, which asks
+  nothing since undo brings it back. ⌘Z and ⇧⌘Z (Ctrl on the others) do the same, and ⌘/Ctrl + Enter
+  transforms. **Copiar** copies the whole text.
+- **Cambios** shows what the last prompt changed: the text as it is now, with every word taken out in
+  red and struck through, where it was, and every word put in, in green; what did not change is left
+  as it is. It compares what the prompt was given with the text on screen, so whatever was typed by
+  hand afterwards shows too, and the view says so. A text pasted, typed from nothing or emptied since
+  has no prompt behind it, and the button is off.
+- The comparison goes word by word, each mark of punctuation on its own, and is the shortest there is:
+  Myers' algorithm, worked from both ends at once, which keeps its memory to the size of the texts
+  (`src/lib/diff.ts`). Whitespace counts only where it breaks a line, and a line break taken out or
+  put in shows as a ¶. Two long texts with little in common may take more than a second to compare:
+  past it, what is left shows as taken out and put in whole.
+- There is one text, the same in every prompt: it can go through several prompts in a row, and one
+  transformed with the wrong prompt is one undo away from trying another.
+- **Ajustes** picks the chat model among those Groq's `/models` lists, `openai/gpt-oss-120b` until
+  another is picked. It is one for every prompt, and it names them too. It is plain text in and plain
+  text out, with nothing model-specific sent, so any chat model the key can use will do.
+- It uses the same Groq API key as Lista, Repaso and Dictado, `groq:api-key`, and asks for one when
+  there is none. Only the key, the text and the prompt's instructions are ever sent to `api.groq.com`.
+- The prompts live in the account, in the `transforma_prompts` table. The text lives in
+  `transforma_texts`, one row per account, with its versions: the last 50, as long as together they
+  stay under 100,000 characters. Pasting the result elsewhere means going to another app, and iOS
+  often closes this one meanwhile: undo, and what the prompt changed, are still there on coming back,
+  and on another device. Both have a copy on the device, and the text's, when the database did not
+  get it, is sent rather than read over the next time the app opens, as in Dictado.

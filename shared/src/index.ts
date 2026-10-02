@@ -20,7 +20,10 @@ export type {
 	ListItemRow,
 	MovementRow,
 	PersonRow,
-	SettingRow
+	SettingRow,
+	TransformaPromptRow,
+	TransformaTextRow,
+	TransformaVersion
 } from './database';
 export { eq, insert, isExpired, oneOf, remove, rpc, select, update, upsert } from './db';
 export { local } from './local.svelte';

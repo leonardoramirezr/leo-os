@@ -363,6 +363,54 @@ export const leogramComments = pgTable(
 	]
 ).enableRLS();
 
+/**
+ * «Transforma»: a prompt, the instructions a text is rewritten with. It is shown by the name the
+ * user gave it or, while it has none, by the one the app gave it.
+ */
+export const transformaPrompts = pgTable(
+	'transforma_prompts',
+	{
+		id: uuid().primaryKey(),
+		user_id: account(),
+		/** What the user named it; '' leaves the name to the app. */
+		title: text().notNull().default(''),
+		/** The name the app gave it, out of its instructions, for as long as `title` is empty. */
+		auto_title: text().notNull().default(''),
+		/** What a text is to become, in the user's words: what the chat model is told. */
+		instructions: text().notNull(),
+		/** Epoch milliseconds. */
+		created_at: bigint({ mode: 'number' }).notNull().default(0)
+	},
+	(table) => [index('transforma_prompts_user').on(table.user_id), ownRows('transforma_prompts_own')]
+).enableRLS();
+
+/** A version of the text in «Transforma», as its history keeps it. */
+export interface TransformaVersion {
+	text: string;
+	/**
+	 * The prompt that made it, by the name it had then. None for a version typed, pasted or
+	 * cleared: only a prompt's own can be shown with what it changed.
+	 */
+	prompt?: string;
+}
+
+/**
+ * «Transforma»: the text every prompt works on, with the versions it went through — what undo,
+ * redo and the changes view walk, kept so that they still work after the app is closed. There is
+ * only ever one text, so the account is the whole key.
+ */
+export const transformaTexts = pgTable(
+	'transforma_texts',
+	{
+		user_id: account().primaryKey(),
+		/** Oldest first. The app keeps the last few. */
+		versions: jsonb().$type<TransformaVersion[]>().notNull(),
+		/** Which of them is on screen. */
+		current: integer().notNull()
+	},
+	() => [ownRows('transforma_texts_own')]
+).enableRLS();
+
 // What the browser reads and writes. `shared/` re-exports these, so a column is described once:
 // rename one here and the apps stop typechecking until they follow.
 export type SettingRow = typeof settings.$inferSelect;
@@ -378,3 +426,5 @@ export type LeogramPostRow = typeof leogramPosts.$inferSelect;
 export type LeogramMediaRow = typeof leogramMedia.$inferSelect;
 export type LeogramLikeRow = typeof leogramLikes.$inferSelect;
 export type LeogramCommentRow = typeof leogramComments.$inferSelect;
+export type TransformaPromptRow = typeof transformaPrompts.$inferSelect;
+export type TransformaTextRow = typeof transformaTexts.$inferSelect;

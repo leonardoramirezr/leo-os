@@ -19,5 +19,8 @@ export type {
 	ListItemRow,
 	MovementRow,
 	PersonRow,
-	SettingRow
+	SettingRow,
+	TransformaPromptRow,
+	TransformaTextRow,
+	TransformaVersion
 } from '@leo-os/db/schema';
