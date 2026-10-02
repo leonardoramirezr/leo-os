@@ -8,6 +8,7 @@ import { readMine, type OwnPost } from './mine';
 import type { CatalogSong } from './music/catalog';
 import { cutClip, type Upload } from './music/clip';
 import { call, deletePost, SONG } from './post';
+import type { TextLayer } from './text';
 
 const TABLE = 'leogram_posts';
 const CACHE = 'leogram-posts';
@@ -34,6 +35,8 @@ export interface DraftSlide {
 	/** What the list of slides shows of it: the photo, or the video's first frame. */
 	thumb: string;
 	focus: Focus;
+	/** What is written on a photo, drawn into it when it is published; a video takes none. */
+	texts: TextLayer[];
 }
 
 export interface DraftMusic {
@@ -101,7 +104,7 @@ class Posts {
 		for (const [slot, item] of draft.slides.entries()) {
 			const image = await load(item.frame ?? item.file);
 			try {
-				const { blob, canvas } = await slide(image, draft.aspect, item.focus);
+				const { blob, canvas } = await slide(image, draft.aspect, item.focus, item.texts);
 				if (slot === 0) thumb = await thumbnail(canvas);
 				if (item.kind === 'video') {
 					files.push({ slot, kind: 'video', file: item.file, type: item.type, focus: item.focus });
