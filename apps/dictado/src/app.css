@@ -19,6 +19,11 @@
 	--danger: light-dark(#d4382c, #ff6b5f);
 	/* The microphone while it listens. */
 	--live: light-dark(#ff3b30, #ff453a);
+	/* What the model took out of the text and what it put in, as the changes view marks them. */
+	--removed: light-dark(#a3140b, #ffb4ad);
+	--removed-bg: light-dark(#ffdcd9, rgb(255 69 58 / 0.3));
+	--added: light-dark(#0b6b2c, #a6f0b9);
+	--added-bg: light-dark(#c9f1d3, rgb(48 209 88 / 0.28));
 	--shadow: 0 2px 12px light-dark(rgb(0 0 0 / 0.07), rgb(0 0 0 / 0.25));
 
 	--font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;

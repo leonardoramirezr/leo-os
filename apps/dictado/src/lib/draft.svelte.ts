@@ -1,5 +1,5 @@
 // The text on screen, which is the one text an account has, and the versions it went through during
-// this visit, for undo and redo.
+// this visit: what undo and redo walk, and what the changes view compares.
 //
 // A change is on screen first and in the database a moment later, so that typing, or undo tapped
 // several times, goes out once. Until the database has it, the copy on the device says so, and the
@@ -21,6 +21,26 @@ const TYPING_PAUSE = 1500;
 /** How long a change waits to be saved, in milliseconds, in case another one follows. */
 const SAVE_DELAY = 800;
 
+/** A version of the text, as undo and redo walk them. */
+interface Version {
+	text: string;
+	/**
+	 * What the model was asked for to make it: «Mejorar texto», or what Editar was told. None for a
+	 * version dictated or typed: only the model's can be shown with what it changed.
+	 */
+	by?: string;
+}
+
+/** What the model changed last: the text it was given and the text as it is now. */
+export interface Comparison {
+	before: string;
+	after: string;
+	/** What it was asked for. */
+	by: string;
+	/** The text was changed afterwards, dictated or typed, and the comparison shows that too. */
+	edited: boolean;
+}
+
 interface Copy {
 	text: string;
 	/** Not in the database yet. */
@@ -38,7 +58,7 @@ class Draft {
 	text = $state('');
 
 	/** Every version of the text during this visit, oldest first. The one on screen is at `#at`. */
-	#versions = $state.raw<string[]>(['']);
+	#versions = $state.raw<Version[]>([{ text: '' }]);
 	#at = $state(0);
 
 	/** The account the text belongs to. Empty until `load` has run. */
@@ -57,6 +77,25 @@ class Draft {
 	get canRedo(): boolean {
 		return this.#at < this.#versions.length - 1;
 	}
+
+	/**
+	 * What the model changed last, to the text on screen: from what it was given to what there is
+	 * now, whatever was dictated or typed since included. None when the model is not behind the text
+	 * on screen — it was only dictated and typed, or emptied since, which begins another text.
+	 */
+	comparison = $derived.by((): Comparison | undefined => {
+		const after = this.#versions[this.#at].text;
+		for (let i = this.#at; i > 0; i--) {
+			const version = this.#versions[i];
+			if (!version.text.trim()) return undefined;
+			if (version.by === undefined) continue;
+
+			const before = this.#versions[i - 1].text;
+			if (!before.trim()) return undefined;
+			return { before, after, by: version.by, edited: i < this.#at };
+		}
+		return undefined;
+	});
 
 	/**
 	 * Reads this account's text: first the copy on the device, then what the database holds, unless
@@ -87,12 +126,15 @@ class Draft {
 		if (this.#saveTimer) this.#send();
 	}
 
-	/** A new version: dictated, improved or edited. Whatever had been undone before it is gone. */
-	set(next: string) {
+	/**
+	 * A new version: dictated, emptied, or what the model made of the text, asked for what `by` says.
+	 * Whatever had been undone before it is gone.
+	 */
+	set(next: string, by?: string) {
 		this.settle();
 		if (next === this.text) return;
 
-		this.#add(next);
+		this.#add(by === undefined ? { text: next } : { text: next, by });
 		this.#changed();
 	}
 
@@ -101,10 +143,10 @@ class Draft {
 		if (next === this.text) return;
 
 		if (this.#typing) {
-			this.#versions = this.#versions.with(this.#at, next);
+			this.#versions = this.#versions.with(this.#at, { text: next });
 			this.text = next;
 		} else {
-			this.#add(next);
+			this.#add({ text: next });
 			this.#typing = true;
 		}
 		clearTimeout(this.#typingTimer);
@@ -129,21 +171,21 @@ class Draft {
 	}
 
 	#start(text: string) {
-		this.#versions = [text];
+		this.#versions = [{ text }];
 		this.#at = 0;
 		this.text = text;
 	}
 
-	#add(next: string) {
-		const versions = [...this.#versions.slice(0, this.#at + 1), next].slice(-VERSIONS);
+	#add(version: Version) {
+		const versions = [...this.#versions.slice(0, this.#at + 1), version].slice(-VERSIONS);
 		this.#versions = versions;
 		this.#at = versions.length - 1;
-		this.text = next;
+		this.text = version.text;
 	}
 
 	#show(at: number) {
 		this.#at = at;
-		this.text = this.#versions[at];
+		this.text = this.#versions[at].text;
 		this.#changed();
 	}
 
@@ -192,7 +234,7 @@ class Draft {
 		// Opening, it is the text there is. Later on it changed on another device, and it comes in as
 		// one more version, so that undo still reaches what this one had.
 		if (first) this.#start(text);
-		else this.#add(text);
+		else this.#add({ text });
 		this.#keep();
 	}
 

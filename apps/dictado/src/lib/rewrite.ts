@@ -56,14 +56,15 @@ const EDIT = [
 
 /**
  * `dictated`, rewritten the way `instructions` say. `before` is the text it goes after, shown to the
- * model so that it follows on from it; only what goes after it comes back.
+ * model so that it follows on from it; only what goes after it comes back. «Mejorar» hands over the
+ * whole text, with nothing before it, and the whole text comes back.
  */
 export async function improve(
 	apiKey: string,
 	model: string,
 	instructions: string,
 	dictated: string,
-	before: string
+	before = ''
 ): Promise<string> {
 	const context = before.trim()
 		? `<text_so_far>\n${before.length > CONTEXT ? `…${before.slice(-CONTEXT)}` : before}\n</text_so_far>\n\n`
