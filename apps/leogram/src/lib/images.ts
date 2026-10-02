@@ -1,7 +1,8 @@
-// Photos as a post keeps them: cut to the post's shape where the author framed them, 1080 pixels
-// wide as Instagram has them, and as JPEG, which Safari can write and which keeps them small. A
-// video goes as it was recorded, since a browser cannot cut one, and is framed when it is shown;
-// what is cut for it here is its poster, the frame that shows until it plays.
+// Photos as a post keeps them: cut to the post's shape where the author framed them, with what was
+// written on them, 1080 pixels wide as Instagram has them, and as JPEG, which Safari can write and
+// which keeps them small. A video goes as it was recorded, since a browser cannot cut one, and is
+// framed when it is shown; what is cut for it here is its poster, the frame that shows until it plays.
+import { drawTexts, type TextLayer } from './text';
 
 /** Instagram's shapes, as width over height. */
 export const ASPECTS = { square: 1, portrait: 4 / 5, landscape: 1.91 } as const;
@@ -49,14 +50,17 @@ export function sizeOf(image: Source): { width: number; height: number } {
 	return { width: image.width, height: image.height };
 }
 
-/** `image` cut to `ratio` around `focus`, `width` pixels wide at most: never more than it has. */
-function frame(image: Source, ratio: number, focus: Focus, width: number): HTMLCanvasElement {
+/**
+ * `image` cut to `ratio` around `focus`, `width` pixels wide at most: never more than it has, unless
+ * `full` asks for all of `width` anyway.
+ */
+function frame(image: Source, ratio: number, focus: Focus, width: number, full = false): HTMLCanvasElement {
 	const source = sizeOf(image);
 	const cropWidth = Math.min(source.width, source.height * ratio);
 	const cropHeight = cropWidth / ratio;
 
 	const canvas = document.createElement('canvas');
-	canvas.width = Math.round(Math.min(width, cropWidth));
+	canvas.width = Math.round(full ? width : Math.min(width, cropWidth));
 	canvas.height = Math.round(canvas.width / ratio);
 	const context = canvas.getContext('2d');
 	if (!context) throw new Error('No se pudo preparar la foto.');
@@ -91,9 +95,19 @@ async function jpeg(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
 	return blob.size > 600_000 ? blobOf(canvas, quality - 0.15) : blob;
 }
 
-/** A photo of the carousel, or a video's poster, and its canvas, which the grid's thumbnail is cut from. */
-export async function slide(image: Source, aspect: Aspect, focus: Focus) {
-	const canvas = frame(image, ASPECTS[aspect], focus, 1080);
+/**
+ * A photo of the carousel, or a video's poster, and its canvas, which the grid's thumbnail is cut
+ * from. A photo with text goes the full 1080 pixels even when it is smaller, so that the letters
+ * are as sharp as on any other.
+ */
+export async function slide(image: Source, aspect: Aspect, focus: Focus, texts: readonly TextLayer[] = []) {
+	const canvas = frame(image, ASPECTS[aspect], focus, 1080, texts.length > 0);
+	if (texts.length > 0) {
+		const context = canvas.getContext('2d');
+		if (!context) throw new Error('No se pudo preparar la foto.');
+		await document.fonts.ready;
+		drawTexts(context, texts, canvas.width, canvas.height);
+	}
 	return { blob: await jpeg(canvas, 0.85), canvas };
 }
 

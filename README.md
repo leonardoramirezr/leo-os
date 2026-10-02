@@ -622,6 +622,26 @@ or not.
 - A post is up to ten photos and videos, in one of Instagram's shapes — 1:1, 4:5 or 1.91:1,
   whichever crops the first one least until another is picked — and framed by dragging each one;
   the arrows and the bin under them reorder them and drop one. Then a caption and a song.
+- **Any photo takes text**, as an Instagram story or a TikTok does: «Aa», in the corner of the photo
+  being framed, opens it on its own, black around it, and straight to writing when it has no text
+  yet; there, «Aa» or a tap on the photo writes another, and a tap on one writes it again, each
+  starting out as the last was written. Its font is one of ten — Instagram's
+  Classic, Modern, Neon, Typewriter and Strong, and Literature, Signature («A mano»), Bubble, Poster
+  and Squeeze («Titular»), which cover TikTok's Classic, Typewriter, Handwriting, Neon and Serif
+  too —, its colour one of Instagram's palette or any other, and the «A» goes through what is done
+  with it, as TikTok's does: the letters themselves, a background behind them, solid or see-through
+  and drawn as one shape round all the lines, an outline, or the hard shadow of Instagram's Strong;
+  Neon glows in its colour instead. The alignment, and the size on a slider at the side, are at
+  hand as on Instagram. Once written, a text is moved with one finger, made bigger or smaller and
+  turned with two, snaps to the middle, showing a line there, and to upright, and is dropped on the
+  bin to go. A video takes none: a browser cannot write over a video.
+- **The text is drawn into the photo** when the post is published, so it shows as written on any
+  device, and on the grid's thumbnail too; a photo with text goes the full 1080 pixels wide even
+  when it is smaller, for sharp letters. The fonts are the device's own, and nothing is downloaded
+  for them: iOS has one for each, and the other systems fall back to the closest they have.
+  `src/lib/text.ts` lays a text out once at 1080 pixels and draws it on a canvas, both into the
+  photo and over it in the editor and the composer, only scaled, so what shows is what goes up,
+  line breaks included; while a text is typed, CSS draws it with the same font, size and room.
 - A photo is kept cut to its frame, 1080 pixels wide, as JPEG. A video goes as it was recorded —
   MP4, MOV or WebM, up to 300 MB, with its sound —, since a browser cannot cut one: it is framed
   when it is shown, and its first frame, cut like a photo, is its poster and, if it comes first,

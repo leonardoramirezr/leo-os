@@ -1,10 +1,11 @@
 <script lang="ts">
 	// «Nueva publicación»: up to ten photos and videos, in one of Instagram's shapes and framed by
-	// dragging each one, a caption and a song. «Compartir» publishes it, and its link is ready right
-	// away: there is no other step to make it public, and nobody finds it without the link.
+	// dragging each one, text written on any of the photos, a caption and a song. «Compartir»
+	// publishes it, and its link is ready right away: there is no other step to make it public, and
+	// nobody finds it without the link.
 	import { isExpired, session } from '@leo-os/shared';
 	import { replaceState } from '$app/navigation';
-	import { onDestroy, onMount } from 'svelte';
+	import { flushSync, onDestroy, onMount } from 'svelte';
 	import { linkOf } from '$lib/code';
 	import { clock } from '$lib/format';
 	import {
@@ -22,6 +23,8 @@
 	import Avatar from './Avatar.svelte';
 	import Icon from './Icon.svelte';
 	import MusicSheet from './MusicSheet.svelte';
+	import TextEditor from './TextEditor.svelte';
+	import TextLayers from './TextLayers.svelte';
 
 	const SHAPES: { aspect: Aspect; label: string }[] = [
 		{ aspect: 'square', label: '1:1' },
@@ -36,6 +39,8 @@
 	/** The slide being framed. */
 	let current = $state(0);
 	let choosingMusic = $state(false);
+	/** The photo whose text is being written. */
+	let writingOn = $state<DraftSlide>();
 	let reading = $state(false);
 	/** From 0 to 1 while it is published. */
 	let progress = $state<number>();
@@ -81,7 +86,7 @@
 			if (file.size > MAX_VIDEO) throw new Error('Un video pesa más de 300 MB: elige uno más corto.');
 			const { width, height, frame } = await readVideo(file);
 			const [preview, thumb] = [URL.createObjectURL(file), URL.createObjectURL(frame)];
-			return { kind: 'video', file, type, width, height, frame, preview, thumb, focus };
+			return { kind: 'video', file, type, width, height, frame, preview, thumb, focus, texts: [] };
 		}
 		if (file.type.startsWith('video/')) {
 			throw new Error('Ese video no se puede subir: elige uno en MP4 o MOV.');
@@ -96,7 +101,17 @@
 		const { width, height } = sizeOf(image);
 		if ('close' in image) image.close();
 		const preview = URL.createObjectURL(file);
-		return { kind: 'photo', file, type: 'image/jpeg', width, height, preview, thumb: preview, focus };
+		return {
+			kind: 'photo',
+			file,
+			type: 'image/jpeg',
+			width,
+			height,
+			preview,
+			thumb: preview,
+			focus,
+			texts: []
+		};
 	}
 
 	async function addFiles() {
@@ -173,6 +188,13 @@
 		// The picture follows the finger, so the frame moves the other way.
 		if (room.x > 0) item.focus.x = clamp(drag.focusX - (event.clientX - drag.x) / room.x);
 		if (room.y > 0) item.focus.y = clamp(drag.focusY - (event.clientY - drag.y) / room.y);
+	}
+
+	/** «Aa»: the editor is up within this same tap, which is what lets its field bring up the keyboard. */
+	function writeOn(item: DraftSlide) {
+		if (item.kind !== 'photo') return;
+		writingOn = item;
+		flushSync();
 	}
 
 	function cancel() {
@@ -278,39 +300,53 @@
 		</div>
 	{:else}
 		<div class="editor">
-			<div
-				class="frame"
-				bind:this={frame}
-				style:aspect-ratio={ASPECTS[aspect]}
-				{onpointerdown}
-				{onpointermove}
-				onpointerup={() => (drag = undefined)}
-				onpointercancel={() => (drag = undefined)}
-				role="img"
-				aria-label={frameLabel}
-			>
-				{#if slides[current]}
-					{@const item = slides[current]}
-					{#if item.kind === 'video'}
-						<video
-							bind:this={video}
-							src={item.preview}
-							style:object-position="{item.focus.x * 100}% {item.focus.y * 100}%"
-							muted
-							loop
-							playsinline
-						></video>
-					{:else}
-						<img
-							src={item.preview}
-							alt=""
-							draggable="false"
-							style:object-position="{item.focus.x * 100}% {item.focus.y * 100}%"
-						/>
+			<div class="framed">
+				<div
+					class="frame"
+					bind:this={frame}
+					style:aspect-ratio={ASPECTS[aspect]}
+					{onpointerdown}
+					{onpointermove}
+					onpointerup={() => (drag = undefined)}
+					onpointercancel={() => (drag = undefined)}
+					role="img"
+					aria-label={frameLabel}
+				>
+					{#if slides[current]}
+						{@const item = slides[current]}
+						{#if item.kind === 'video'}
+							<video
+								bind:this={video}
+								src={item.preview}
+								style:object-position="{item.focus.x * 100}% {item.focus.y * 100}%"
+								muted
+								loop
+								playsinline
+							></video>
+						{:else}
+							<img
+								src={item.preview}
+								alt=""
+								draggable="false"
+								style:object-position="{item.focus.x * 100}% {item.focus.y * 100}%"
+							/>
+							<TextLayers layers={item.texts} />
+						{/if}
 					{/if}
-				{/if}
-				{#if slides.length > 1}
-					<span class="counter">{current + 1}/{slides.length}</span>
+					{#if slides.length > 1}
+						<span class="counter">{current + 1}/{slides.length}</span>
+					{/if}
+				</div>
+				<!-- Beside the frame rather than in it: what is in an image is not read out. -->
+				{#if slides[current]?.kind === 'photo'}
+					<button
+						class="write"
+						type="button"
+						onclick={() => writeOn(slides[current])}
+						aria-label="Escribir en la foto"
+					>
+						<Icon name="text" size={20} />
+					</button>
 				{/if}
 			</div>
 
@@ -370,6 +406,8 @@
 							<img src={item.thumb} alt="" />
 							{#if item.kind === 'video'}
 								<span class="kind"><Icon name="video" size={14} /></span>
+							{:else if item.texts.length > 0}
+								<span class="kind"><Icon name="text" size={14} /></span>
 							{/if}
 						</button>
 					</li>
@@ -440,6 +478,20 @@
 	{/if}
 </div>
 
+{#if writingOn}
+	<TextEditor
+		photo={writingOn.preview}
+		focus={writingOn.focus}
+		{aspect}
+		texts={writingOn.texts}
+		ondone={(texts) => {
+			if (writingOn) writingOn.texts = texts;
+			writingOn = undefined;
+		}}
+		oncancel={() => (writingOn = undefined)}
+	/>
+{/if}
+
 <MusicSheet
 	bind:open={choosingMusic}
 	onpick={(picked) => {
@@ -493,6 +545,10 @@
 		padding-bottom: calc(24px + env(safe-area-inset-bottom));
 	}
 
+	.framed {
+		position: relative;
+	}
+
 	.frame {
 		position: relative;
 		width: 100%;
@@ -516,6 +572,22 @@
 		pointer-events: none;
 		-webkit-user-select: none;
 		user-select: none;
+	}
+
+	.write {
+		display: grid;
+		position: absolute;
+		bottom: 12px;
+		left: 12px;
+		place-items: center;
+		width: 36px;
+		height: 36px;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: rgb(18 18 18 / 0.7);
+		color: #fff;
+		cursor: pointer;
 	}
 
 	.counter {

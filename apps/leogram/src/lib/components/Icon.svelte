@@ -33,7 +33,11 @@
 		person: '<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>',
 		square: '<rect x="5" y="5" width="14" height="14" rx="1.5"/>',
 		portrait: '<rect x="6" y="4.5" width="12" height="15" rx="1.5"/>',
-		landscape: '<rect x="2.5" y="7" width="19" height="10" rx="1.5"/>'
+		landscape: '<rect x="2.5" y="7" width="19" height="10" rx="1.5"/>',
+		text: '<path d="M2 19 7.5 5 13 19M4.4 14h6.2"/><circle cx="18.2" cy="15.6" r="3.2"/><path d="M21.4 12.4V19"/>',
+		'align-left': '<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>',
+		'align-center': '<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>',
+		'align-right': '<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>'
 	};
 
 	export type IconName = keyof typeof icons;
