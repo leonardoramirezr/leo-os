@@ -5,7 +5,13 @@ declare global {
 		// interface Error {}
 		// interface Locals {}
 		// interface PageData {}
-		// interface PageState {}
+
+		/** Which screen is showing, kept in the history entry so that «back» returns to the text. */
+		interface PageState {
+			/** Looking at what the model changed last. */
+			changes?: boolean;
+		}
+
 		// interface Platform {}
 	}
 }

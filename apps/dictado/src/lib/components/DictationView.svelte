@@ -1,5 +1,11 @@
+<script lang="ts" module>
+	/** How far down the text was when the changes were opened, to come back to it there. */
+	let scrolled = 0;
+</script>
+
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
+	import { pushState } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import icon from '../../../icon.svg';
 	import { draft } from '$lib/draft.svelte';
@@ -45,6 +51,9 @@
 		viewport?.addEventListener('resize', fitViewport);
 		viewport?.addEventListener('scroll', fitViewport);
 
+		textarea.scrollTop = scrolled;
+		scrolled = 0;
+
 		return () => {
 			viewport?.removeEventListener('resize', fitViewport);
 			viewport?.removeEventListener('scroll', fitViewport);
@@ -68,9 +77,12 @@
 		};
 	});
 
-	// A dictation lands at the end of the text, which may be out of sight: it is scrolled to.
+	// A dictation lands at the end of the text, which may be out of sight: it is scrolled to. One that
+	// landed before the screen was drawn, coming back from the changes, is where it was left.
+	let landed = voice.landed;
 	$effect(() => {
-		if (!voice.landed) return;
+		if (voice.landed === landed) return;
+		landed = voice.landed;
 		tick().then(() => textarea?.scrollTo({ top: textarea.scrollHeight, behavior: 'smooth' }));
 	});
 
@@ -116,6 +128,11 @@
 		} catch {
 			show('No se pudo copiar. Mantén presionado el texto para copiarlo a mano.');
 		}
+	}
+
+	function showChanges() {
+		scrolled = textarea.scrollTop;
+		pushState('', { changes: true });
 	}
 
 	function startOver() {
@@ -244,7 +261,7 @@
 	</main>
 
 	{#if !typing}
-		<VoiceBar {notice} onprompt={() => (improveOpen = true)} />
+		<VoiceBar {notice} onprompt={() => (improveOpen = true)} onchanges={showChanges} />
 	{/if}
 </div>
 

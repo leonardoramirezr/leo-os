@@ -87,8 +87,8 @@
 		</label>
 	</div>
 	<p class="hint">
-		Reescribe lo que dictas cuando «Mejorar texto» está encendido, y hace los cambios que le pides con
-		«Editar».
+		Reescribe lo que dictas cuando «Mejorar texto» está encendido, y todo el texto cuando tocas
+		«Mejorar». También hace los cambios que le pides con «Editar».
 	</p>
 
 	<h3 class="section-title">API key de Groq</h3>

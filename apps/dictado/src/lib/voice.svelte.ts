@@ -1,10 +1,12 @@
-// The two microphones. One dictates: what is said goes to Whisper and lands at the end of the text,
-// rewritten first by the chat model when «Mejorar texto» is on. The other, «Editar», listens for an
-// instruction instead, which the chat model carries out on the whole text.
+// The two microphones, and «Mejorar». One microphone dictates: what is said goes to Whisper and
+// lands at the end of the text, rewritten first by the chat model when «Mejorar texto» is on. The
+// other, «Editar», listens for an instruction instead, which the chat model carries out on the
+// whole text. «Mejorar» needs no microphone: the chat model rewrites the whole text, there and then,
+// the way «Mejorar texto» rewrites a dictation.
 import { draft } from './draft.svelte';
 import { GroqError, transcribe } from './groq';
 import { MicrophoneError, record, type Recording } from './recorder';
-import { edit, improve } from './rewrite';
+import * as rewrite from './rewrite';
 import { apiKey, chatModel, improving, language, prompt, transcriptionModel } from './settings.svelte';
 
 export type Mode = 'dictate' | 'edit';
@@ -18,6 +20,12 @@ const MAX_SECONDS = 600;
 const MIN_SECONDS = 0.6;
 
 const NOTHING_HEARD = 'No se oyó nada.';
+
+/**
+ * What the changes view says made an improvement: the switch, by its name. «Mejorar» follows the
+ * same instructions, and goes by the same name.
+ */
+const IMPROVING = 'Mejorar texto';
 
 /** A line that is an item of a list: «- Leche», «• Leche», «1. Leche», «2) Leche». */
 const ITEM = /^\s*([-*•]|\d+[.)])\s/;
@@ -42,8 +50,8 @@ function append(text: string, addition: string): string {
 class Voice {
 	phase = $state<Phase>('idle');
 
-	/** What the microphone is open for, or was the last time. */
-	mode = $state<Mode>('dictate');
+	/** What the last tap asked for, and so what is under way while busy: a microphone, or «Mejorar». */
+	mode = $state<Mode | 'improve'>('dictate');
 
 	/** Seconds the microphone has been open. */
 	seconds = $state(0);
@@ -94,7 +102,35 @@ class Voice {
 		if (this.phase === 'recording') this.#finish();
 	}
 
-	/** What the last dictation or edit said no longer applies: the text was changed by other means. */
+	/**
+	 * «Mejorar»: the whole text, rewritten the way the instructions of «Mejorar texto» say, whether
+	 * the switch is on or not. What it was stays one undo away.
+	 */
+	async improve() {
+		draft.settle();
+		const before = draft.text;
+		if (this.phase !== 'idle' || !before.trim()) return;
+
+		this.forget();
+		this.mode = 'improve';
+		this.phase = 'improving';
+		try {
+			const after = await rewrite.improve(apiKey.value, chatModel.value, prompt.value, before);
+			if (!after) throw new Error('Groq no devolvió el texto. Inténtalo de nuevo.');
+
+			if (after === before.trim()) this.reply = 'El texto quedó igual.';
+			else draft.set(after, IMPROVING);
+		} catch (error) {
+			this.#fail(error);
+		} finally {
+			this.phase = 'idle';
+		}
+	}
+
+	/**
+	 * What the last dictation, edit or improvement said no longer applies: the text was changed by
+	 * other means.
+	 */
 	forget() {
 		if (this.phase !== 'idle') return;
 
@@ -189,10 +225,10 @@ class Voice {
 		if (!improving.value) return;
 
 		this.phase = 'improving';
-		const improved = await improve(key, chatModel.value, prompt.value, heard, before);
+		const improved = await rewrite.improve(key, chatModel.value, prompt.value, heard, before);
 		if (!improved) return;
 
-		draft.set(append(before, improved));
+		draft.set(append(before, improved), IMPROVING);
 		this.landed++;
 	}
 
@@ -201,20 +237,20 @@ class Voice {
 		this.phase = 'editing';
 
 		const before = draft.text;
-		const after = await edit(key, chatModel.value, before, heard);
+		const after = await rewrite.edit(key, chatModel.value, before, heard);
 		if (!after) throw new Error('Groq no devolvió el texto. Inténtalo de nuevo.');
 
 		if (after === before.trim()) {
 			this.reply = 'El texto quedó igual.';
 		} else {
-			draft.set(after);
+			draft.set(after, heard);
 			this.reply = 'Listo.';
 		}
 	}
 
 	#fail(error: unknown) {
 		const message = this.#describe(error);
-		// The dictation is on screen already, as it was heard.
+		// What was being improved is on screen as it was: a dictation, as it was heard.
 		this.error = this.phase === 'improving' ? `${message} El texto quedó sin mejorar.` : message;
 	}
 

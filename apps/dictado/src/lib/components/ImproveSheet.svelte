@@ -51,7 +51,8 @@
 	</div>
 	<p class="hint">
 		Encendido, lo que dictas pasa por {chatModel.value} con estas instrucciones y lo que devuelve toma el
-		lugar de la transcripción. Deshacer te devuelve lo que se oyó.
+		lugar de la transcripción. Deshacer te devuelve lo que se oyó. El botón «Mejorar» hace lo mismo con
+		todo el texto cuando lo tocas, esté encendido o no.
 	</p>
 
 	<h3 class="section-title">Instrucciones</h3>

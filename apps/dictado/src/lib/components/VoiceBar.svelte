@@ -5,10 +5,16 @@
 	import Icon from './Icon.svelte';
 	import Switch from './Switch.svelte';
 
-	let { notice = '', onprompt }: { notice?: string; onprompt: () => void } = $props();
+	let {
+		notice = '',
+		onprompt,
+		onchanges
+	}: { notice?: string; onprompt: () => void; onchanges: () => void } = $props();
 
 	const recording = $derived(voice.phase === 'recording');
 	const dictating = $derived(voice.mode === 'dictate');
+	/** The button whose work is under way: it keeps its colour and shows a spinner. */
+	const busyWith = $derived(voice.busy ? voice.mode : undefined);
 	const hasText = $derived(draft.text.trim() !== '');
 	const clock = $derived(`${Math.floor(voice.seconds / 60)}:${String(voice.seconds % 60).padStart(2, '0')}`);
 
@@ -50,15 +56,18 @@
 						<button class="link" type="button" onclick={() => voice.changeKey()}>Cambiar API key</button>
 					{/if}
 				</p>
-			{:else if voice.reply}
-				<p>{voice.reply}</p>
-			{:else if notice}
-				<p>{notice}</p>
+			{:else if voice.reply || notice || draft.comparison}
+				<p>
+					{voice.reply || notice}
+					{#if draft.comparison}
+						<button class="link" type="button" onclick={onchanges}>Ver cambios</button>
+					{/if}
+				</p>
 			{/if}
 		{/if}
 	</div>
 
-	<div class="improve">
+	<div class="auto-improve">
 		<label class="toggle">
 			<Switch bind:checked={improving.value} />
 			<span>Mejorar texto</span>
@@ -106,13 +115,13 @@
 			class:live={recording && dictating}
 			type="button"
 			disabled={voice.busy || (recording && !dictating)}
-			aria-busy={voice.busy && dictating}
+			aria-busy={busyWith === 'dictate'}
 			style:--level={voice.level}
 			onclick={() => voice.toggle('dictate')}
 		>
 			<span class="halo" aria-hidden="true"></span>
 			<span class="round">
-				{#if voice.busy && dictating}
+				{#if busyWith === 'dictate'}
 					<span class="spinner" aria-hidden="true"></span>
 				{:else if recording && dictating}
 					<Icon name="stop" size={30} />
@@ -126,17 +135,33 @@
 		<div class="side">
 			{#if hasText}
 				<button
+					class="action improve"
+					type="button"
+					disabled={voice.phase !== 'idle'}
+					aria-busy={busyWith === 'improve'}
+					onclick={() => voice.improve()}
+				>
+					<span class="round">
+						{#if busyWith === 'improve'}
+							<span class="spinner" aria-hidden="true"></span>
+						{:else}
+							<Icon name="sparkles" size={24} />
+						{/if}
+					</span>
+					<span class="label">Mejorar</span>
+				</button>
+				<button
 					class="action edit"
 					class:live={recording && !dictating}
 					type="button"
 					disabled={voice.busy || (recording && dictating)}
-					aria-busy={voice.busy && !dictating}
+					aria-busy={busyWith === 'edit'}
 					style:--level={voice.level}
 					onclick={() => voice.toggle('edit')}
 				>
 					<span class="halo" aria-hidden="true"></span>
 					<span class="round">
-						{#if voice.busy && !dictating}
+						{#if busyWith === 'edit'}
 							<span class="spinner" aria-hidden="true"></span>
 						{:else if recording && !dictating}
 							<Icon name="stop" size={24} />
@@ -208,7 +233,7 @@
 	}
 
 	/* The switch, and the way to what it asks the model for. */
-	.improve {
+	.auto-improve {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
@@ -253,6 +278,7 @@
 	.side {
 		display: flex;
 		justify-content: center;
+		gap: 8px;
 	}
 
 	/* Centred on the microphone, like the other buttons, whose labels hang below. */
@@ -307,10 +333,12 @@
 		color: #fff;
 	}
 
+	/* Two of them side by side, between the microphone and the edge of a small phone. */
+	.improve .round,
 	.edit .round {
-		width: 56px;
-		height: 56px;
-		margin: 8px 0;
+		width: 52px;
+		height: 52px;
+		margin: 10px 0;
 		color: var(--tint);
 	}
 
@@ -351,8 +379,8 @@
 	}
 
 	.edit .halo {
-		--size: 56px;
-		--top: 8px;
+		--size: 52px;
+		--top: 10px;
 	}
 
 	.live .halo {

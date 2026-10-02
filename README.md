@@ -579,6 +579,17 @@ Voice to text: say something and it is written down, then go on dictating, or sa
   the transcription. The transcription is on screen first and Deshacer goes back to it; if improving
   it fails, it stays. The model is shown the end of the text so far, to follow on from it, and only
   what goes after it comes back.
+- **Mejorar**, next to Editar, does the same to the whole text whenever it is tapped, with the switch
+  on or off: the whole text goes to the chat model with those instructions, and what comes back
+  takes its place, one Deshacer away from what it was.
+- **Ver cambios**, under the text, shows what the chat model changed last — an improvement, by the
+  switch or by Mejorar, or an edit — just as Transforma's **Cambios** does, with the same comparison
+  word by word (`src/lib/diff.ts`): the text as it is now, with every word taken out in red and
+  struck through, where it was, and every word put in, in green. It compares what the model was
+  given with the text on screen, so whatever was dictated or typed afterwards shows too, and the
+  view says so. It is there for as long as a change of the model's is behind the text: a text only
+  dictated and typed, or emptied since, has none. Like the versions it compares, it lasts as long as
+  the visit.
 - Typing on a touch screen, the bar with the microphones steps aside for the keyboard, and the top
   one has Deshacer, Rehacer and **Listo**. The copy button copies the whole text, and **Texto nuevo**
   empties it after asking; Deshacer brings it back.
