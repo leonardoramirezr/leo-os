@@ -31,6 +31,12 @@
 		upload: '<path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 20h14"/>',
 		check: '<path d="M20 6 9 17l-5-5"/>',
 		person: '<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>',
+		friends:
+			'<circle cx="9" cy="8.5" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M15 5.2a3.5 3.5 0 0 1 0 6.6M18 14.4a6.5 6.5 0 0 1 3.5 5.6"/>',
+		star: '<path d="m12 3.2 2.7 5.5 6 .9-4.35 4.2 1 6-5.35-2.8-5.35 2.8 1-6L3.3 9.6l6-.9Z"/>',
+		starred:
+			'<path fill="currentColor" d="m12 3.2 2.7 5.5 6 .9-4.35 4.2 1 6-5.35-2.8-5.35 2.8 1-6L3.3 9.6l6-.9Z"/>',
+		lock: '<rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>',
 		square: '<rect x="5" y="5" width="14" height="14" rx="1.5"/>',
 		portrait: '<rect x="6" y="4.5" width="12" height="15" rx="1.5"/>',
 		landscape: '<rect x="2.5" y="7" width="19" height="10" rx="1.5"/>',

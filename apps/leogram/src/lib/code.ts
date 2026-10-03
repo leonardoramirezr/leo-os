@@ -12,10 +12,17 @@ export function isCode(value: string | null): value is string {
 	return value !== null && /^[A-Za-z0-9_-]{11}$/.test(value);
 }
 
-/** The link that opens the post for anybody: this app's address with the code. */
+/** The link that opens the post, for whoever it is for: this app's address with the code. */
 export function linkOf(code: string): string {
 	const url = new URL(location.pathname, location.origin);
 	url.searchParams.set('p', code);
+	return url.href;
+}
+
+/** The link to an account's bio: this app's address with its username. */
+export function bioLink(username: string): string {
+	const url = new URL(location.pathname, location.origin);
+	url.searchParams.set('u', username);
 	return url.href;
 }
 

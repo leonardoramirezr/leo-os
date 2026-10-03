@@ -1,5 +1,6 @@
-// The account's own posts: the grid it sees of them, and what it takes to publish one. A post is
-// public the moment it is saved, to whoever is given its link, and to nobody else.
+// The account's own posts: the grid it sees of them, and what it takes to publish one. A post opens
+// the moment it is saved, for whoever it is for and has its link — anybody, or some friends — and
+// shows in the account's bio, to those same people, only if it is listed there.
 import { insert, pull, push, readCache, writeCache, type LeogramMusic } from '@leo-os/shared';
 import { send, type Signed } from './bucket';
 import { newCode } from './code';
@@ -7,7 +8,7 @@ import { load, slide, thumbnail, type Aspect, type Focus } from './images';
 import { readMine, type OwnPost } from './mine';
 import type { CatalogSong } from './music/catalog';
 import { cutClip, type Upload } from './music/clip';
-import { call, deletePost, SONG } from './post';
+import { call, deletePost, share, SONG, type Visibility } from './post';
 import type { TextLayer } from './text';
 
 const TABLE = 'leogram_posts';
@@ -51,7 +52,7 @@ export interface DraftMusic {
 	length: number;
 }
 
-export interface Draft {
+export interface Draft extends Visibility {
 	slides: DraftSlide[];
 	aspect: Aspect;
 	caption: string;
@@ -151,13 +152,18 @@ class Posts {
 			aspect: draft.aspect,
 			slides: draft.slides.length,
 			music,
-			created_at: Date.now()
+			created_at: Date.now(),
+			audience: draft.audience,
+			listed: draft.listed
 		};
 		await insert(TABLE, { ...post, user_id: this.#account });
 
 		const total = files.reduce((sum, { file }) => sum + file.size, 0);
 		let sent = 0;
 		try {
+			// Saved as for some friends already, it opens for nobody but its author until they are
+			// added; and they are, before a single file goes up.
+			if (draft.audience === 'friends') await share(code, draft);
 			for (const { slot, kind, file, type, focus } of files) {
 				const signed = await call<Signed>('leogram_upload', {
 					code,
@@ -187,6 +193,12 @@ class Posts {
 		this.list = [shown, ...this.list];
 		void this.#read();
 		return code;
+	}
+
+	/** Who a post is for changed, from its own page: its marks in the grid, and its tab, follow. */
+	reshare(code: string, { audience, listed }: Pick<Visibility, 'audience' | 'listed'>) {
+		this.list = this.list.map((post) => (post.id === code ? { ...post, audience, listed } : post));
+		writeCache(CACHE, this.#account, $state.snapshot(this.list));
 	}
 
 	/** Takes a post down from the grid, after it was deleted from its own page. */

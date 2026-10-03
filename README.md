@@ -112,7 +112,7 @@ Neon Auth on that domain.
   policies in `db/schema.ts` only ever let `auth.user_id()` — the account behind the request's
   token — see its own. Signed out, the Data API sees the anonymous token Neon Auth hands anybody
   and runs it as the `anonymous` role, which reaches no table: all it may do is open a Leogram post
-  whose link it has ([Leogram](#leogram)).
+  whose link it has, or an account's bio ([Leogram](#leogram)).
 - **Images stay on the device.** The wallpaper and WillChat's conversation are far too large for
   rows read on every open, so they stay in `localStorage` and IndexedDB. Their keys carry the
   account too: two people using the same phone do not see each other's, and signing out drops the
@@ -612,13 +612,15 @@ Voice to text: say something and it is written down, then go on dictating, or sa
 ## Leogram
 
 A parody of Instagram: carousel posts with a song, each with a link that opens for anybody, signed in
-or not.
+or not, or only for some friends; and a bio that lists the ones its author picks.
 
 - Opening it shows the account's profile as Instagram has one: its photo, its username and its posts
-  in a grid of three, and «+» to write a new one. The first time, it asks for the username its posts
-  and comments will carry, suggested out of the account's name; «Editar perfil» changes it and the
-  photo later. Usernames are Instagram's: lowercase letters, digits, dots and underscores, and no two
-  accounts share one.
+  in a grid of three, and «+» to write a new one. The grid comes in two tabs, «En tu bio» for the
+  posts the bio lists and «Solo con enlace» for those only their link opens, and two heads in a
+  corner mark a post for some friends. «Compartir perfil» copies or shares the bio's link, or opens
+  the bio itself. The first time, it asks for the username its posts and comments will carry,
+  suggested out of the account's name; «Editar perfil» changes it and the photo later. Usernames are
+  Instagram's: lowercase letters, digits, dots and underscores, and no two accounts share one.
 - A post is up to ten photos and videos, in one of Instagram's shapes — 1:1, 4:5 or 1.91:1,
   whichever crops the first one least until another is picked — and framed by dragging each one;
   the arrows and the bin under them reorder them and drop one. Then a caption and a song.
@@ -659,36 +661,62 @@ or not.
   decoded or encoded. What is not an MP3 is decoded and kept as a WAV of one channel at 22 kHz,
   which is what a browser can write by itself.
 - **«Compartir» publishes it, and its link is ready right away** (`…/leogram/?p=<code>`): there is no
-  other step to make it public. Nobody comes across a post without its link, whose code is eleven
-  random characters, and nothing lists posts but their author's own grid. The link is copied or
-  shared from there, from the post's «⋯», or from the paper plane under it.
-- **The link opens for anybody**, with Leogram's name on top as Instagram has its own: the photos
-  and videos to swipe through, the song, who posted it, the likes, the caption and the comments. A
-  browser lets no page make sound before it is touched, so when the song cannot start on its own it
-  says so on the photo, and starts with the first tap anywhere. The video showing plays on a loop,
-  without sound: under the song if the post has one, and otherwise until its speaker is tapped.
+  other step. Nobody comes across a post without its link, whose code is eleven random characters,
+  unless its author lists it in the bio. The link is copied or shared from there, from the post's
+  «⋯», or from the paper plane under it.
+- **Who it is for** comes under the song, «Quién la ve»: «Cualquiera con el enlace», anybody with
+  the link, signed in or not, which every post was before there was a choice and every new one
+  starts out as; or «Amigos específicos», the accounts picked, signed in, and nobody else but its
+  author. To anyone else with that link, signed out or with another account, it is only «Esta
+  publicación es solo para algunos amigos», with «Entrar» while signed out: signing in is what tells
+  a friend apart. Likes and comments, too, come only from whoever can open the post.
+- **Friends are found by username**, any account with a Leogram profile but one's own, and a tap
+  picks them. The star keeps them among the favourites, which are what the picker shows before
+  anything is typed, so that the usual ones are a tap away every time; a bio's «Añadir a
+  favoritos» keeps its account there as well.
+- **«Listar en mi bio»**, the switch under it, puts the post in the bio, `…/leogram/?u=<username>`:
+  the account's photo and username and a grid of its listed posts, for anybody, signed in or not,
+  showing each post only to whoever can open it — everybody, for one for anybody with the link;
+  those friends, for one for some friends. A post that is not listed is in nobody's view of the bio,
+  not even its friends', who open it by its link all the same. A username anywhere, on a post or by a
+  comment, opens its bio.
+- **Who it is for changes later**, from the post itself: its author sees it in a bar above the post,
+  with «Cambiar», and as «Cambiar quién la ve» in its «⋯». The change is one, for everybody at once:
+  the link stops opening for whoever is left out in the same moment it opens for whoever is added,
+  though the addresses to its files it already handed out keep working until they run out, two days
+  at most. Posts from before there was a choice are for anybody with their link and out of the bio,
+  as they always were; this is how one goes into it.
+- **The link opens for whoever the post is for**, with Leogram's name on top as Instagram has its
+  own: the photos and videos to swipe through, the song, who posted it, the likes, the caption and
+  the comments. A browser lets no page make sound before it is touched, so when the song cannot
+  start on its own it says so on the photo, and starts with the first tap anywhere. The video
+  showing plays on a loop, without sound: under the song if the post has one, and otherwise until
+  its speaker is tapped.
 - **Liking and commenting take an account.** Signed out, the heart, a double tap on a photo or the
   comment box put up the same door as every app of Leo OS, with «Ahora no» to go back to the post;
   once signed in, the like is given, or the box is ready. An account's first comment gives it a
   Leogram username out of its name. A comment can be deleted by whoever wrote it and by the post's
   author, and a post by its author, which takes its files, likes and comments with it.
-- **What is said goes to the database, the files to a bucket.** The database has
-  `leogram_profiles`, `leogram_posts`, `leogram_likes` and `leogram_comments`, and
-  `leogram_media` and `leogram_avatars`, which only say where each file is. The files — photos,
-  videos and their posters, the songs' clips, the grid's thumbnails and the profile photos — go
-  straight from the browser to a private bucket of the project's
-  [Object Storage](https://neon.com/docs/storage), with nothing in between. The bucket only lets
-  through requests signed with its key, which the browser never sees: the database keeps it in
-  `leogram_private`, a schema the Data API does not serve, and signs with it. `leogram_upload()`
-  hands over an address that takes one file of one's own post, of the type and the exact size it
-  was told; `leogram_post()`, to whoever opens the link, addresses that read the post's files for a
-  day at least; deleting a post, where to delete its files. It is AWS Signature Version 4, worked
-  out in SQL (`db/migrations/0007_leogram_public.sql`).
-- **How a link opens with no account.** The Data API turns away a request with no token, so a
-  visitor's page asks Neon Auth for the anonymous token it hands anybody (`/token/anonymous`), which
-  the Data API runs as the `anonymous` role. That role reaches no table: all it may do is call
-  `leogram_post(code)`, which runs as its owner and hands over the one post whose code it is given,
-  never a list. Signed in, it also says whether the post is one's own and whether one liked it. It
+- **What is said goes to the database, the files to a bucket.** The database has `leogram_profiles`,
+  `leogram_posts`, `leogram_likes` and `leogram_comments`, `leogram_audience` (who a post for some
+  friends is for) and `leogram_favorites`, and `leogram_media` and `leogram_avatars`, which only say
+  where each file is. The files — photos, videos and their posters, the songs' clips, the grid's
+  thumbnails and the profile photos — go straight from the browser to a private bucket of the
+  project's [Object Storage](https://neon.com/docs/storage), with nothing in between. The bucket
+  only lets through requests signed with its key, which the browser never sees: the database keeps
+  it in `leogram_private`, a schema the Data API does not serve, and signs with it.
+  `leogram_upload()` hands over an address that takes one file of one's own post, of the type and
+  the exact size it was told; `leogram_post()`, to whoever opens the link, addresses that read the
+  post's files for a day at least; deleting a post, where to delete its files. It is AWS Signature
+  Version 4, worked out in SQL (`db/migrations/0007_leogram_public.sql`).
+- **How a link and a bio open with no account.** The Data API turns away a request with no token,
+  so a visitor's page asks Neon Auth for the anonymous token it hands anybody (`/token/anonymous`),
+  which the Data API runs as the `anonymous` role. That role reaches no table: all it may do is call
+  `leogram_post(code)` and `leogram_profile(username)`, which run as their owner. The first hands
+  over the one post whose code it is given, never a list; the second, the posts a bio lists. Both
+  ask `leogram_can_see(code)`, the one place that says who opens a post, which the policies on likes
+  and comments ask too (`db/migrations/0010_leogram_bio.sql`). Signed in, `leogram_post` also says
+  whether the post is one's own and whether one liked it, and tells its author who it is for. It
   takes the Data API's anonymous role to be `anonymous`, which is its default.
 - Neon's free plan has 5 GB of Object Storage per project, and each account may fill 2 GB of it.
   Every visit downloads what it shows from the bucket; a song from Apple takes nothing: it plays

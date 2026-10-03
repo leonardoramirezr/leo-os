@@ -41,6 +41,13 @@ export function shortDate(at: number, now = Date.now()): string {
 	return `${Math.floor(since / WEEK)} sem`;
 }
 
+/** Who a post is for, by username: «ana», «ana y beto», «ana, beto y carla», «ana, beto y 3 más». */
+export function people(names: string[]): string {
+	if (names.length <= 2) return names.join(' y ');
+	if (names.length === 3) return `${names[0]}, ${names[1]} y ${names[2]}`;
+	return `${names[0]}, ${names[1]} y ${names.length - 2} más`;
+}
+
 /** «1:05». */
 export function clock(seconds: number): string {
 	const whole = Math.max(0, Math.floor(seconds));

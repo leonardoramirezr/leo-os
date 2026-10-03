@@ -1,6 +1,6 @@
 <script lang="ts">
-	// One of the account's own posts, over its grid: the post as anyone with the link sees it, with
-	// that link on top to copy or share.
+	// One of the account's own posts, over its grid: the post as whoever it is for sees it, with its
+	// link on top to copy or share, and who it is for, to change, above the post.
 	import { linkOf } from '$lib/code';
 	import { posts } from '$lib/posts.svelte';
 	import Icon from './Icon.svelte';
@@ -36,10 +36,6 @@
 		<a href={link} target="_blank" rel="noopener">{link.replace(/^https?:\/\//, '')}</a>
 		<button class="secondary" type="button" onclick={copy}>{copied ? 'Copiado' : 'Copiar'}</button>
 	</div>
-	<p class="hint">
-		Cualquiera con el enlace puede verla, sin cuenta. Para dar «Me gusta» o comentar, entra con la
-		suya.
-	</p>
 
 	<PostView
 		{code}
@@ -47,6 +43,7 @@
 			posts.forget(code);
 			history.back();
 		}}
+		onshared={(visibility) => posts.reshare(code, visibility)}
 	/>
 </div>
 
@@ -89,7 +86,7 @@
 		align-items: center;
 		gap: 10px;
 		max-width: 470px;
-		margin: 12px auto 0;
+		margin: 12px auto;
 		padding: 0 12px;
 	}
 
@@ -101,11 +98,5 @@
 		text-decoration: none;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-	}
-
-	.hint {
-		max-width: 470px;
-		margin: 6px auto 8px;
-		padding: 0 12px;
 	}
 </style>

@@ -12,6 +12,7 @@ export type {
 	DictationRow,
 	Json,
 	LeogramCommentRow,
+	LeogramFavoriteRow,
 	LeogramLikeRow,
 	LeogramMediaRow,
 	LeogramMusic,

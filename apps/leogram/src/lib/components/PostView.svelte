@@ -2,12 +2,13 @@
 	// A post as Instagram shows one: who posted it and their song, the photos and videos, the likes,
 	// the caption and the comments. It is the same for its author, for someone signed in, and for
 	// whoever opened the link with no account at all; liking and commenting are what take an
-	// account, and asking for them signed out puts the door up (`onaccount`). Its files come straight
+	// account, and asking for them signed out puts the door up (`onaccount`). A post for some friends
+	// only shows to them, signed in, and to anyone else says only that much. Its files come straight
 	// from the bucket, at the addresses the database signed for them.
 	import { isExpired, session } from '@leo-os/shared';
 	import { onDestroy, untrack } from 'svelte';
-	import { isCode, linkOf } from '$lib/code';
-	import { count, postDate, shortDate } from '$lib/format';
+	import { bioLink, isCode, linkOf } from '$lib/code';
+	import { count, people, postDate, shortDate } from '$lib/format';
 	import { Player } from '$lib/music/player.svelte';
 	import {
 		addComment,
@@ -17,28 +18,40 @@
 		removeComment,
 		unlike,
 		type CommentView,
-		type PostView
+		type PostView,
+		type Visibility
 	} from '$lib/post';
 	import { createProfile } from '$lib/profile.svelte';
 	import ActionSheet, { type Action } from './ActionSheet.svelte';
 	import Avatar from './Avatar.svelte';
 	import Carousel from './Carousel.svelte';
 	import Icon from './Icon.svelte';
+	import VisibilitySheet from './VisibilitySheet.svelte';
 
 	let {
 		code,
 		onaccount,
-		ondeleted
+		ondeleted,
+		onshared
 	}: {
 		code: string;
-		/** Signed out, a like or a comment asks for an account: the door, wherever it is kept. */
+		/**
+		 * Signed out, a like or a comment asks for an account, and so does a post for some friends:
+		 * the door, wherever it is kept.
+		 */
 		onaccount?: () => void;
 		/** Its author deleted it from here. */
 		ondeleted?: () => void;
+		/** Its author changed who it is for from here. */
+		onshared?: (visibility: Visibility) => void;
 	} = $props();
 
-	/** Undefined while it is read; null when there is no such post. */
+	/** Undefined while it is read; null when there is no such post, or not for whoever is looking. */
 	let post = $state<PostView | null>();
+	/** It is there, for some friends only, and whoever is looking is not one of them, or not yet. */
+	let restricted = $state(false);
+	/** Its author is changing who it is for. */
+	let sharing = $state(false);
 	/** Why it could not be read. */
 	let problem = $state('');
 	let index = $state(0);
@@ -99,8 +112,10 @@
 			return;
 		}
 		try {
-			const found = await readPost(current);
+			const answer = await readPost(current);
 			if (current !== code) return;
+			restricted = answer !== null && 'restricted' in answer;
+			const found = answer && !('restricted' in answer) ? answer : null;
 			post = found;
 			problem = '';
 			if (!found) return;
@@ -268,9 +283,35 @@
 		if (typeof navigator !== 'undefined' && 'share' in navigator) {
 			list.push({ label: 'Compartir…', run: share });
 		}
-		if (post?.mine) list.push({ label: 'Eliminar', run: confirmDelete, danger: true });
+		if (post?.mine) {
+			list.push({ label: 'Cambiar quién la ve', run: () => (sharing = true) });
+			list.push({ label: 'Eliminar', run: confirmDelete, danger: true });
+		}
 		return list;
 	});
+
+	/** Who it is for, as its author last saved it. */
+	const visibility = $derived<Visibility>({
+		audience: post?.audience ?? 'link',
+		listed: post?.listed ?? false,
+		friends: post?.friends ?? []
+	});
+
+	/** What its author is told above it: who it is for, and whether the bio lists it. */
+	const forWhom = $derived(
+		visibility.audience === 'friends'
+			? `Solo para ${people(visibility.friends.map((friend) => friend.username))}`
+			: 'Cualquiera con el enlace'
+	);
+
+	function reshared(chosen: Visibility) {
+		if (post) {
+			post.audience = chosen.audience;
+			post.listed = chosen.listed;
+			post.friends = chosen.friends;
+		}
+		onshared?.(chosen);
+	}
 
 	/** The caption cut short, as Instagram shows a long one until «más» is tapped. */
 	const caption = $derived.by(() => {
@@ -295,6 +336,19 @@
 		<p>{problem}</p>
 		<button class="secondary" type="button" onclick={() => read(code)}>Reintentar</button>
 	</div>
+{:else if restricted}
+	<div class="unavailable">
+		<span class="lock"><Icon name="lock" size={36} stroke={1.6} /></span>
+		<h2>Esta publicación es solo para algunos amigos</h2>
+		{#if session.status === 'in'}
+			<p>Quien la publicó no la compartió con esta cuenta.</p>
+		{:else}
+			<p>Si la compartieron contigo, entra con tu cuenta para verla.</p>
+			{#if onaccount}
+				<button class="primary" type="button" onclick={onaccount}>Entrar</button>
+			{/if}
+		{/if}
+	</div>
 {:else if post === null}
 	<div class="unavailable">
 		<h2>Esta publicación no está disponible</h2>
@@ -310,10 +364,29 @@
 	</div>
 {:else}
 	<article class="post" aria-label="Publicación de {post.username}">
+		{#if post.mine}
+			<button class="audience" type="button" onclick={() => (sharing = true)}>
+				<Icon name={visibility.audience === 'friends' ? 'friends' : 'link'} size={18} />
+				<span class="summary">
+					{forWhom} · {visibility.listed ? 'En tu bio' : 'Fuera de tu bio'}
+				</span>
+				<span class="change">Cambiar</span>
+			</button>
+		{/if}
 		<header>
-			<Avatar src={post.avatars[post.username]} username={post.username} />
+			<a class="face" href={bioLink(post.username)} aria-label="Bio de {post.username}">
+				<Avatar src={post.avatars[post.username]} username={post.username} />
+			</a>
 			<div class="who">
-				<span class="username">{post.username}</span>
+				<span class="name">
+					<a class="username" href={bioLink(post.username)}>{post.username}</a>
+					{#if post.audience === 'friends'}
+						<span class="friends" title="Solo para algunos amigos">
+							<Icon name="friends" size={12} stroke={2.6} />
+							Amigos
+						</span>
+					{/if}
+				</span>
 				{#if post.music}
 					<button class="song" type="button" onclick={() => player?.toggle()}>
 						<Icon name="music" size={11} stroke={2.5} />
@@ -424,7 +497,7 @@
 
 			{#if post.caption}
 				<p class="caption">
-					<span class="username">{post.username}</span>
+					<a class="username" href={bioLink(post.username)}>{post.username}</a>
 					{caption.text}{#if caption.cut}…
 						<button class="more" type="button" onclick={() => (fullCaption = true)}>más</button>
 					{/if}
@@ -441,9 +514,14 @@
 				<ul class="comments">
 					{#each shownComments as item (item.id)}
 						<li>
-							<Avatar src={post.avatars[item.username]} username={item.username} size={24} />
+							<a class="face" href={bioLink(item.username)} aria-label="Bio de {item.username}">
+								<Avatar src={post.avatars[item.username]} username={item.username} size={24} />
+							</a>
 							<div>
-								<p><span class="username">{item.username}</span> {item.text}</p>
+								<p>
+									<a class="username" href={bioLink(item.username)}>{item.username}</a>
+									{item.text}
+								</p>
 								<p class="meta">
 									<time datetime={new Date(item.created_at).toISOString()}>
 										{shortDate(item.created_at)}
@@ -487,6 +565,9 @@
 	</article>
 
 	<ActionSheet bind:open={menu} {actions} />
+	{#if post.mine}
+		<VisibilitySheet bind:open={sharing} code={post.id} current={visibility} onsaved={reshared} />
+	{/if}
 {/if}
 
 {#if toast}
@@ -526,7 +607,84 @@
 	}
 
 	.username {
+		color: inherit;
 		font-weight: 600;
+		text-decoration: none;
+	}
+
+	.face {
+		display: block;
+		flex: none;
+		border-radius: 50%;
+		color: inherit;
+		text-decoration: none;
+	}
+
+	.name {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		min-width: 0;
+	}
+
+	.name .username {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	/* Instagram marks a post for close friends by its author's name; this is the same idea. */
+	.friends {
+		display: inline-flex;
+		flex: none;
+		align-items: center;
+		gap: 3px;
+		padding: 1px 7px 1px 5px;
+		border-radius: 10px;
+		background: #1db954;
+		color: #fff;
+		font-size: 11px;
+		font-weight: 700;
+		line-height: 16px;
+	}
+
+	/* What only its author sees: who it is for, with «Cambiar» at hand. */
+	.audience {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		width: 100%;
+		min-height: 40px;
+		padding: 8px 12px;
+		border: 0;
+		border-bottom: 1px solid var(--border);
+		background: var(--field);
+		font-size: 13px;
+		text-align: left;
+	}
+
+	.audience .summary {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.audience .change {
+		color: var(--blue);
+		font-weight: 600;
+	}
+
+	.lock {
+		display: inline-grid;
+		place-items: center;
+		width: 72px;
+		height: 72px;
+		margin-bottom: 16px;
+		border: 2px solid var(--text);
+		border-radius: 50%;
 	}
 
 	.song {
