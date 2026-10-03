@@ -12,8 +12,19 @@ export function isCode(value: string | null): value is string {
 	return value !== null && /^[A-Za-z0-9_-]{11}$/.test(value);
 }
 
-/** The link that opens the post for anybody: this app's address with the code. */
+/**
+ * Where links go when the build names it: the Neon Function that gives each post a preview of its
+ * own in a chat, and sends whoever opens the link on to the post (neon/leogram-link.ts). A preview's
+ * build names it with the preview's path on the end, `…/previews/<preview>`.
+ */
+const links = (import.meta.env.VITE_LEOGRAM_LINK_URL ?? '').trim().replace(/\/+$/, '');
+
+/**
+ * The link that opens the post for anybody: the function's, `/p/<code>` like Instagram's, or else
+ * this app's address with the code.
+ */
 export function linkOf(code: string): string {
+	if (links) return `${links}/p/${code}`;
 	const url = new URL(location.pathname, location.origin);
 	url.searchParams.set('p', code);
 	return url.href;

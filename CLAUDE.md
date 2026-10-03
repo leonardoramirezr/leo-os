@@ -64,7 +64,7 @@ data», including what has to be set up in the Neon console.
 home/            The home screen
 apps/<slug>/     One folder per app; the slug is part of the URL
 shared/          The account and the database; every project depends on it
-neon/            The Neon Function that forwards to Neon Auth on an own domain; deployed by hand
+neon/            Neon Functions, deployed by hand: Neon Auth on an own domain, and Leogram's links
 db/              The models (schema.ts) and the migrations generated from them
 scripts/         build, icons, local preview, and publishing to the gh-pages branch
 .github/workflows/  deploy.yml on every push, preview-cleanup.yml when a branch is deleted

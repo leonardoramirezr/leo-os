@@ -1,0 +1,2 @@
+ALTER TABLE "leogram_media" DROP CONSTRAINT "leogram_media_kind";--> statement-breakpoint
+ALTER TABLE "leogram_media" ADD CONSTRAINT "leogram_media_kind" CHECK ("leogram_media"."kind" in ('photo', 'video', 'poster', 'thumb', 'card', 'song'));

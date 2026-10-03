@@ -3,7 +3,7 @@
 import { insert, pull, push, readCache, writeCache, type LeogramMusic } from '@leo-os/shared';
 import { send, type Signed } from './bucket';
 import { newCode } from './code';
-import { load, slide, thumbnail, type Aspect, type Focus } from './images';
+import { linkCard, load, slide, thumbnail, type Aspect, type Focus } from './images';
 import { readMine, type OwnPost } from './mine';
 import type { CatalogSong } from './music/catalog';
 import { cutClip, type Upload } from './music/clip';
@@ -61,7 +61,7 @@ export interface Draft {
 /** One file of a post on its way to the bucket. */
 interface Outgoing {
 	slot: number;
-	kind: 'photo' | 'video' | 'poster' | 'thumb' | 'song';
+	kind: 'photo' | 'video' | 'poster' | 'thumb' | 'card' | 'song';
 	file: Blob;
 	type: string;
 	focus?: Focus;
@@ -101,11 +101,15 @@ class Posts {
 		const files: Outgoing[] = [];
 
 		let thumb: Blob | undefined;
+		let card: Blob | undefined;
 		for (const [slot, item] of draft.slides.entries()) {
 			const image = await load(item.frame ?? item.file);
 			try {
 				const { blob, canvas } = await slide(image, draft.aspect, item.focus, item.texts);
-				if (slot === 0) thumb = await thumbnail(canvas);
+				if (slot === 0) {
+					thumb = await thumbnail(canvas);
+					card = await linkCard(canvas, draft.aspect);
+				}
 				if (item.kind === 'video') {
 					files.push({ slot, kind: 'video', file: item.file, type: item.type, focus: item.focus });
 					files.push({ slot, kind: 'poster', file: blob, type: 'image/jpeg' });
@@ -117,6 +121,7 @@ class Posts {
 			}
 		}
 		if (thumb) files.push({ slot: 0, kind: 'thumb', file: thumb, type: 'image/jpeg' });
+		if (card) files.push({ slot: 0, kind: 'card', file: card, type: 'image/jpeg' });
 
 		let music: LeogramMusic | null = null;
 		const chosen = draft.music;

@@ -43,6 +43,10 @@ jobs:
           # The site's own domain, e.g. leo-os.is-cool.dev. With it the site is served from that domain's
           # root; without it, from <owner>.github.io/<repo>/. See «Own domain» in README.md.
           DOMAIN: ${{ vars.PAGES_DOMAIN }}
+          # Where Leogram's links go: the Neon Function that gives each post a preview of its own in a
+          # chat, e.g. https://leogram.leo-os.is-cool.dev. Without it a link leads straight to the app.
+          # See «Leogram's links» in README.md.
+          LINKS: ${{ vars.LEOGRAM_LINK_URL }}
         run: |
           owner=$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
           repo='${{ github.event.repository.name }}'
@@ -53,12 +57,14 @@ jobs:
             root="/$repo"
             site="https://$owner.github.io/$repo"
           fi
+          links="${LINKS%/}"
 
           if [ "$GITHUB_REF_NAME" = '${{ github.event.repository.default_branch }}' ]; then
             {
               echo "preview=false"
               echo "base=$root"
               echo "url=$site/"
+              echo "links=$links"
             } >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -73,6 +79,8 @@ jobs:
             echo "slug=$slug"
             echo "base=$root/previews/$slug"
             echo "url=$site/previews/$slug/"
+            # The function finds a preview's posts, in the preview's copy of the database, by this path.
+            echo "links=${links:+$links/previews/$slug}"
           } >> "$GITHUB_OUTPUT"
 
       # Only from the default branch. The migrations are one line of history, and two branches
@@ -129,6 +137,8 @@ jobs:
           VITE_NEON_DATA_API_URL: ${{ vars.NEON_DATA_API_URL }}
           # The preview's schema; empty for the site, and for a preview that has none.
           VITE_NEON_DATA_API_SCHEMA: ${{ steps.database.outputs.schema }}
+          # Where Leogram's links go, a preview's own path included; empty for links straight to the app.
+          VITE_LEOGRAM_LINK_URL: ${{ steps.target.outputs.links }}
 
       # GitHub Pages takes the custom domain from a CNAME file at the root of the branch it serves.
       # Publishing the site replaces that root whole, so the file has to come with every build — and

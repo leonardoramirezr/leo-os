@@ -29,7 +29,8 @@ phone home screen: every app is an icon.
 │   ├── preview.mjs          # Gives each preview a copy of the database of its own
 │   └── storage.mjs          # Gets Leogram's bucket ready (see «Leogram»)
 ├── neon/
-│   └── auth-proxy.ts        # Stands Neon Auth on an own domain (see «Own domain»)
+│   ├── auth-proxy.ts        # Stands Neon Auth on an own domain (see «Own domain»)
+│   └── leogram-link.ts      # Gives a Leogram post's link a preview of its own (see «Leogram's links»)
 ├── scripts/
 │   ├── build.mjs            # Builds the home screen and every app into dist/
 │   ├── icons.mjs            # Turns each icon.svg into the PNG iOS asks for
@@ -99,7 +100,8 @@ database and is queried straight from the browser. There is still no backend of 
 [Neon Auth](https://neon.com/docs/auth/overview) holds the session and the
 [Neon Data API](https://neon.com/docs/data-api/overview) (PostgREST over HTTPS) serves the tables.
 The one exception is on an [own domain](#own-domain), where a function that only forwards stands
-Neon Auth on that domain.
+Neon Auth on that domain; and Leogram's links, which go through another that reads a post as any
+visitor with the link would, for the preview a chat shows of it ([Leogram's links](#leograms-links)).
 
 - **Signing in.** The home screen and every app open behind the same door. Neon Auth keeps the
   session in a cookie of its own domain, so signing in once covers the whole site. It is asked for
@@ -192,6 +194,7 @@ Then, in this repository under **Settings → Secrets and variables → Actions*
 | **Secrets** | `DATABASE_URL` | The project's connection string, for the migrations and the previews |
 | **Secrets** | `NEON_API_KEY` | A Neon API key, to tell the Data API what to serve and when to look again, and to make Leogram's bucket |
 | **Variables** | `LEOGRAM_BUCKET` | Optional: the name of [Leogram's bucket](#leograms-bucket), `leogram` if unset |
+| **Variables** | `LEOGRAM_LINK_URL` | Optional: where [Leogram's links](#leograms-links) go; without it they lead straight to the app |
 | **Secrets** | `LEOGRAM_STORAGE_ACCESS_KEY_ID`, `LEOGRAM_STORAGE_SECRET_ACCESS_KEY` | Optional: a key of your own to that bucket; without them the deploy makes one |
 
 The two URLs are not secrets: they are the public addresses of services that decide for themselves
@@ -658,10 +661,12 @@ or not.
   cuts it out of the MP3's frames byte for byte, so it sounds exactly as the song did, with nothing
   decoded or encoded. What is not an MP3 is decoded and kept as a WAV of one channel at 22 kHz,
   which is what a browser can write by itself.
-- **«Compartir» publishes it, and its link is ready right away** (`…/leogram/?p=<code>`): there is no
-  other step to make it public. Nobody comes across a post without its link, whose code is eleven
-  random characters, and nothing lists posts but their author's own grid. The link is copied or
-  shared from there, from the post's «⋯», or from the paper plane under it.
+- **«Compartir» publishes it, and its link is ready right away**: there is no other step to make it
+  public. Nobody comes across a post without its link, whose code is eleven random characters, and
+  nothing lists posts but their author's own grid. The link is copied or shared from there, from the
+  post's «⋯», or from the paper plane under it. It is `…/p/<code>`, which a chat shows with the
+  post's photo, who posted it and the caption ([Leogram's links](#leograms-links)); until that is set
+  up, `…/leogram/?p=<code>`, which shows Leogram's name and nothing of the post.
 - **The link opens for anybody**, with Leogram's name on top as Instagram has its own: the photos
   and videos to swipe through, the song, who posted it, the likes, the caption and the comments. A
   browser lets no page make sound before it is touched, so when the song cannot start on its own it
@@ -675,9 +680,9 @@ or not.
 - **What is said goes to the database, the files to a bucket.** The database has
   `leogram_profiles`, `leogram_posts`, `leogram_likes` and `leogram_comments`, and
   `leogram_media` and `leogram_avatars`, which only say where each file is. The files — photos,
-  videos and their posters, the songs' clips, the grid's thumbnails and the profile photos — go
-  straight from the browser to a private bucket of the project's
-  [Object Storage](https://neon.com/docs/storage), with nothing in between. The bucket only lets
+  videos and their posters, the songs' clips, the grid's thumbnails, the cards a chat shows of a
+  shared link and the profile photos — go straight from the browser to a private bucket of the
+  project's [Object Storage](https://neon.com/docs/storage), with nothing in between. The bucket only lets
   through requests signed with its key, which the browser never sees: the database keeps it in
   `leogram_private`, a schema the Data API does not serve, and signs with it. `leogram_upload()`
   hands over an address that takes one file of one's own post, of the type and the exact size it
@@ -687,9 +692,10 @@ or not.
 - **How a link opens with no account.** The Data API turns away a request with no token, so a
   visitor's page asks Neon Auth for the anonymous token it hands anybody (`/token/anonymous`), which
   the Data API runs as the `anonymous` role. That role reaches no table: all it may do is call
-  `leogram_post(code)`, which runs as its owner and hands over the one post whose code it is given,
-  never a list. Signed in, it also says whether the post is one's own and whether one liked it. It
-  takes the Data API's anonymous role to be `anonymous`, which is its default.
+  `leogram_post(code)`, and `leogram_card(code)`, the part of it a chat's preview shows. Both run as
+  their owner and hand over the one post whose code they are given, never a list. Signed in,
+  `leogram_post` also says whether the post is one's own and whether one liked it. It takes the
+  Data API's anonymous role to be `anonymous`, which is its default.
 - Neon's free plan has 5 GB of Object Storage per project, and each account may fill 2 GB of it.
   Every visit downloads what it shows from the bucket; a song from Apple takes nothing: it plays
   from Apple.
@@ -722,6 +728,62 @@ thing it needs is what the previews already need: `DATABASE_URL`, `NEON_API_KEY`
 - Object Storage is in beta and only in some of Neon's regions. Where the branch has none, the step
   says so and the site is published all the same: Leogram shows its posts, and says it cannot
   upload yet.
+
+### Leogram's links
+
+WhatsApp, Telegram, Messages, Slack and the rest show a link as a card: a picture, a title and a line
+or two, which they read from the `og:` tags of the page the link leads to, without running any of it.
+Every post opens on the same static page, `…/leogram/?p=<code>`, and GitHub Pages cannot answer one
+post differently from another: every link was a card with Leogram's name and nothing of the post. So
+a post's link leads to a [Neon Function](https://neon.com/docs/compute/functions/overview) instead,
+`neon/leogram-link.ts`, at `https://<its domain>/p/<code>`:
+
+- **A chat**, told apart by the name it gives (WhatsApp, Telegram, Facebook's, which is also what
+  Messages on the iPhone gives…), gets a page of the post's own. Its title is who posted it and the
+  caption, `leo.r en Leogram: «Atardecer en la playa»`, and under it go the likes, the comments and
+  the date, as Instagram puts them; then the post's picture.
+- **Anybody else** is somebody opening the link, and is sent straight on to the post's page, with
+  nothing read first.
+- **The picture is the post's card**: its first photo, or its video's first frame, in the post's
+  shape, 720 pixels wide and about a hundred kilobytes, made with the rest of its files when it is
+  published. WhatsApp leaves out a picture past a few hundred kilobytes without a word, and a photo
+  1080 pixels wide often weighs that. A post from before there were cards shows its first photo, or
+  frame, when that weighs 300 KB at most, and its thumbnail from the grid when not. The function
+  serves it at `/p/<code>.jpg`, from the bucket, so a chat still finds it after the bucket's address
+  runs out.
+- **It sees what any visitor with the link sees**: it asks Neon Auth for the anonymous token and
+  calls `leogram_card(code)` with it (`db/migrations/0010_leogram_card_public.sql`). It holds no
+  key, and its page asks search engines not to list the post.
+- **Previews too.** A preview's links carry its path, `…/previews/<preview>/p/<code>`: the function
+  reads the post from the preview's copy of the database and sends people on to the preview.
+- A chat keeps the card it made of a link, WhatsApp for days and Facebook until it is told to read
+  the link again ([Sharing Debugger](https://developers.facebook.com/tools/debug/)). A link shared
+  before this keeps showing Leogram's name, and links of the old shape still open the post.
+
+It is set up like the [auth proxy](#own-domain), with the Neon CLI linked to this project and its
+production branch:
+
+1. **The function.**
+
+   ```sh
+   neon functions deploy leogramlink --src neon/leogram-link.ts \
+     --env SITE_URL=https://leo-os.is-cool.dev
+   neon functions domains register leogram.leo-os.is-cool.dev --slug leogramlink --output json
+   ```
+
+   `SITE_URL` is where the site is: `https://<domain>`, or `https://<owner>.github.io/<repo>` without
+   an own domain. Where Neon Auth and the Data API are, Neon tells the function itself
+   (`NEON_AUTH_BASE_URL`, `NEON_DATA_API_URL`). The second command answers with a `cname_target`.
+2. **Its subdomain.** At Open Domains, a `CNAME` from `leogram.leo-os.is-cool.dev` to that target,
+   DNS only. `neon functions domains list --output json` says `active` once the certificate is issued.
+3. **This repository.** The variable `LEOGRAM_LINK_URL` = `https://leogram.leo-os.is-cool.dev`, and a
+   run of `deploy.yml` on `main`: from then on the app hands out links of the new shape. A branch
+   pushed after that gets them in its preview too.
+
+To see what a chat sees: `curl -A WhatsApp/2 https://leogram.leo-os.is-cool.dev/p/<code>`. A post
+that exists showing «Una publicación en Leogram.» means the function could not reach Neon; the deploy
+can tell it where Neon is, with `--env NEON_AUTH_URL=<the Auth URL>` and
+`--env NEON_DATA_API_URL=<the Data API URL>`.
 
 ## Transforma
 

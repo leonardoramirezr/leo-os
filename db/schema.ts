@@ -294,9 +294,10 @@ export const leogramMedia = pgTable(
 		slot: integer().notNull(),
 		/**
 		 * An item of the carousel, `photo` or `video`; a video's `poster`, the frame it shows before
-		 * it plays; `thumb`, the grid's square of slot 0; or the `song`'s clip.
+		 * it plays; `thumb`, the grid's square of slot 0; `card`, slot 0 as a chat shows it when the
+		 * link is shared (`leogram_card()`); or the `song`'s clip.
 		 */
-		kind: text().$type<'photo' | 'video' | 'poster' | 'thumb' | 'song'>().notNull(),
+		kind: text().$type<'photo' | 'video' | 'poster' | 'thumb' | 'card' | 'song'>().notNull(),
 		/** Where it is in the bucket: `<schema>/<post>/<kind><slot>-<random>.<extension>`. */
 		key: text().notNull().unique(),
 		/** Its MIME type, and its size in bytes: the upload is signed for exactly these. */
@@ -309,7 +310,7 @@ export const leogramMedia = pgTable(
 	(table) => [
 		primaryKey({ columns: [table.post_id, table.slot, table.kind] }),
 		check('leogram_media_slot', sql`${table.slot} between -1 and 9`),
-		check('leogram_media_kind', sql`${table.kind} in ('photo', 'video', 'poster', 'thumb', 'song')`),
+		check('leogram_media_kind', sql`${table.kind} in ('photo', 'video', 'poster', 'thumb', 'card', 'song')`),
 		check('leogram_media_song', sql`(${table.kind} = 'song') = (${table.slot} = -1)`),
 		check('leogram_media_focus_x', sql`${table.focus_x} between 0 and 100`),
 		check('leogram_media_focus_y', sql`${table.focus_y} between 0 and 100`),

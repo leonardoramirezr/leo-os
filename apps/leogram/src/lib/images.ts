@@ -89,10 +89,10 @@ function blobOf(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
 	);
 }
 
-/** As a JPEG. One that comes out heavy goes again, lighter: every visit downloads it. */
-async function jpeg(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
+/** As a JPEG. One that comes out heavier than `limit` goes again, lighter: every visit downloads it. */
+async function jpeg(canvas: HTMLCanvasElement, quality: number, limit = 600_000): Promise<Blob> {
 	const blob = await blobOf(canvas, quality);
-	return blob.size > 600_000 ? blobOf(canvas, quality - 0.15) : blob;
+	return blob.size > limit ? blobOf(canvas, quality - 0.15) : blob;
 }
 
 /**
@@ -114,6 +114,21 @@ export async function slide(image: Source, aspect: Aspect, focus: Focus, texts: 
 /** The first slide as the grid shows it: the middle square of its frame, a third of a screen wide. */
 export function thumbnail(slideCanvas: HTMLCanvasElement): Promise<Blob> {
 	return jpeg(frame(slideCanvas, 1, CENTRED, 360), 0.7);
+}
+
+/**
+ * How wide the card is, always: neon/leogram-link.ts, which has its own copy of this, tells the chats
+ * how big it is without opening it.
+ */
+const CARD_WIDTH = 720;
+
+/**
+ * The first slide as a chat shows it when the post's link is shared: the whole frame, scaled down.
+ * WhatsApp leaves out a picture past a few hundred kilobytes without a word, and a slide 1080 pixels
+ * wide is often that heavy; this one comes out several times lighter.
+ */
+export function linkCard(slideCanvas: HTMLCanvasElement, aspect: Aspect): Promise<Blob> {
+	return jpeg(frame(slideCanvas, ASPECTS[aspect], CENTRED, CARD_WIDTH, true), 0.8, 250_000);
 }
 
 /** A profile photo: small, since it goes along with every comment of its owner. */

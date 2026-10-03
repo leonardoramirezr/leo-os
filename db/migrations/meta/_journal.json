@@ -64,6 +64,20 @@
       "when": 1790909023169,
       "tag": "0008_transforma",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790986816963,
+      "tag": "0009_leogram_card",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790986821593,
+      "tag": "0010_leogram_card_public",
+      "breakpoints": true
     }
   ]
 }
