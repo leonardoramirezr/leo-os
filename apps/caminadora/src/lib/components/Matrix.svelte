@@ -1,10 +1,10 @@
 <script lang="ts">
 	// The program running, drawn on a dot matrix as a treadmill's display (or a Game Boy's) draws it:
-	// a grid of square pixels, the ones off still faint. Each column is a slice of the program's time
-	// and lights up to the speed of the segment it falls in, so a bar is as wide as its segment lasts
-	// and as tall as its speed. The one running is solid, the ones gone by are a checkerboard — the
-	// grey a screen of two shades can draw — and the ones to come are outlined, their sides dotted.
-	// The bottom row is how far into the program it is.
+	// a grid of square pixels, the ones off still faint. Each segment is a bar three pixels wide for
+	// every half minute it lasts, a dark column between two, and as tall as its speed. The ones gone
+	// by are solid; the one running has its edge lit and its middle blinking; the ones to come are
+	// outlined, their sides dotted, so that the one running never looks like them. The bottom row is
+	// how far into the program it is.
 	import { lengthOf, segmentAt, type Segment } from '$lib/programs.svelte';
 
 	let { segments, at }: { segments: Segment[]; at: number } = $props();
@@ -23,13 +23,42 @@
 	const columns = $derived(Math.floor(width / pitch));
 	const rows = $derived(Math.floor(height / pitch));
 
-	/** Every pixel, as two paths: the ones lit and the ones off. One shape each keeps it cheap to redraw. */
+	/** The columns of the whole program, side by side: three for every half minute, one dark between two. */
+	const strip = $derived.by(() => {
+		const starts: number[] = [];
+		const widths: number[] = [];
+		let x = 0;
+		for (const segment of segments) {
+			starts.push(x);
+			widths.push(3 * Math.max(1, Math.ceil(segment.seconds / 30)));
+			x += widths[widths.length - 1] + 1;
+		}
+		return { starts, widths, length: Math.max(0, x - 1) };
+	});
+
+	/** How far along the strip the program is, in columns. */
+	const playhead = $derived.by(() => {
+		if (current >= segments.length) return strip.length;
+		const { start } = segmentAt(segments, at);
+		return strip.starts[current] + ((at - start) / segments[current].seconds) * strip.widths[current];
+	});
+
+	/**
+	 * The column of the strip at the left edge. The program starts flush left; when it is wider than the
+	 * matrix it slides along, keeping where it is a third of the way in, until its end reaches the right.
+	 */
+	const scroll = $derived(
+		Math.max(0, Math.min(strip.length - columns, Math.round(playhead - Math.floor(columns / 3))))
+	);
+
+	/** Every pixel, as three paths: lit, off and blinking. One shape each keeps it cheap to redraw. */
 	const pixels = $derived.by(() => {
 		let lit = '';
 		let off = '';
+		let blink = '';
 		// The bars take every row but the last two: one left blank, then the progress.
 		const tall = rows - 2;
-		if (columns < 1 || tall < 1 || !total || !fastest) return { lit, off };
+		if (columns < 1 || tall < 1 || !total || !fastest) return { lit, off, blink };
 
 		// The grid is centred in its room.
 		const left = (width - columns * pitch) / 2;
@@ -37,45 +66,38 @@
 		const square = (column: number, row: number) =>
 			`M${(left + column * pitch).toFixed(1)} ${(top + row * pitch).toFixed(1)}h${dot}v${dot}h-${dot}z`;
 
-		// Which segment each column falls in, by the middle of its slice of time.
-		const owner = Array.from({ length: columns }, (_, column) =>
-			segmentAt(segments, ((column + 0.5) / columns) * total).index
-		);
-		const done = Math.round((at / total) * columns);
-
-		// The columns each segment is drawn in. Where it starts, a column is left dark, so that two
-		// segments at one speed still read as two — unless that would leave it too thin to see.
-		const from = new Map<number, number>();
-		const to = new Map<number, number>();
-		owner.forEach((index, column) => {
-			if (!from.has(index)) from.set(index, column);
-			to.set(index, column);
-		});
-		for (const [index, start] of from) {
-			if (index > 0 && to.get(index)! - start >= 2) from.set(index, start + 1);
-		}
+		// Which segment each column of the strip is in; the dark ones between two are in none.
+		const owner = new Array<number>(strip.length).fill(-1);
+		strip.starts.forEach((start, index) => owner.fill(index, start, start + strip.widths[index]));
+		const done = Math.round(playhead);
 
 		for (let column = 0; column < columns; column++) {
-			const index = owner[column];
-			const drawn = column >= from.get(index)!;
-			const edge = column === from.get(index) || column === to.get(index);
-			const bar = drawn ? Math.max(1, Math.round((segments[index].speed / fastest) * tall)) : 0;
+			const x = column + scroll;
+			const index = owner[x] ?? -1;
+			const start = strip.starts[index];
+			const edge = index >= 0 && (x === start || x === start + strip.widths[index] - 1);
+			const bar = index >= 0 ? Math.max(1, Math.round((segments[index].speed / fastest) * tall)) : 0;
 
 			for (let row = 0; row < tall; row++) {
 				const inside = row >= tall - bar;
+				const rim = edge || row === tall - bar;
 				let on = false;
-				if (inside && index === current) on = true;
-				else if (inside && index < current) on = (row + column) % 2 === 0;
-				// Sides dotted: one too narrow to be hollow must not look like the one running.
-				else if (inside) on = row === tall - bar || (edge && (tall - row) % 2 === 1);
+				if (inside && index < current) on = true;
+				else if (inside && index === current) {
+					if (!rim) {
+						blink += square(column, row);
+						continue;
+					}
+					on = true;
+				} else if (inside) on = row === tall - bar || (edge && (tall - row) % 2 === 1);
 				if (on) lit += square(column, row);
 				else off += square(column, row);
 			}
 			off += square(column, tall);
-			if (column < done) lit += square(column, rows - 1);
+			if (x < done) lit += square(column, rows - 1);
 			else off += square(column, rows - 1);
 		}
-		return { lit, off };
+		return { lit, off, blink };
 	});
 </script>
 
@@ -83,6 +105,7 @@
 	<svg {width} {height} viewBox="0 0 {width} {height}" aria-hidden="true">
 		<path class="off" d={pixels.off} />
 		<path d={pixels.lit} />
+		<path class="blink" d={pixels.blink} />
 	</svg>
 </div>
 
@@ -108,5 +131,23 @@
 	/* As faint as the segments of the digits that are off. */
 	.off {
 		opacity: var(--ghost, 0.08);
+	}
+
+	/* On and off, never in between, as a display's pixel does. */
+	.blink {
+		animation: blink 1s steps(1, end) infinite;
+	}
+
+	@keyframes blink {
+		50% {
+			opacity: var(--ghost, 0.08);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.blink {
+			animation: none;
+			opacity: 0.45;
+		}
 	}
 </style>
