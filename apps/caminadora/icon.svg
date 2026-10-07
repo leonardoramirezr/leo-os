@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="caminadora-bg" x1="0" y1="0" x2="1" y2="1">
+			<stop offset="0" stop-color="#2e2e31" />
+			<stop offset="1" stop-color="#0b0b0c" />
+		</linearGradient>
+		<radialGradient id="caminadora-glow" cx="0.28" cy="0.18" r="0.9">
+			<stop offset="0" stop-color="#fff" stop-opacity="0.16" />
+			<stop offset="1" stop-color="#fff" stop-opacity="0" />
+		</radialGradient>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#caminadora-bg)" />
+	<rect width="1024" height="1024" fill="url(#caminadora-glow)" />
+	<!-- A program as the display draws it: each bar as wide as its segment lasts and as tall as its
+	     speed. The ones gone by are dimmed, the one running is solid, the ones to come are outlined. -->
+	<g fill="#fff">
+		<rect x="178" y="513" width="127" height="195" opacity="0.38" />
+		<rect x="325" y="420" width="79" height="288" opacity="0.38" />
+		<rect x="424" y="244" width="127" height="464" />
+	</g>
+	<g fill="#fff" fill-opacity="0.08" stroke="#fff" stroke-width="22">
+		<rect x="582" y="464" width="57" height="233" />
+		<rect x="680" y="325" width="57" height="372" />
+		<rect x="779" y="557" width="56" height="140" />
+	</g>
+	<!-- How far into the program it is -->
+	<rect x="178" y="748" width="668" height="40" fill="#fff" opacity="0.2" />
+	<rect x="178" y="748" width="309" height="40" fill="#fff" />
+</svg>

@@ -1,5 +1,5 @@
 // A post as whoever opens its link sees it, from `leogram_post()` (see
-// db/migrations/0010_leogram_bio.sql). It answers signed out as well, which is what lets a link
+// db/migrations/0012_leogram_bio.sql). It answers signed out as well, which is what lets a link
 // open for anybody; liking and commenting need an account, and go to the tables like any write.
 // A post for some friends only opens for them, signed in, and its author; to anyone else the link
 // only says that much.

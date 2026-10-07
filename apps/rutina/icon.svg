@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="rutina-bg" x1="0" y1="0" x2="1" y2="1">
+			<stop offset="0" stop-color="#4be38a" />
+			<stop offset="1" stop-color="#0b7a47" />
+		</linearGradient>
+		<radialGradient id="rutina-glow" cx="0.28" cy="0.18" r="0.9">
+			<stop offset="0" stop-color="#fff" stop-opacity="0.3" />
+			<stop offset="1" stop-color="#fff" stop-opacity="0" />
+		</radialGradient>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#rutina-bg)" />
+	<rect width="1024" height="1024" fill="url(#rutina-glow)" />
+	<!-- A dumbbell, lifted at an angle: the bar, then each side's big plate, small plate and collar -->
+	<g fill="#fff" transform="rotate(-30 512 512)">
+		<rect x="296" y="478" width="432" height="68" rx="26" />
+		<rect x="228" y="316" width="88" height="392" rx="36" />
+		<rect x="708" y="316" width="88" height="392" rx="36" />
+		<rect x="156" y="384" width="84" height="256" rx="32" />
+		<rect x="784" y="384" width="84" height="256" rx="32" />
+		<rect x="116" y="478" width="52" height="68" rx="20" />
+		<rect x="856" y="478" width="52" height="68" rx="20" />
+	</g>
+</svg>

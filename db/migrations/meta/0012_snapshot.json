@@ -1,9 +1,81 @@
 {
-  "id": "67531ff2-6a35-464d-9faa-b7b517c2140e",
-  "prevId": "c11361f5-b79b-47b1-974f-174b8b6aa42a",
+  "id": "e9ad02ef-4c5e-45a7-b180-a0a4664c41e7",
+  "prevId": "4692bdc2-2472-451c-b580-1dbd325aceb1",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.caminadora_programs": {
+      "name": "caminadora_programs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "auth.user_id()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "segments": {
+          "name": "segments",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "caminadora_programs_user": {
+          "name": "caminadora_programs_user",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "caminadora_programs_own": {
+          "name": "caminadora_programs_own",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "authenticated"
+          ],
+          "using": "user_id = auth.user_id()",
+          "withCheck": "user_id = auth.user_id()"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
     "public.repaso_cards": {
       "name": "repaso_cards",
       "schema": "",
@@ -101,9 +173,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "repaso_cards_deck": {
           "name": "repaso_cards_deck",
@@ -116,24 +188,24 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "repaso_cards_deck_id_repaso_decks_id_fk": {
           "name": "repaso_cards_deck_id_repaso_decks_id_fk",
           "tableFrom": "repaso_cards",
-          "tableTo": "repaso_decks",
           "columnsFrom": [
             "deck_id"
           ],
+          "tableTo": "repaso_decks",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -201,9 +273,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {},
@@ -261,6 +333,94 @@
       "checkConstraints": {},
       "isRLSEnabled": true
     },
+    "public.leogram_audience": {
+      "name": "leogram_audience",
+      "schema": "",
+      "columns": {
+        "post_id": {
+          "name": "post_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "auth.user_id()"
+        },
+        "friend_id": {
+          "name": "friend_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "leogram_audience_friend": {
+          "name": "leogram_audience_friend",
+          "columns": [
+            {
+              "expression": "friend_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "leogram_audience_post_id_leogram_posts_id_fk": {
+          "name": "leogram_audience_post_id_leogram_posts_id_fk",
+          "tableFrom": "leogram_audience",
+          "columnsFrom": [
+            "post_id"
+          ],
+          "tableTo": "leogram_posts",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "leogram_audience_friend_id_leogram_profiles_user_id_fk": {
+          "name": "leogram_audience_friend_id_leogram_profiles_user_id_fk",
+          "tableFrom": "leogram_audience",
+          "columnsFrom": [
+            "friend_id"
+          ],
+          "tableTo": "leogram_profiles",
+          "columnsTo": [
+            "user_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "leogram_audience_post_id_friend_id_pk": {
+          "name": "leogram_audience_post_id_friend_id_pk",
+          "columns": [
+            "post_id",
+            "friend_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "leogram_audience_not_author": {
+          "name": "leogram_audience_not_author",
+          "value": "\"leogram_audience\".\"friend_id\" <> \"leogram_audience\".\"user_id\""
+        }
+      },
+      "isRLSEnabled": true
+    },
     "public.leogram_avatars": {
       "name": "leogram_avatars",
       "schema": "",
@@ -290,25 +450,25 @@
         "leogram_avatars_user_id_leogram_profiles_user_id_fk": {
           "name": "leogram_avatars_user_id_leogram_profiles_user_id_fk",
           "tableFrom": "leogram_avatars",
-          "tableTo": "leogram_profiles",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "leogram_profiles",
           "columnsTo": [
             "user_id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "leogram_avatars_key_unique": {
           "name": "leogram_avatars_key_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "key"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -364,9 +524,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "leogram_comments_user": {
           "name": "leogram_comments_user",
@@ -379,37 +539,37 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "leogram_comments_post_id_leogram_posts_id_fk": {
           "name": "leogram_comments_post_id_leogram_posts_id_fk",
           "tableFrom": "leogram_comments",
-          "tableTo": "leogram_posts",
           "columnsFrom": [
             "post_id"
           ],
+          "tableTo": "leogram_posts",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "leogram_comments_user_id_leogram_profiles_user_id_fk": {
           "name": "leogram_comments_user_id_leogram_profiles_user_id_fk",
           "tableFrom": "leogram_comments",
-          "tableTo": "leogram_profiles",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "leogram_profiles",
           "columnsTo": [
             "user_id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -452,6 +612,86 @@
       },
       "isRLSEnabled": true
     },
+    "public.leogram_favorites": {
+      "name": "leogram_favorites",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "auth.user_id()"
+        },
+        "friend_id": {
+          "name": "friend_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "leogram_favorites_friend": {
+          "name": "leogram_favorites_friend",
+          "columns": [
+            {
+              "expression": "friend_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "leogram_favorites_friend_id_leogram_profiles_user_id_fk": {
+          "name": "leogram_favorites_friend_id_leogram_profiles_user_id_fk",
+          "tableFrom": "leogram_favorites",
+          "columnsFrom": [
+            "friend_id"
+          ],
+          "tableTo": "leogram_profiles",
+          "columnsTo": [
+            "user_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "leogram_favorites_user_id_friend_id_pk": {
+          "name": "leogram_favorites_user_id_friend_id_pk",
+          "columns": [
+            "user_id",
+            "friend_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "leogram_favorites_own": {
+          "name": "leogram_favorites_own",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "authenticated"
+          ],
+          "using": "user_id = auth.user_id()",
+          "withCheck": "user_id = auth.user_id()"
+        }
+      },
+      "checkConstraints": {
+        "leogram_favorites_not_self": {
+          "name": "leogram_favorites_not_self",
+          "value": "\"leogram_favorites\".\"friend_id\" <> \"leogram_favorites\".\"user_id\""
+        }
+      },
+      "isRLSEnabled": true
+    },
     "public.leogram_likes": {
       "name": "leogram_likes",
       "schema": "",
@@ -482,24 +722,24 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "leogram_likes_post_id_leogram_posts_id_fk": {
           "name": "leogram_likes_post_id_leogram_posts_id_fk",
           "tableFrom": "leogram_likes",
-          "tableTo": "leogram_posts",
           "columnsFrom": [
             "post_id"
           ],
+          "tableTo": "leogram_posts",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -601,24 +841,24 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "leogram_media_post_id_leogram_posts_id_fk": {
           "name": "leogram_media_post_id_leogram_posts_id_fk",
           "tableFrom": "leogram_media",
-          "tableTo": "leogram_posts",
           "columnsFrom": [
             "post_id"
           ],
+          "tableTo": "leogram_posts",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -634,10 +874,10 @@
       "uniqueConstraints": {
         "leogram_media_key_unique": {
           "name": "leogram_media_key_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "key"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -713,6 +953,20 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
+        },
+        "audience": {
+          "name": "audience",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'link'"
+        },
+        "listed": {
+          "name": "listed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {
@@ -727,24 +981,24 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "leogram_posts_user_id_leogram_profiles_user_id_fk": {
           "name": "leogram_posts_user_id_leogram_profiles_user_id_fk",
           "tableFrom": "leogram_posts",
-          "tableTo": "leogram_profiles",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "leogram_profiles",
           "columnsTo": [
             "user_id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -777,6 +1031,10 @@
         "leogram_posts_caption": {
           "name": "leogram_posts_caption",
           "value": "char_length(\"leogram_posts\".\"caption\") <= 2200"
+        },
+        "leogram_posts_audience": {
+          "name": "leogram_posts_audience",
+          "value": "\"leogram_posts\".\"audience\" in ('link', 'friends')"
         }
       },
       "isRLSEnabled": true
@@ -811,9 +1069,9 @@
             }
           ],
           "isUnique": true,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {},
@@ -888,9 +1146,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {},
@@ -1019,9 +1277,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "me_deben_movements_person": {
           "name": "me_deben_movements_person",
@@ -1034,24 +1292,24 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "me_deben_movements_person_id_me_deben_people_id_fk": {
           "name": "me_deben_movements_person_id_me_deben_people_id_fk",
           "tableFrom": "me_deben_movements",
-          "tableTo": "me_deben_people",
           "columnsFrom": [
             "person_id"
           ],
+          "tableTo": "me_deben_people",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -1120,9 +1378,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {},
@@ -1192,9 +1450,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {},
@@ -1283,9 +1541,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "rutina_sessions_routine": {
           "name": "rutina_sessions_routine",
@@ -1298,24 +1556,24 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "rutina_sessions_routine_id_rutina_routines_id_fk": {
           "name": "rutina_sessions_routine_id_rutina_routines_id_fk",
           "tableFrom": "rutina_sessions",
-          "tableTo": "rutina_routines",
           "columnsFrom": [
             "routine_id"
           ],
+          "tableTo": "rutina_routines",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -1443,9 +1701,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {},
@@ -1512,10 +1770,10 @@
   },
   "enums": {},
   "schemas": {},
+  "views": {},
   "sequences": {},
   "roles": {},
   "policies": {},
-  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},

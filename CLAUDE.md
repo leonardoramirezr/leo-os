@@ -140,7 +140,7 @@ to register it.
   is closed until granted, and has a SQL-standard body (`BEGIN ATOMIC`) and no `search_path` of its
   own, which is what lets a preview's copy read the preview's tables (`0007_leogram_public.sql`).
   That copy creates functions in the order they were first created, so one that starts calling a
-  newer one is dropped and created again, never replaced (`0010_leogram_bio.sql`).
+  newer one is dropped and created again, never replaced (`0012_leogram_bio.sql`).
 - **The status bar's colour on iOS 26** is what `--status-bar`, or else `--bg`, holds: `Account`
   paints it on an invisible strip along the top edge, the one thing there WebKit keeps reading.
   `theme-color` does nothing, and neither does colouring anything that fills the screen

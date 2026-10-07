@@ -11,6 +11,8 @@ phone home screen: every app is an icon.
 - Dictado: https://leonardoramirezr.github.io/leo-os/dictado/
 - Leogram: https://leonardoramirezr.github.io/leo-os/leogram/
 - Transforma: https://leonardoramirezr.github.io/leo-os/transforma/
+- Rutina: https://leonardoramirezr.github.io/leo-os/rutina/
+- Caminadora: https://leonardoramirezr.github.io/leo-os/caminadora/
 
 ## Layout
 
@@ -715,7 +717,7 @@ or not, or only for some friends; and a bio that lists the ones its author picks
   `leogram_post(code)` and `leogram_profile(username)`, which run as their owner. The first hands
   over the one post whose code it is given, never a list; the second, the posts a bio lists. Both
   ask `leogram_can_see(code)`, the one place that says who opens a post, which the policies on likes
-  and comments ask too (`db/migrations/0010_leogram_bio.sql`). Signed in, `leogram_post` also says
+  and comments ask too (`db/migrations/0012_leogram_bio.sql`). Signed in, `leogram_post` also says
   whether the post is one's own and whether one liked it, and tells its author who it is for. It
   takes the Data API's anonymous role to be `anonymous`, which is its default.
 - Neon's free plan has 5 GB of Object Storage per project, and each account may fill 2 GB of it.
@@ -792,3 +794,123 @@ another makes it formal, another corrects it — whatever each one's instruction
   often closes this one meanwhile: undo, and what the prompt changed, are still there on coming back,
   and on another device. Both have a copy on the device, and the text's, when the database did not
   get it, is sent rather than read over the next time the app opens, as in Dictado.
+
+## Rutina
+
+A workout routine to follow at the gym: each day's exercises with the effort to beat, a timer for
+every set and every rest, and how the effort has gone, day by day.
+
+- **The routine.** The first time it opens, it asks for one: a name, its days and each day's
+  exercises, picked from the app's catalog — 73 exercises, grouped as the routine it started from
+  groups them: warm-up, squat, hip hinge, horizontal and vertical push and pull, core and others —
+  or of one's own, by name. Each exercise has its sets, its repetitions (or seconds, for one done
+  against the clock, such as a plank), the timer of each set, the rest after it and, optionally, the
+  last block of work done before the app kept track, written the way it is usually noted: «15@72kg»
+  is 15 repetitions with 72 kg; «15,15,12@72kg», three sets; «10,(10+3)@40kg», two, the second of
+  13; «12», twelve with no weight. Whatever follows the numbers is a note, and is left out
+  (`src/lib/effort.ts`).
+- **Pasting it as JSON.** «Pégala como JSON» shows the routine's JSON Schema, with what each key is
+  for, and copies it: handed to a chat with an AI together with a routine kept elsewhere, it comes
+  back as the JSON to paste. The exercises come by name, never by the catalog's ids: a chat model
+  on Groq — `openai/gpt-oss-120b` until another is picked in Ajustes, held to a schema whose only
+  ids are the catalog's — says which catalog exercise each one is, and nothing is saved until the
+  matches have been looked over, and changed where they are wrong. Each exercise keeps the name the
+  JSON gave it; the match gives it its animation. Without a Groq key, or when Groq cannot be
+  reached, they are matched by name alone. The key is the one Lista, Repaso, Dictado and Transforma
+  use, `groq:api-key`, and only the key and the exercises' names are ever sent to `api.groq.com`.
+- **The day.** The first screen lists the routines, each with the day to train: the one named after
+  today's weekday, else the one after the day trained last. «Empezar» starts it, and any other day
+  starts from the routine's own screen, which also shows each exercise's first and last block of
+  work in the app.
+- **The workout** is laid out for a phone lying sideways: the exercise's animation on one side; on
+  the other its name, the set, the effort expected and the two buttons to tap once the set is
+  done, «Mismo esfuerzo» and «Cambiar esfuerzo». Upright it still works — a phone with its rotation
+  locked cannot turn the page —, and says to turn the phone. Every other screen is laid out
+  upright. The sets go round by round: one set of each exercise per round, and an exercise whose
+  sets are all done drops out of the rounds that follow.
+- **The effort expected** of a set is what that same set was the last time the exercise was done —
+  past the sets it had then, its last one —, else the block written with the routine, else its
+  repetitions with no weight. «Cambiar esfuerzo» asks for the repetitions and the weight actually
+  done, and from then on the session's sets of that exercise expect what was just done: the weight
+  on the bar is the one moved on to.
+- **Timers.** Each set has a timer, and so does each rest, both set per exercise. When one runs out
+  an alarm sounds — Web Audio beeps, with no file to load — until the button that moves on is
+  tapped: «Mismo esfuerzo» or «Cambiar esfuerzo» for a set, where typing the effort silences it,
+  and «Empezar siguiente serie» for a rest, which can also cut it short. The screen also turns red
+  and the time blinks: an iPhone on silent plays no sound from a page. The screen is kept on while
+  the workout shows. No timer is counted down: each is worked out from when its phase began, so a
+  phone that locks, or a page iOS reloads behind the user's back, picks up at the right second,
+  and opening the app again goes straight back into a workout under way.
+- **The end.** After the last round, congratulations and what the workout came to: its duration,
+  sets, volume and repetitions, and each exercise's sets against the time before. «Terminar», on a
+  set or a rest, ends it at any point with the same summary and no congratulations. What was done
+  is kept either way.
+- **Statistics.** From the first screen, a line chart per day of the routine and per exercise, one
+  point per session: the volume — series × repetitions × kilograms, added up set by set — or, with
+  «Promedio», a set's repetitions and its weight on average, each in a chart of its own. An
+  exercise with no weight is measured in repetitions (or seconds), one against the clock with
+  weight in kilograms × seconds, and a day's totals leave those out. Each chart's numbers are also
+  in a table under it.
+- **The animations** are ExerciseDB's free GIFs (`oss.exercisedb.dev`, with no key): three-second
+  loops of a 3D figure doing the exercise, the muscles it works in red, in the style of GymVisual's.
+  They load from ExerciseDB's CDN, which therefore sees which ones are shown; an exercise of a
+  routine can show a GIF or an MP4 of the user's own instead. The catalog is
+  `src/lib/catalog.ts`, and an exercise's id there is stored in the routines: names can be reworded,
+  ids never change.
+- Routines live in `rutina_routines`, one row each with its days and exercises as JSON, and
+  workouts in `rutina_sessions`, one row per day trained with every set done. A session is saved
+  whole after every set. A gym is as likely as not to have no signal: a session the database did
+  not get stays on the device as pending, and goes again every time the app opens — and with every
+  set after it — until it does. Both tables have a copy on the device, so the app opens without
+  waiting.
+
+## Caminadora
+
+Training programs for a treadmill that has none of its own, or whose programs are not the ones
+wanted: the app says when to change the speed, as a mid- or high-end treadmill's programs do, and
+the speed is set by hand.
+
+- The first time, it asks for a program. A program is a name and its segments, one after another,
+  each with how long it lasts, in minutes and seconds, and the speed it goes at, in km/h with one
+  decimal at most, from 0.1 to 30. A new segment starts as a copy of the last one, since most
+  programs repeat more than they change; 90 seconds are written back as 1:30, and a speed typed
+  with a comma (`6,5`) is taken as 6.5. The program is drawn as it is typed. One left unnamed is
+  called «Programa N».
+- From then on the app opens on the list of programs, in alphabetical order, each with its length,
+  how many segments it has and a small drawing of them. Tapping one starts it; the pencil beside it
+  changes or deletes it.
+- A program runs on a screen made to look like a treadmill's display: black and white, the numbers
+  in seven segments, the ones off still faint as on an LCD. The whole program is drawn across the
+  middle on a dot matrix, as a Game Boy draws: square pixels, the ones off faint, a bar per segment
+  as wide as it lasts and as tall as its speed. The one running is solid, the ones gone by a
+  checkerboard of pixels and the ones to come outlined, with a row of pixels underneath for the
+  program's progress.
+  Above it, the speed to set and the segment, with how long it has run and how long is left of it;
+  below it, the same for the whole program. With the phone lying down, the bars and the keys go on
+  the left and the numbers down the right.
+- The voice says «Minuto 10» on every whole minute of the program, and «Cambia la velocidad a 6 punto
+  5» as every segment starts, the first one included, without the unit: both at once when they
+  coincide, and «Programa terminado» at the end.
+- **Pausa** stops the clock, which blinks as a treadmill's does, and **Continuar** goes on. **Salir**
+  ends the program, after asking unless it is over. On a keyboard, Space pauses and goes on and Esc
+  leaves.
+- The time is read off the clock, never counted: a page that spent a while in the background comes
+  back to where the program truly is, which is where the treadmill is too. A segment that started
+  meanwhile has its speed said on coming back; the minutes gone by are not caught up on.
+- The screen is kept on while a program runs, and goes off as usual once it is over. iOS lets a
+  page speak only once it has spoken during a tap, which is why the tap that starts a program is
+  the one that says its first speed.
+- The back button and the back gesture leave the program running, with the list showing it on top
+  and how far it has got; tapping it goes back to it. Tapping another program while one runs asks
+  first.
+- The program running is kept on the device (`caminadora:run`), not in the database: iOS may close
+  the app while it sits in the background, and opening it again finds the program still running,
+  where the treadmill is, a tap away on the list. One paused for over an hour is let go, and so is
+  one already over.
+- The voice is the browser's own speech synthesis, in Mexican Spanish where the device has that
+  voice, or else the closest Spanish one. The device's own voices come before those that speak from
+  a server, such as Chrome's «Google» ones, which are sent what is said. Nothing else leaves the
+  device but the programs, to the account.
+- The programs live in the account, in the `caminadora_programs` table, one row per program with
+  its segments in a `jsonb` column, and a copy on the device so the app opens without waiting.
+  Coming back to the app reads them again, in case they changed on another device.

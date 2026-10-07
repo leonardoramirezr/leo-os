@@ -7,6 +7,8 @@ export type { Lang } from './components/text';
 export { readCache, writeCache } from './cache';
 export { configured } from './config';
 export type {
+	CaminadoraProgramRow,
+	CaminadoraSegment,
 	CardRow,
 	DeckRow,
 	DictationRow,
@@ -21,6 +23,12 @@ export type {
 	ListItemRow,
 	MovementRow,
 	PersonRow,
+	RutinaBlock,
+	RutinaDay,
+	RutinaEntry,
+	RutinaRoutineRow,
+	RutinaSessionRow,
+	RutinaSet,
 	SettingRow,
 	TransformaPromptRow,
 	TransformaTextRow,
