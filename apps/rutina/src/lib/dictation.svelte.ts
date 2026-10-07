@@ -1,9 +1,10 @@
-// A routine described out loud rather than typed: a tap opens the microphone, a second one closes it
-// and sends what it heard to Whisper, and the text it writes down goes to `onheard`, into the box
-// where the routine is being described. One per screen: it closes the microphone when the screen goes.
+// Saying it rather than typing it: a tap opens the microphone, a second one closes it and sends what
+// it heard to the speech to text model picked, and the text it writes down goes to `onheard` — into
+// the box where a routine is described, or the window where a change to it is asked for. One per
+// screen: it closes the microphone when the screen goes.
 import { describe, GroqError, transcribe } from './groq';
 import { MicrophoneError, record, type Recording } from './recorder';
-import { apiKey } from './settings.svelte';
+import { apiKey, transcriptionModel } from './settings.svelte';
 
 export type Phase = 'idle' | 'starting' | 'recording' | 'transcribing';
 
@@ -119,7 +120,10 @@ export class Dictation {
 
 		try {
 			const audio = await recording.stop();
-			const heard = seconds < MIN_SECONDS || audio.size === 0 ? '' : await transcribe(apiKey.value, audio);
+			const heard =
+				seconds < MIN_SECONDS || audio.size === 0
+					? ''
+					: await transcribe(apiKey.value, audio, transcriptionModel.value);
 			if (heard) this.#onheard(heard);
 			else this.error = 'No se oyó nada. Toca el micrófono y vuelve a intentarlo.';
 		} catch (error) {

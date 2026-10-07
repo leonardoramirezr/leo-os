@@ -15,6 +15,7 @@
 	import ExerciseMedia from './ExerciseMedia.svelte';
 	import ExercisePicker from './ExercisePicker.svelte';
 	import Icon from './Icon.svelte';
+	import ReviseDock from './ReviseDock.svelte';
 
 	interface Props {
 		routine?: Routine;
@@ -128,6 +129,18 @@
 		else replaceState('', { routine: created.id });
 	}
 
+	/** The routine on screen, for the AI to change. */
+	function current() {
+		return { name, days: copy(days) };
+	}
+
+	/** A change the AI made, or the routine before it: either way it replaces what is on screen. */
+	function revised(routine: { name: string; days: RutinaDay[] }) {
+		name = routine.name;
+		days = copy(routine.days);
+		error = '';
+	}
+
 	function cancel() {
 		if (dirty && !confirm('¿Descartar los cambios?')) return;
 		if (onback) onback();
@@ -151,7 +164,7 @@
 	}
 </script>
 
-<div class="screen">
+<div class="screen" class:docked={draft}>
 	<header class="bar">
 		{#if first}
 			<span></span>
@@ -175,8 +188,8 @@
 		</p>
 	{:else if draft}
 		<p class="lead">
-			La armó la IA con lo que describiste. Revísala y cambia lo que haga falta antes de guardarla: nada se
-			guarda hasta entonces.
+			La armó la IA con lo que describiste. Revísala antes de guardarla: cambia lo que haga falta aquí, o
+			pídeselo a la IA con los botones de abajo, escribiendo o hablando. Nada se guarda hasta entonces.
 		</p>
 	{/if}
 
@@ -280,6 +293,10 @@
 
 <ExercisePicker bind:open={pickerOpen} onpick={picked} />
 
+{#if draft}
+	<ReviseDock {current} onrevised={revised} />
+{/if}
+
 {#if editing}
 	<EntrySheet
 		bind:open={sheetOpen}
@@ -294,6 +311,11 @@
 {/if}
 
 <style>
+	/* Room under «Guardar rutina» for the buttons that float over the end of the page. */
+	.docked {
+		padding-bottom: calc(120px + env(safe-area-inset-bottom));
+	}
+
 	.lead {
 		margin: 4px 4px 20px;
 		color: var(--muted);

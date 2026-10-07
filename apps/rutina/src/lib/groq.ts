@@ -8,8 +8,14 @@ const API_URL = 'https://api.groq.com/openai/v1';
 /** Writes routines and matches exercises until another model is picked: the one the other apps use. */
 export const DEFAULT_MODEL = 'openai/gpt-oss-120b';
 
-/** Speech to text: the model Lista and WillChat transcribe with. */
-export const TRANSCRIPTION_MODEL = 'whisper-large-v3';
+/** Speech to text until another model is picked: the one Lista and WillChat transcribe with. */
+export const DEFAULT_TRANSCRIPTION_MODEL = 'whisper-large-v3';
+
+/** Offered when Groq's list cannot be had: the speech to text models it has had for a while. */
+const KNOWN_TRANSCRIPTION_MODELS = ['whisper-large-v3', 'whisper-large-v3-turbo'];
+
+/** What `/models` lists for speech to text. */
+const TRANSCRIPTION = /whisper|transcri/i;
 
 /** What `/models` lists besides chat models: speech, voices, safety classifiers, agent systems. */
 const NOT_FOR_TEXT = /whisper|transcri|tts|orpheus|playai|guard|compound/i;
@@ -87,7 +93,16 @@ export async function listModels(apiKey: string): Promise<string[]> {
 /** The chat models among `ids`, with `current` among them even if Groq no longer lists it. */
 export function chatModels(ids: string[], current: string): string[] {
 	const found = ids.filter((id) => !NOT_FOR_TEXT.test(id));
-	const models = found.length ? found : [DEFAULT_MODEL];
+	return withCurrent(found.length ? found : [DEFAULT_MODEL], current);
+}
+
+/** The speech to text models among `ids`, with `current` among them even if Groq no longer lists it. */
+export function transcriptionModels(ids: string[], current: string): string[] {
+	const found = ids.filter((id) => TRANSCRIPTION.test(id));
+	return withCurrent(found.length ? found : KNOWN_TRANSCRIPTION_MODELS, current);
+}
+
+function withCurrent(models: string[], current: string): string[] {
 	return models.includes(current) ? models : [current, ...models];
 }
 
@@ -105,12 +120,12 @@ interface Segment {
 	no_speech_prob: number;
 }
 
-/** What was said, as text. Empty when all Whisper heard was silence or noise. */
-export async function transcribe(apiKey: string, audio: Blob): Promise<string> {
+/** What was said, as text, written down by `model`. Empty when all it heard was silence or noise. */
+export async function transcribe(apiKey: string, audio: Blob, model: string): Promise<string> {
 	const form = new FormData();
 	// Named with the extension of its format, which is what the endpoint goes by.
 	form.append('file', audio, `rutina.${extensionOf(audio.type)}`);
-	form.append('model', TRANSCRIPTION_MODEL);
+	form.append('model', model);
 	// Told rather than detected: the names of exercises in English would have Whisper unsure of the
 	// language, and on a wrong guess it writes down what was said in the other one.
 	form.append('language', 'es');

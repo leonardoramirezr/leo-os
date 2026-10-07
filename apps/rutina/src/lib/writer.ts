@@ -1,10 +1,11 @@
-// A routine described in one's own words — typed, or dictated and written down by Whisper — written
-// out by a chat model on Groq. The model is shown the catalog and picks every exercise it can from
+// A routine described in one's own words — typed, or dictated and written down by speech to text —
+// written out by a chat model on Groq, and then changed the same way: «cambia la sentadilla por
+// prensa», «quita el viernes». The model is shown the catalog and picks every exercise it can from
 // it, so that the routine comes with its animations. The editor opens with what it wrote, and
 // nothing is saved until it has been looked over there.
 import type { RutinaDay, RutinaEntry } from '@leo-os/shared';
 import { CATALOG, catalogText, exerciseOf, normalize } from './catalog';
-import { parseBlocks } from './effort';
+import { blocksText, parseBlocks } from './effort';
 import { completeJSON } from './groq';
 import { shortId } from './ids';
 import { guess } from './importer';
@@ -16,37 +17,52 @@ export interface Written {
 	days: RutinaDay[];
 }
 
-const INSTRUCTIONS = [
-	"You write workout routines for a gym app from a person's description of the routine they want.",
+/** What each part of a routine is: the same for writing one and for changing it. */
+const FIELDS = [
+	'A routine has a name and its days, in order, and each day has its exercises in the order they are',
+	'done:',
+	"- The routine's name: what the person calls it, else a short one that says what it is",
+	'  ("Full body 3 días"), in their language.',
+	"- A day's name: the weekday it is done on, when there is one, written in Spanish (\"Lunes\",",
+	'  "Miércoles"), since the app proposes such a day on its weekday; else what the person calls it',
+	'  ("Pierna", "Empuje"); else "Día 1", "Día 2" and so on.',
+	'- exercise: the id of the catalog exercise it is: the same movement, even if the person adds a',
+	'  grip, a tempo, equipment or a note. Empty when the catalog has no exercise that is the same',
+	'  movement, rather than a different one.',
+	"- name: empty when the catalog exercise's name says it all. Otherwise the name to show, in the",
+	"  person's words and language: for an exercise the catalog does not have, or for a variant its",
+	'  name leaves out ("Sentadilla goblet con pausa").',
+	'- sets and reps: the number of sets and the repetitions of each. With a range, such as 8 to 12,',
+	'  the lower number.',
+	'- timed: true for an exercise done against the clock, such as a plank. Its reps are then the',
+	'  seconds each set lasts.',
+	'- rest_seconds: the rest after each set, in seconds.',
+	'- last_block: the weight already being moved, when the person gives it, as "reps@weightkg":',
+	'  "8@60kg" for sets of 8 with 60 kg, "12,10,8@40kg" for sets that differ. Pounds are converted to',
+	'  kilograms. Empty when no weight is given.'
+];
+
+/** How the person writes: what both kinds of request are told about the text they get. */
+const SPEECH = [
 	'It is usually in Spanish, often with exercise names in English, and it may have been dictated and',
-	'written down by speech recognition: expect misheard words and missing punctuation.',
+	'written down by speech recognition: expect misheard words and missing punctuation.'
+];
+
+const SHAPE = [
+	'"name": "<routine>", "days": [{"name": "<day>", "exercises": [{"exercise": "<catalog id or empty>",',
+	'"name": "", "sets": 3, "reps": 10, "timed": false, "rest_seconds": 90, "last_block": ""}]}]'
+];
+
+const WRITE = [
+	"You write workout routines for a gym app from a person's description of the routine they want.",
+	...SPEECH,
 	'',
 	'You get the app\'s catalog of exercises, one per line as "id: name (other names)", and the',
 	'description. It may spell the routine out (days, exercises, sets, repetitions, weights) or only',
 	'say what it is for ("3 days a week, full body, beginner"): then design it yourself, with',
 	'exercises from the catalog.',
 	'',
-	'A routine has a name and its days, in order, and each day has its exercises in the order they are',
-	'done:',
-	'- The routine\'s name: what the description calls it, else a short one that says what it is',
-	'  ("Full body 3 días"), in the language of the description.',
-	'- A day\'s name: the weekday it is done on, when the description gives one, written in Spanish',
-	'  ("Lunes", "Miércoles"), since the app proposes such a day on its weekday; else what the',
-	'  description calls it ("Pierna", "Empuje"); else "Día 1", "Día 2" and so on.',
-	'- exercise: the id of the catalog exercise it is: the same movement, even if the description adds',
-	'  a grip, a tempo, equipment or a note. Empty when the catalog has no exercise that is the same',
-	'  movement, rather than a different one.',
-	'- name: empty when the catalog exercise\'s name says it all. Otherwise the name to show, in the',
-	'  words and the language of the description: for an exercise the catalog does not have, or for a',
-	'  variant its name leaves out ("Sentadilla goblet con pausa").',
-	'- sets and reps: the number of sets and the repetitions of each. With a range, such as 8 to 12,',
-	'  the lower number.',
-	'- timed: true for an exercise done against the clock, such as a plank. Its reps are then the',
-	'  seconds each set lasts.',
-	'- rest_seconds: the rest after each set, in seconds.',
-	'- last_block: the weight already being moved, when the description gives it, as "reps@weightkg":',
-	'  "8@60kg" for sets of 8 with 60 kg, "12,10,8@40kg" for sets that differ. Pounds are converted to',
-	'  kilograms. Empty when no weight is given.',
+	...FIELDS,
 	'',
 	'Fill in what the description leaves out sensibly for its goal. With nothing to go by:',
 	`${DEFAULTS.sets} sets of ${DEFAULTS.reps} repetitions (${DEFAULTS.timedReps} seconds against the clock) ` +
@@ -54,44 +70,73 @@ const INSTRUCTIONS = [
 	'When the text describes no workout at all, answer with no days.',
 	'',
 	'Answer with a JSON object and nothing else, shaped',
-	'{"name": "<routine>", "days": [{"name": "<day>", "exercises": [{"exercise": "<catalog id or empty>",',
-	'"name": "", "sets": 3, "reps": 10, "timed": false, "rest_seconds": 90, "last_block": ""}]}]}.'
+	`{${SHAPE.join('\n')}}.`
 ].join('\n');
 
-const SCHEMA = {
-	type: 'object',
-	properties: {
-		name: { type: 'string' },
-		days: {
-			type: 'array',
-			items: {
-				type: 'object',
-				properties: {
-					name: { type: 'string' },
-					exercises: {
-						type: 'array',
-						items: {
-							type: 'object',
-							properties: {
-								exercise: { type: 'string', enum: ['', ...CATALOG.map((exercise) => exercise.id)] },
-								name: { type: 'string' },
-								sets: { type: 'integer' },
-								reps: { type: 'integer' },
-								timed: { type: 'boolean' },
-								rest_seconds: { type: 'integer' },
-								last_block: { type: 'string' }
-							},
-							required: ['exercise', 'name', 'sets', 'reps', 'timed', 'rest_seconds', 'last_block'],
-							additionalProperties: false
-						}
+const REVISE = [
+	'You change a workout routine of a gym app the way a person asks: swap, add or remove exercises or',
+	'days, change sets, repetitions, rests or weights, rename, reorder.',
+	...SPEECH,
+	'',
+	'You get the app\'s catalog of exercises, one per line as "id: name (other names)", the routine as',
+	'JSON, and what the person wants changed. Answer with the whole routine, changed as asked and',
+	'otherwise exactly as it was: every day, exercise, order and value the request does not touch stays',
+	'the same. New exercises come from the catalog whenever it has them.',
+	'',
+	...FIELDS,
+	'',
+	'Also answer with "summary": one short sentence, in the language of the request and addressed to the',
+	'person, saying what you changed ("Cambié la sentadilla por prensa de piernas y quité el viernes.").',
+	'When the request asks for nothing you can do to the routine, leave it exactly as it was and say why',
+	'in the summary.',
+	'',
+	'Answer with a JSON object and nothing else, shaped',
+	`{"summary": "<what changed>", ${SHAPE.join('\n')}}.`
+].join('\n');
+
+const ROUTINE = {
+	name: { type: 'string' },
+	days: {
+		type: 'array',
+		items: {
+			type: 'object',
+			properties: {
+				name: { type: 'string' },
+				exercises: {
+					type: 'array',
+					items: {
+						type: 'object',
+						properties: {
+							exercise: { type: 'string', enum: ['', ...CATALOG.map((exercise) => exercise.id)] },
+							name: { type: 'string' },
+							sets: { type: 'integer' },
+							reps: { type: 'integer' },
+							timed: { type: 'boolean' },
+							rest_seconds: { type: 'integer' },
+							last_block: { type: 'string' }
+						},
+						required: ['exercise', 'name', 'sets', 'reps', 'timed', 'rest_seconds', 'last_block'],
+						additionalProperties: false
 					}
-				},
-				required: ['name', 'exercises'],
-				additionalProperties: false
-			}
+				}
+			},
+			required: ['name', 'exercises'],
+			additionalProperties: false
 		}
-	},
+	}
+};
+
+const WRITE_SCHEMA = {
+	type: 'object',
+	properties: ROUTINE,
 	required: ['name', 'days'],
+	additionalProperties: false
+};
+
+const REVISE_SCHEMA = {
+	type: 'object',
+	properties: { summary: { type: 'string' }, ...ROUTINE },
+	required: ['summary', 'name', 'days'],
 	additionalProperties: false
 };
 
@@ -107,11 +152,11 @@ export async function writeRoutine(apiKey: string, model: string, description: s
 	const answer = await completeJSON(apiKey, {
 		model,
 		messages: [
-			{ role: 'system', content: INSTRUCTIONS },
+			{ role: 'system', content: WRITE },
 			{ role: 'user', content: ['Catalog:', catalogText(), '', 'Description:', description].join('\n') }
 		],
 		name: 'routine',
-		schema: SCHEMA,
+		schema: WRITE_SCHEMA,
 		max_completion_tokens: MAX_TOKENS
 	});
 
@@ -120,6 +165,84 @@ export async function writeRoutine(apiKey: string, model: string, description: s
 		throw new Error('No encontré una rutina en lo que describiste. Di qué ejercicios lleva, o para qué es.');
 	}
 	return written;
+}
+
+export interface Revision {
+	routine: Written;
+	/** What the model says it changed, or why it changed nothing. */
+	summary: string;
+	changed: boolean;
+}
+
+/** `routine` changed the way `request` asks, by `model`. Throws when the change would leave it empty. */
+export async function reviseRoutine(
+	apiKey: string,
+	model: string,
+	routine: Written,
+	request: string
+): Promise<Revision> {
+	const before = JSON.stringify(shown(routine), null, 1);
+	const answer = await completeJSON(apiKey, {
+		model,
+		messages: [
+			{ role: 'system', content: REVISE },
+			{
+				role: 'user',
+				content: ['Catalog:', catalogText(), '', 'Routine:', before, '', 'Change:', request].join('\n')
+			}
+		],
+		name: 'routine_change',
+		schema: REVISE_SCHEMA,
+		max_completion_tokens: MAX_TOKENS
+	});
+
+	const revised = read(answer);
+	if (!revised.days.length) throw new Error('El cambio dejaba la rutina sin ejercicios: no se aplicó.');
+	keepWhatIsNotShown(revised, routine);
+
+	return {
+		routine: { ...revised, name: revised.name || routine.name },
+		summary: isRecord(answer) ? text(answer.summary) : '',
+		changed: JSON.stringify(shown(revised), null, 1) !== before
+	};
+}
+
+/** The routine as the model reads and writes it. */
+function shown(routine: Written) {
+	return {
+		name: routine.name,
+		days: routine.days.map((day) => ({
+			name: day.name,
+			exercises: day.exercises.map((entry) => ({
+				exercise: entry.exercise,
+				name: entry.name,
+				sets: entry.sets,
+				reps: entry.reps,
+				timed: entry.timed,
+				rest_seconds: entry.rest,
+				last_block: entry.last.length ? blocksText(entry.last) : ''
+			}))
+		}))
+	};
+}
+
+/**
+ * What the model is never shown — an exercise's own GIF or video, the timer of its sets — is carried
+ * over from the same exercise before the change, so that changing something else does not undo it.
+ */
+function keepWhatIsNotShown(revised: Written, routine: Written) {
+	const before = new Map<string, RutinaEntry>();
+	for (const entry of routine.days.flatMap((day) => day.exercises)) {
+		before.set(`${entry.exercise}|${normalize(entry.name)}`, entry);
+	}
+
+	for (const entry of revised.days.flatMap((day) => day.exercises)) {
+		const was = before.get(`${entry.exercise}|${normalize(entry.name)}`);
+		if (!was) continue;
+		entry.media = was.media;
+		// Against the clock, the timer is the set itself, which the model may have changed.
+		if (!entry.timed && !was.timed) entry.work = was.work;
+	}
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

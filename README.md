@@ -783,14 +783,22 @@ every set and every rest, and how the effort has gone, day by day.
 - **Two ways to a new one.** «Nueva rutina» asks how: «Manual», the editor above, or «Con texto
   natural», a box to describe the routine in one's own words — the days, the exercises, their sets
   and repetitions, the rest, the weight already moved, or only what it is for: «full body 3 días,
-  principiante». The microphone next to it records, and once the recording stops Whisper on Groq
-  (`whisper-large-v3`, told it is Spanish and given a few gym words to spell) writes it down into
-  the box, after whatever is already there. «Crear rutina» hands the text to a chat model on Groq —
-  `openai/gpt-oss-120b` until another is picked, there or in Ajustes —, shown the catalog and held
-  to a schema whose only exercise ids are the catalog's, and the editor opens with the routine it
-  wrote: nothing is saved until it has been looked over there, and «‹ Texto» goes back to the
-  description to say more and try again. The first time, with no list yet, the editor links to it
-  (`src/lib/writer.ts`).
+  principiante». The microphone next to it records, and once the recording stops a speech to text
+  model on Groq (`whisper-large-v3` until another is picked, there or in Ajustes, told it is Spanish
+  and given a few gym words to spell) writes it down into the box, after whatever is already there.
+  «Crear rutina» hands the text to a chat model on Groq — `openai/gpt-oss-120b` until another is
+  picked, there or in Ajustes —, shown the catalog and held to a schema whose only exercise ids are
+  the catalog's, and the editor opens with the routine it wrote: nothing is saved until it has been
+  looked over there, and «‹ Texto» goes back to the description to say more and try again. The
+  first time, with no list yet, the editor links to it (`src/lib/writer.ts`).
+- **Changing the proposal in words.** Over that editor float two buttons: one opens a window to
+  write a change in — «cambia la sentadilla por prensa», «quita el viernes» —, which can be
+  minimized to a bar to look at the routine underneath, and has its own microphone and «Enviar»;
+  the other records the change, and once the recording stops the same window opens with what was
+  written down, to be corrected before it goes. The chat model gets the routine as it is on screen,
+  hand edits included, and answers with all of it changed and a sentence saying what it changed,
+  shown with «Deshacer». What it is never shown — an exercise's own GIF or video, its set timer —
+  is carried over from the same exercise before the change (`src/lib/components/ReviseDock.svelte`).
 - **Pasting it as JSON.** «Pégala como JSON» shows the routine's JSON Schema, with what each key is
   for, and copies it: handed to a chat with an AI together with a routine kept elsewhere, it comes
   back as the JSON to paste. The exercises come by name, never by the catalog's ids: a chat model

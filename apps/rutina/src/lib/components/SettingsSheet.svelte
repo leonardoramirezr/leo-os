@@ -42,15 +42,17 @@
 	{#if apiKey.value}
 		<div class="group">
 			<ModelField />
+			<ModelField kind="transcription" />
 			<div class="row key">
 				<code>{maskedKey}</code>
 				<button class="danger" type="button" onclick={removeKey}>Quitar</button>
 			</div>
 		</div>
 		<p class="hint">
-			El modelo de Groq arma la rutina que describes con tus palabras y, al importar una como JSON, decide a
-			qué ejercicio de la app corresponde cada uno. Lo que dictas lo transcribe Whisper, también en Groq. La
-			API key es la misma de las demás apps de Leo OS que usan Groq.
+			El modelo de Groq arma la rutina que describes con tus palabras, le hace los cambios que le pides y, al
+			importar una como JSON, decide a qué ejercicio de la app corresponde cada uno. Lo que dictas lo escribe
+			el modelo de voz a texto, también en Groq. La API key es la misma de las demás apps de Leo OS que usan
+			Groq.
 		</p>
 	{:else}
 		<GroqKeyField />

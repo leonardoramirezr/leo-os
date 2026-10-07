@@ -178,10 +178,11 @@
 			<h2 class="section-title">Inteligencia artificial</h2>
 			<div class="group">
 				<ModelField />
+				<ModelField kind="transcription" />
 			</div>
 			<p class="hint">
-				Lo que escribes, y el audio de lo que dictas, solo se envían a api.groq.com: Whisper transcribe tu voz
-				y el modelo elegido arma la rutina.
+				Lo que escribes, y el audio de lo que dictas, solo se envían a api.groq.com: el modelo de voz a texto
+				escribe lo que dices y el otro arma la rutina.
 			</p>
 
 			{#if error}
