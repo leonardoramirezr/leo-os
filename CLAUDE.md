@@ -106,8 +106,8 @@ to register it.
   in `vite.config.ts` and `ssr = false` + `prerender = true` in `src/routes/+layout.ts`.
 - `@leo-os/shared` as a `workspace:*` dependency, and a `+layout.svelte` that wraps
   `{@render children()}` in its `<Account load={…}>`: nothing of the app draws until there is an
-  account and its rows have been read. The one screen outside it is a Leogram post's link (`?p=`),
-  on purpose: it opens for anybody.
+  account and its rows have been read. The two screens outside it are Leogram's post links (`?p=`)
+  and bios (`?u=`), on purpose: they open signed in or not.
 - Colours that change with the theme are `light-dark(light, dark)` under `color-scheme: light dark`,
   never an `@media (prefers-color-scheme)` block: only that way does the theme picked in the home
   screen's Ajustes reach the app (`shared/src/theme.ts`).
@@ -139,6 +139,8 @@ to register it.
   --custom`): `0001_grants.sql` covers the tables of every migration still to come, while a function
   is closed until granted, and has a SQL-standard body (`BEGIN ATOMIC`) and no `search_path` of its
   own, which is what lets a preview's copy read the preview's tables (`0007_leogram_public.sql`).
+  That copy creates functions in the order they were first created, so one that starts calling a
+  newer one is dropped and created again, never replaced (`0012_leogram_bio.sql`).
 - **The status bar's colour on iOS 26** is what `--status-bar`, or else `--bg`, holds: `Account`
   paints it on an invisible strip along the top edge, the one thing there WebKit keeps reading.
   `theme-color` does nothing, and neither does colouring anything that fills the screen

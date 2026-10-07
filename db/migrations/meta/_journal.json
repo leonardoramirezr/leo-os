@@ -78,6 +78,27 @@
       "when": 1791354603034,
       "tag": "0010_caminadora",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791400101906,
+      "tag": "0011_leogram_audience",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791400103486,
+      "tag": "0012_leogram_bio",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791400105176,
+      "tag": "0013_leogram_can_see",
+      "breakpoints": true
     }
   ]
 }

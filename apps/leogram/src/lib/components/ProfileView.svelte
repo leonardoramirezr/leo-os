@@ -1,16 +1,55 @@
 <script lang="ts">
 	// The account's profile, as Instagram has it: its photo and username on top, and every post it
-	// has published in a grid of three. «+» writes a new one.
-	import { pushState } from '$app/navigation';
+	// has published in a grid of three — in one tab those its bio lists, as others find them there,
+	// and in the other those that only open by their link. «+» writes a new one.
+	import { goto, pushState } from '$app/navigation';
+	import { bioLink } from '$lib/code';
 	import { count } from '$lib/format';
 	import { posts } from '$lib/posts.svelte';
 	import { profile } from '$lib/profile.svelte';
+	import ActionSheet, { type Action } from './ActionSheet.svelte';
 	import Avatar from './Avatar.svelte';
+	import Grid from './Grid.svelte';
 	import Icon from './Icon.svelte';
 	import ProfileSheet from './ProfileSheet.svelte';
 	import Wordmark from './Wordmark.svelte';
 
 	let editing = $state(false);
+	let sharing = $state(false);
+	let copied = $state(false);
+	/** The tab picked; until one is, the bio's, unless only the other one has posts. */
+	let picked = $state<'bio' | 'link'>();
+
+	const listed = $derived(posts.list.filter((post) => post.listed));
+	const unlisted = $derived(posts.list.filter((post) => !post.listed));
+	const tab = $derived(picked ?? (listed.length === 0 && unlisted.length > 0 ? 'link' : 'bio'));
+
+	const open = (id: string) => pushState('', { post: id });
+
+	async function copy() {
+		try {
+			await navigator.clipboard.writeText(bioLink(profile.username));
+			copied = true;
+			setTimeout(() => (copied = false), 2000);
+		} catch {
+			// No clipboard: «Ver tu bio» has the link in the address bar.
+		}
+	}
+
+	const actions = $derived.by(() => {
+		const list: Action[] = [{ label: 'Copiar enlace', run: copy }];
+		if (typeof navigator !== 'undefined' && 'share' in navigator) {
+			list.push({
+				label: 'Compartir…',
+				run: () =>
+					navigator
+						.share({ title: `${profile.username} en Leogram`, url: bioLink(profile.username) })
+						.catch(() => {})
+			});
+		}
+		list.push({ label: 'Ver tu bio', run: () => goto(bioLink(profile.username)) });
+		return list;
+	});
 </script>
 
 <div class="profile">
@@ -39,49 +78,61 @@
 
 	<div class="buttons">
 		<button class="secondary" type="button" onclick={() => (editing = true)}>Editar perfil</button>
+		<button class="secondary" type="button" onclick={() => (sharing = true)}>
+			{copied ? 'Enlace copiado' : 'Compartir perfil'}
+		</button>
 	</div>
 
-	<div class="tab" aria-hidden="true"><Icon name="grid" /></div>
+	<div class="tabs" role="tablist" aria-label="Tus publicaciones">
+		<button role="tab" type="button" aria-selected={tab === 'bio'} onclick={() => (picked = 'bio')}>
+			<Icon name="grid" size={20} />
+			<span>En tu bio</span>
+		</button>
+		<button role="tab" type="button" aria-selected={tab === 'link'} onclick={() => (picked = 'link')}>
+			<Icon name="link" size={20} />
+			<span>Solo con enlace</span>
+		</button>
+	</div>
 
 	{#if posts.list.length === 0}
 		<div class="empty">
 			<span class="circle"><Icon name="camera" size={40} stroke={1.5} /></span>
 			<h2>Comparte fotos</h2>
 			<p>
-				Cuando compartas una publicación, aparecerá en tu perfil, con un enlace para que cualquiera la
-				vea.
+				Cuando compartas una publicación, aparecerá en tu perfil, con un enlace para quien tú elijas:
+				cualquiera, o solo algunos amigos.
 			</p>
 			<button class="link" type="button" onclick={() => pushState('', { composing: true })}>
 				Comparte tu primera foto
 			</button>
 		</div>
+	{:else if tab === 'bio'}
+		{#if listed.length > 0}
+			<p class="hint pad">
+				Así aparecen en tu bio: las de enlace, para todos; las de amigos, solo para esos amigos.
+			</p>
+			<Grid posts={listed} onopen={open} />
+		{:else}
+			<div class="empty">
+				<h2>Tu bio está vacía</h2>
+				<p>
+					Al publicar, activa «Listar en mi bio» para que una publicación aparezca aquí y en tu bio,
+					para quien pueda verla. Las que ya tienes se cambian desde su «⋯».
+				</p>
+			</div>
+		{/if}
+	{:else if unlisted.length > 0}
+		<p class="hint pad">No aparecen en tu bio: solo se abren con su enlace.</p>
+		<Grid posts={unlisted} onopen={open} />
 	{:else}
-		<ul class="grid">
-			{#each posts.list as post (post.id)}
-				<li>
-					<button
-						type="button"
-						onclick={() => pushState('', { post: post.id })}
-						aria-label="Abrir la publicación"
-					>
-						{#if post.thumb}
-							<img src={post.thumb} alt="" onerror={(event) => event.currentTarget.remove()} />
-						{/if}
-						{#if post.slides > 1}
-							<span class="badge"><Icon name="carousel" size={20} /></span>
-						{:else if post.video}
-							<span class="badge"><Icon name="video" size={20} /></span>
-						{:else if post.music}
-							<span class="badge"><Icon name="music" size={18} stroke={2.4} /></span>
-						{/if}
-					</button>
-				</li>
-			{/each}
-		</ul>
+		<div class="empty">
+			<p>Todas tus publicaciones están en tu bio.</p>
+		</div>
 	{/if}
 </div>
 
 <ProfileSheet bind:open={editing} />
+<ActionSheet bind:open={sharing} {actions} />
 
 <style>
 	.profile {
@@ -139,46 +190,35 @@
 		flex: 1;
 	}
 
-	.tab {
+	.tabs {
 		display: flex;
-		justify-content: center;
-		padding: 10px 0;
 		border-top: 1px solid var(--border);
+	}
+
+	.tabs button {
+		display: flex;
+		flex: 1;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		padding: 10px 0;
+		border: 0;
+		background: none;
+		color: var(--muted);
+		font-size: 13px;
+		font-weight: 600;
+	}
+
+	/* As Instagram marks the tab showing: a line under it. */
+	.tabs button[aria-selected='true'] {
+		color: var(--text);
 		box-shadow: inset 0 -1px 0 var(--text);
 	}
 
-	.grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 2px;
+	.pad {
 		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.grid button {
-		display: block;
-		position: relative;
-		width: 100%;
-		padding: 0;
-		border: 0;
-		aspect-ratio: 1;
-		background: var(--placeholder);
-	}
-
-	.grid img {
-		display: block;
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-	}
-
-	.badge {
-		position: absolute;
-		top: 8px;
-		right: 8px;
-		color: #fff;
-		filter: drop-shadow(0 0 2px rgb(0 0 0 / 0.5));
+		padding: 8px 16px 10px;
+		text-align: center;
 	}
 
 	.empty {

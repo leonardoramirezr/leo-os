@@ -54,6 +54,9 @@
 		border-radius: 20px 20px 0 0;
 		background: var(--sheet);
 		overscroll-behavior: contain;
+		/* In the dark a sheet is the grey fields are: a field on it, or a face with no photo, takes
+		   the lighter one Instagram has its own sheets' fields in. */
+		--field: light-dark(#efefef, #363636);
 	}
 
 	@media (min-width: 640px) {

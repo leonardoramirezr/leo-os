@@ -1,0 +1,2 @@
+ALTER POLICY "leogram_comments_own" ON "leogram_comments" TO authenticated USING (user_id = auth.user_id()) WITH CHECK (user_id = auth.user_id() and leogram_can_see("leogram_comments"."post_id"));--> statement-breakpoint
+ALTER POLICY "leogram_likes_own" ON "leogram_likes" TO authenticated USING (user_id = auth.user_id()) WITH CHECK (user_id = auth.user_id() and leogram_can_see("leogram_likes"."post_id"));

@@ -1,13 +1,13 @@
 <script lang="ts">
 	// «Nueva publicación»: up to ten photos and videos, in one of Instagram's shapes and framed by
-	// dragging each one, text written on any of the photos, a caption and a song. «Compartir»
-	// publishes it, and its link is ready right away: there is no other step to make it public, and
-	// nobody finds it without the link.
+	// dragging each one, text written on any of the photos, a caption, a song, and who it is for.
+	// «Compartir» publishes it, and its link is ready right away: there is no other step, and nobody
+	// finds it but through the link — or the bio, if it is listed there.
 	import { isExpired, session } from '@leo-os/shared';
 	import { replaceState } from '$app/navigation';
 	import { flushSync, onDestroy, onMount } from 'svelte';
 	import { linkOf } from '$lib/code';
-	import { clock } from '$lib/format';
+	import { clock, people } from '$lib/format';
 	import {
 		ASPECTS,
 		closestAspect,
@@ -18,6 +18,8 @@
 		videoType,
 		type Aspect
 	} from '$lib/images';
+	import type { Person } from '$lib/people.svelte';
+	import type { Audience } from '$lib/post';
 	import { MAX_SLIDES, posts, type DraftMusic, type DraftSlide } from '$lib/posts.svelte';
 	import { profile } from '$lib/profile.svelte';
 	import Avatar from './Avatar.svelte';
@@ -25,6 +27,7 @@
 	import MusicSheet from './MusicSheet.svelte';
 	import TextEditor from './TextEditor.svelte';
 	import TextLayers from './TextLayers.svelte';
+	import VisibilityFields from './VisibilityFields.svelte';
 
 	const SHAPES: { aspect: Aspect; label: string }[] = [
 		{ aspect: 'square', label: '1:1' },
@@ -36,6 +39,11 @@
 	let aspect = $state<Aspect>('portrait');
 	let caption = $state('');
 	let music = $state<DraftMusic | null>(null);
+	// Every post starts out as every post was before there was a choice: for anybody with its link,
+	// and out of the bio.
+	let audience = $state<Audience>('link');
+	let friends = $state<Person[]>([]);
+	let listed = $state(false);
 	/** The slide being framed. */
 	let current = $state(0);
 	let choosingMusic = $state(false);
@@ -203,13 +211,16 @@
 		history.back();
 	}
 
+	/** Some friends, and nobody picked: the post would be for its author alone. */
+	const friendless = $derived(audience === 'friends' && friends.length === 0);
+
 	async function share() {
-		if (slides.length === 0 || progress !== undefined) return;
+		if (slides.length === 0 || progress !== undefined || friendless) return;
 		problem = '';
 		progress = 0;
 		try {
 			published = await posts.publish(
-				{ slides, aspect, caption: caption.trim(), music },
+				{ slides, aspect, caption: caption.trim(), music, audience, listed, friends },
 				(done) => (progress = done)
 			);
 		} catch (thrown) {
@@ -256,7 +267,7 @@
 				class="text-button blue side end"
 				type="button"
 				onclick={share}
-				disabled={slides.length === 0 || progress !== undefined || reading}
+				disabled={slides.length === 0 || progress !== undefined || reading || friendless}
 			>
 				Compartir
 			</button>
@@ -269,9 +280,19 @@
 		<div class="done">
 			<span class="check"><Icon name="check" size={40} stroke={2.4} /></span>
 			<h2>Tu publicación ya tiene enlace</h2>
-			<p>
-				Cualquiera que lo abra la ve, sin cuenta. Para dar «Me gusta» o comentar, tendrá que entrar.
-			</p>
+			{#if audience === 'friends'}
+				<p>
+					Solo {people(friends.map((friend) => friend.username))}
+					{friends.length === 1 ? 'puede' : 'pueden'} abrirlo, entrando con su cuenta.
+					{listed ? 'También aparece en tu bio, pero solo para quien puede abrirla.' : 'No está en tu bio.'}
+				</p>
+			{:else}
+				<p>
+					Cualquiera que lo abra la ve, sin cuenta. Para dar «Me gusta» o comentar, tendrá que
+					entrar.
+					{listed ? 'Además, aparece en tu bio para todos.' : 'No está en tu bio.'}
+				</p>
+			{/if}
 			<a class="link" href={linkOf(published)} target="_blank" rel="noopener">
 				{linkOf(published).replace(/^https?:\/\//, '')}
 			</a>
@@ -465,6 +486,8 @@
 					<Icon name="forward" size={18} />
 				</button>
 			{/if}
+
+			<VisibilityFields bind:audience bind:friends bind:listed />
 
 			{#if problem}<p class="error pad">{problem}</p>{/if}
 		</div>

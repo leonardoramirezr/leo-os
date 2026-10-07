@@ -8,7 +8,8 @@
 // it against `auth.user_id()`, the `sub` of the Neon Auth session behind the request. Signed out,
 // the token is the anonymous one Neon Auth hands anybody, which the Data API runs as the
 // `anonymous` role: it reaches no table at all, and may only call the functions that show a
-// Leogram post to whoever has its link (`migrations/0007_leogram_public.sql`).
+// Leogram post to whoever has its link and is meant to see it, and an account's bio
+// (`migrations/0007_leogram_public.sql`, `migrations/0012_leogram_bio.sql`).
 //
 // Images never come here. The wallpaper and WillChat's conversation are far too large for rows
 // read on every open, and they stay in the browser's localStorage and IndexedDB; a Leogram post's
@@ -17,9 +18,10 @@
 //
 // Fields are named after their columns, not in camelCase: the Data API hands rows over as the
 // columns are spelled, and `shared/` re-exports `$inferSelect` as the shape the browser works in.
-import { sql } from 'drizzle-orm';
+import { sql, type SQL } from 'drizzle-orm';
 import { authenticatedRole } from 'drizzle-orm/neon';
 import {
+	type AnyPgColumn,
 	bigint,
 	boolean,
 	check,
@@ -48,14 +50,15 @@ const account = () =>
 /**
  * Lets an account at its own rows and at nothing else. `using` is what may be read, changed or
  * deleted; `withCheck` what may be written. Both sides are needed: without `withCheck` an account
- * could file a row under someone else's name.
+ * could file a row under someone else's name. `check` is anything else a row has to meet to be
+ * written.
  */
-const ownRows = (name: string) =>
+const ownRows = (name: string, check?: SQL) =>
 	pgPolicy(name, {
 		for: 'all',
 		to: authenticatedRole,
 		using: sql`user_id = auth.user_id()`,
-		withCheck: sql`user_id = auth.user_id()`
+		withCheck: check ? sql`user_id = auth.user_id() and ${check}` : sql`user_id = auth.user_id()`
 	});
 
 /**
@@ -248,8 +251,10 @@ export interface LeogramMusic {
 }
 
 /**
- * A post: a carousel of photos and videos with a caption and a song. Only its author can list them;
- * anyone else reaches one by its link, whose code is its key (`leogram_post()` in the migrations).
+ * A post: a carousel of photos and videos with a caption and a song. Only its author can list them
+ * here; anyone else reaches one by its link, whose code is its key, or in its author's bio when it
+ * is listed there — `leogram_post()` and `leogram_profile()` in the migrations, which ask
+ * `leogram_can_see()` who may.
  */
 export const leogramPosts = pgTable(
 	'leogram_posts',
@@ -265,15 +270,72 @@ export const leogramPosts = pgTable(
 		slides: integer().notNull(),
 		music: jsonb().$type<LeogramMusic>(),
 		/** Epoch milliseconds. */
-		created_at: bigint({ mode: 'number' }).notNull().default(0)
+		created_at: bigint({ mode: 'number' }).notNull().default(0),
+		/**
+		 * Who opens it: `link`, anybody with its link, signed in or not; `friends`, only its author
+		 * and the accounts in `leogram_audience`, signed in. Posts from before there was a choice
+		 * are `link`, which is what they had always been.
+		 */
+		audience: text().$type<'link' | 'friends'>().notNull().default('link'),
+		/**
+		 * Whether its author's bio lists it, to whoever can open it: everybody for `link`, those
+		 * friends for `friends`. Unlisted, nobody comes across it but through its link.
+		 */
+		listed: boolean().notNull().default(false)
 	},
 	(table) => [
 		check('leogram_posts_id', sql`${table.id} ~ '^[A-Za-z0-9_-]{11}$'`),
 		check('leogram_posts_aspect', sql`${table.aspect} in ('square', 'portrait', 'landscape')`),
 		check('leogram_posts_slides', sql`${table.slides} between 1 and 10`),
 		check('leogram_posts_caption', sql`char_length(${table.caption}) <= 2200`),
+		check('leogram_posts_audience', sql`${table.audience} in ('link', 'friends')`),
 		index('leogram_posts_user').on(table.user_id),
 		ownRows('leogram_posts_own')
+	]
+).enableRLS();
+
+/**
+ * Who a post for some friends only is for, besides its author: one row per friend. Like
+ * `leogram_media`, it has no policy: `leogram_share()` writes it, for the post's author alone, and
+ * `leogram_can_see()` reads it.
+ */
+export const leogramAudience = pgTable(
+	'leogram_audience',
+	{
+		post_id: text()
+			.notNull()
+			.references(() => leogramPosts.id, { onDelete: 'cascade' }),
+		/** The post's author. */
+		user_id: account(),
+		friend_id: text()
+			.notNull()
+			.references(() => leogramProfiles.user_id, { onDelete: 'cascade' })
+	},
+	(table) => [
+		primaryKey({ columns: [table.post_id, table.friend_id] }),
+		check('leogram_audience_not_author', sql`${table.friend_id} <> ${table.user_id}`),
+		index('leogram_audience_friend').on(table.friend_id)
+	]
+).enableRLS();
+
+/**
+ * The accounts an account keeps at hand to share posts with: the first ones the composer offers
+ * when a post is for some friends only. They are found by username (`leogram_find()`), and
+ * `leogram_mine()` reads them back with their names and faces, which only it may.
+ */
+export const leogramFavorites = pgTable(
+	'leogram_favorites',
+	{
+		user_id: account(),
+		friend_id: text()
+			.notNull()
+			.references(() => leogramProfiles.user_id, { onDelete: 'cascade' })
+	},
+	(table) => [
+		primaryKey({ columns: [table.user_id, table.friend_id] }),
+		check('leogram_favorites_not_self', sql`${table.friend_id} <> ${table.user_id}`),
+		index('leogram_favorites_friend').on(table.friend_id),
+		ownRows('leogram_favorites_own')
 	]
 ).enableRLS();
 
@@ -317,6 +379,12 @@ export const leogramMedia = pgTable(
 	]
 ).enableRLS();
 
+/**
+ * Who a post's likes and comments may come from: whoever can open it. A post for some friends only
+ * takes theirs alone, even from someone else who got hold of its link.
+ */
+const canSee = (postId: AnyPgColumn) => sql`leogram_can_see(${postId})`;
+
 /** One row per account that likes a post. Liking takes an account, which is what makes it one each. */
 export const leogramLikes = pgTable(
 	'leogram_likes',
@@ -329,7 +397,7 @@ export const leogramLikes = pgTable(
 	(table) => [
 		primaryKey({ columns: [table.post_id, table.user_id] }),
 		index('leogram_likes_user').on(table.user_id),
-		ownRows('leogram_likes_own')
+		ownRows('leogram_likes_own', canSee(table.post_id))
 	]
 ).enableRLS();
 
@@ -350,7 +418,7 @@ export const leogramComments = pgTable(
 		check('leogram_comments_text', sql`char_length(${table.text}) between 1 and 2200`),
 		index('leogram_comments_post').on(table.post_id),
 		index('leogram_comments_user').on(table.user_id),
-		ownRows('leogram_comments_own'),
+		ownRows('leogram_comments_own', canSee(table.post_id)),
 		// Whoever wrote the post may take any comment off it, as on Instagram. A delete only finds
 		// the rows it may also read, hence the two.
 		...(['select', 'delete'] as const).map((command) =>
@@ -544,6 +612,8 @@ export type DictationRow = typeof dictations.$inferSelect;
 export type LeogramProfileRow = typeof leogramProfiles.$inferSelect;
 export type LeogramAvatarRow = typeof leogramAvatars.$inferSelect;
 export type LeogramPostRow = typeof leogramPosts.$inferSelect;
+export type LeogramAudienceRow = typeof leogramAudience.$inferSelect;
+export type LeogramFavoriteRow = typeof leogramFavorites.$inferSelect;
 export type LeogramMediaRow = typeof leogramMedia.$inferSelect;
 export type LeogramLikeRow = typeof leogramLikes.$inferSelect;
 export type LeogramCommentRow = typeof leogramComments.$inferSelect;
