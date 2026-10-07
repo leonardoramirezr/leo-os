@@ -506,6 +506,32 @@ export const rutinaSessions = pgTable(
 	]
 ).enableRLS();
 
+/** A stretch of a «Caminadora» program: how long it lasts and how fast the treadmill goes meanwhile. */
+export interface CaminadoraSegment {
+	/** Whole seconds, at least one. */
+	seconds: number;
+	/** Kilometres an hour, with one decimal at most. */
+	speed: number;
+}
+
+/**
+ * «Caminadora»: a training program, the segments a treadmill goes through one after another. They
+ * are always read and written together, so they share a column.
+ */
+export const caminadoraPrograms = pgTable(
+	'caminadora_programs',
+	{
+		id: uuid().primaryKey(),
+		user_id: account(),
+		name: text().notNull(),
+		/** In the order they run. */
+		segments: jsonb().$type<CaminadoraSegment[]>().notNull(),
+		/** Epoch milliseconds. */
+		created_at: bigint({ mode: 'number' }).notNull().default(0)
+	},
+	(table) => [index('caminadora_programs_user').on(table.user_id), ownRows('caminadora_programs_own')]
+).enableRLS();
+
 // What the browser reads and writes. `shared/` re-exports these, so a column is described once:
 // rename one here and the apps stop typechecking until they follow.
 export type SettingRow = typeof settings.$inferSelect;
@@ -525,3 +551,4 @@ export type TransformaPromptRow = typeof transformaPrompts.$inferSelect;
 export type TransformaTextRow = typeof transformaTexts.$inferSelect;
 export type RutinaRoutineRow = typeof rutinaRoutines.$inferSelect;
 export type RutinaSessionRow = typeof rutinaSessions.$inferSelect;
+export type CaminadoraProgramRow = typeof caminadoraPrograms.$inferSelect;

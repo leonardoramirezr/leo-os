@@ -6,6 +6,8 @@
 //
 // This is a type-only re-export, so `drizzle-orm` never reaches the browser.
 export type {
+	CaminadoraProgramRow,
+	CaminadoraSegment,
 	CardRow,
 	DeckRow,
 	DictationRow,
