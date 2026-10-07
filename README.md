@@ -13,6 +13,7 @@ phone home screen: every app is an icon.
 - Transforma: https://leonardoramirezr.github.io/leo-os/transforma/
 - Rutina: https://leonardoramirezr.github.io/leo-os/rutina/
 - Caminadora: https://leonardoramirezr.github.io/leo-os/caminadora/
+- Reloj: https://leonardoramirezr.github.io/leo-os/reloj/
 
 ## Layout
 
@@ -906,3 +907,36 @@ the speed is set by hand.
 - The programs live in the account, in the `caminadora_programs` table, one row per program with
   its segments in a `jsonb` column, and a copy on the device so the app opens without waiting.
   Coming back to the app reads them again, in case they changed on another device.
+
+## Reloj
+
+A stopwatch, a timer and a clock that say the time aloud, on a display like Caminadora's: black and
+white, the numbers in seven segments, the ones off still faint as on an LCD.
+
+- Three keys along the bottom switch between them; the app opens on the last one used (`reloj:tab`,
+  on the device). A dot on a key marks the stopwatch or the timer running while another one shows.
+- **Cronómetro** runs from 00:00:00.00 up to 23:59:59.99, the hundredths drawn smaller, and stops
+  there by itself. **Pausa** stops it, blinking, and **Continuar** goes on; **Reiniciar** sets it
+  back to zero.
+- **Temporizador** is picked in hours, minutes and seconds, from 00:00:01 to 23:59:59: an arrow
+  above and below each column, which keeps stepping while held and goes round past either end. It
+  counts down in hundredths, with a bar that empties, and at zero says «Se acabó el tiempo» and
+  rings until **Detener**, or for a minute. Ringing brings its tab up. The length last started is
+  where the picker starts next time (`reloj:timer-duration`).
+- **Hora** shows the time the way the phone writes it, 12 or 24 hours, with the date, and **Decir la
+  hora** says it: «Son las 3 y cuarto de la tarde».
+- Each of the three can speak on its own: never, or every 1, 5, 10, 15 or 30 minutes, or every hour,
+  always on the marks. The clock says the time at :00, :05, :10… for every 5 minutes; the stopwatch
+  «Llevas 10 minutos» as what it has run reaches 5, 10, 15…; the timer «Quedan 10 minutos» as what it
+  has left reaches 10, 5…, which is what it shows. What coincides is said in one go. A mark more than
+  three seconds late — the screen was off — goes unsaid. The choices live in the account
+  (`reloj:stopwatch-every`, `reloj:timer-every`, `reloj:clock-every`).
+- The time is read off the clock, never counted, and the stopwatch and the timer are kept on the
+  device (`reloj:stopwatch`, `reloj:timer`): iOS may close the app in the background, and opening it
+  again finds them where they would be. A timer that reached zero over a minute before does not ring
+  then; it shows it is over.
+- The screen is kept on while the stopwatch or the timer runs, while the alarm rings, and while the
+  clock is set to speak: a phone that locks puts the page, and its voice, to sleep. iOS only lets a
+  page speak and sound from a tap, so every tap on the app unlocks both. On a keyboard, Space starts,
+  pauses and goes on, or says the time.
+- The voice is Caminadora's: the device's own Spanish one, Mexican where it has it.

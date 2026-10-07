@@ -1,0 +1,175 @@
+/* Each colour is light-dark(light, dark): the device picks, unless a theme was picked in the home
+   screen's Ajustes (shared/src/theme.ts). */
+:root {
+	color-scheme: light dark;
+
+	/* The whole app is a watch's display: ink on paper, as Caminadora's running program is. */
+	--paper: light-dark(#f4f4ef, #050505);
+	--ink: light-dark(#151515, #f1f1ec);
+
+	--bg: var(--paper);
+	--text: var(--ink);
+	--muted: light-dark(#6b6b76, #a3a3ab);
+	--group: light-dark(#ffffff, #1c1c1e);
+	--danger: light-dark(#d4382c, #ff6b5f);
+
+	/* How thick the display's lines are, and how faint what is off on it. */
+	--line: 2.5px;
+	--ghost: 0.07;
+
+	--font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	min-height: 100%;
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--font);
+	font-size: 16px;
+	-webkit-font-smoothing: antialiased;
+	-webkit-text-size-adjust: 100%;
+	-webkit-tap-highlight-color: transparent;
+	overscroll-behavior: none;
+}
+
+button,
+input {
+	font: inherit;
+	color: inherit;
+}
+
+button {
+	cursor: pointer;
+}
+
+button:disabled {
+	cursor: default;
+}
+
+:focus-visible {
+	outline: 2px solid var(--ink);
+	outline-offset: 2px;
+}
+
+/*
+ * The display's parts, which every screen shares (Svelte styles are scoped). As on Caminadora's: a
+ * window drawn in ink, its label printed on the frame, and keys outlined in ink, the main one solid.
+ */
+.panel {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 8px;
+	min-width: 0;
+	padding: 10px 14px 12px;
+	border: var(--line) solid var(--ink);
+	border-radius: 14px;
+}
+
+.label {
+	margin: 0;
+	font-size: 12px;
+	font-weight: 800;
+	letter-spacing: 0.12em;
+	line-height: 1.2;
+	text-transform: uppercase;
+}
+
+.labels {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	min-height: 22px;
+}
+
+.badge {
+	flex: none;
+	padding: 4px 9px;
+	border-radius: 6px;
+	background: var(--ink);
+	color: var(--paper);
+	font-size: 12px;
+	font-weight: 800;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+
+/* What a window shows, in the middle of whatever room it has below its label. */
+.face {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 14px;
+	margin-block: auto;
+}
+
+.digits {
+	display: flex;
+	justify-content: center;
+	min-width: 0;
+	line-height: 1;
+}
+
+.keys {
+	display: flex;
+	gap: 12px;
+}
+
+.key {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	min-height: 58px;
+	padding: 0 12px;
+	border: var(--line) solid var(--ink);
+	border-radius: 14px;
+	background: transparent;
+	color: var(--ink);
+	font-size: 17px;
+	font-weight: 800;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	transition: transform 0.1s;
+}
+
+.key.main {
+	background: var(--ink);
+	color: var(--paper);
+}
+
+.key:active:not(:disabled) {
+	transform: scale(0.98);
+}
+
+.key:disabled {
+	opacity: 0.3;
+}
+
+/* A clock stopped blinks, as a watch's does. */
+.blinking {
+	animation: blink 1.2s steps(1, end) infinite;
+}
+
+@keyframes blink {
+	50% {
+		opacity: 0.15;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.blinking {
+		animation: none;
+		opacity: 0.45;
+	}
+}
