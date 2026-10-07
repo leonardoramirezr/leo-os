@@ -68,8 +68,15 @@
     {
       "idx": 9,
       "version": "7",
-      "when": 1791346243632,
-      "tag": "0009_caminadora",
+      "when": 1791343691780,
+      "tag": "0009_rutina",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791354603034,
+      "tag": "0010_caminadora",
       "breakpoints": true
     }
   ]

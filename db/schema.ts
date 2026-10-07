@@ -411,6 +411,101 @@ export const transformaTexts = pgTable(
 	() => [ownRows('transforma_texts_own')]
 ).enableRLS();
 
+/** A set's effort in «Rutina»: so many repetitions — or seconds, against the clock — with so much. */
+export interface RutinaBlock {
+	reps: number;
+	/** Kilograms; 0 with no weight. */
+	weight: number;
+}
+
+/** An exercise of a day in «Rutina», with how it is done. */
+export interface RutinaEntry {
+	/** Random: the sets a session records point at it, so it outlives renaming and reordering. */
+	id: string;
+	/** Its id in the app's catalog (`apps/rutina/src/lib/catalog.ts`); '' for one of the user's own. */
+	exercise: string;
+	/** What it is called on screen; '' goes by the catalog's name. */
+	name: string;
+	sets: number;
+	/** Per set: repetitions, or seconds when `timed`. */
+	reps: number;
+	timed: boolean;
+	/** Seconds each set's timer counts down from before the alarm sounds; 0 for none. */
+	work: number;
+	/** Seconds of rest after each set. */
+	rest: number;
+	/**
+	 * The last block of work done before the app kept track, «15@72kg»: one per set, or one for all
+	 * of them, and none when it was not given. Once a session records the exercise, that counts.
+	 */
+	last: RutinaBlock[];
+	/** A GIF or video of the user's own, shown instead of the catalog's; '' for none. */
+	media: string;
+}
+
+/** A day of a routine in «Rutina». */
+export interface RutinaDay {
+	id: string;
+	/** «Lunes», «Día 1»… One named after a day of the week is the one the app offers on that day. */
+	name: string;
+	exercises: RutinaEntry[];
+}
+
+/** A set done in a session of «Rutina». */
+export interface RutinaSet {
+	/** The exercise of the day it belongs to, by its `RutinaEntry` id. */
+	entry: string;
+	reps: number;
+	weight: number;
+	/** Epoch milliseconds: when it was done. */
+	at: number;
+}
+
+/** «Rutina»: a routine, with its days and their exercises, edited as a whole. */
+export const rutinaRoutines = pgTable(
+	'rutina_routines',
+	{
+		id: uuid().primaryKey(),
+		user_id: account(),
+		name: text().notNull(),
+		days: jsonb().$type<RutinaDay[]>().notNull(),
+		/** Epoch milliseconds. */
+		created_at: bigint({ mode: 'number' }).notNull().default(0)
+	},
+	(table) => [index('rutina_routines_user').on(table.user_id), ownRows('rutina_routines_own')]
+).enableRLS();
+
+/**
+ * «Rutina»: a day of a routine trained once, with every set done. It is written set by set while
+ * it goes on, so that a workout the phone cuts short is not lost.
+ */
+export const rutinaSessions = pgTable(
+	'rutina_sessions',
+	{
+		id: uuid().primaryKey(),
+		user_id: account(),
+		// Deleting a routine takes its history with it, which is what the app promises.
+		routine_id: uuid()
+			.notNull()
+			.references(() => rutinaRoutines.id, { onDelete: 'cascade' }),
+		/** The day trained, by its id in the routine's `days`. */
+		day_id: text().notNull(),
+		/** Epoch milliseconds. */
+		started_at: bigint({ mode: 'number' }).notNull(),
+		/** Epoch milliseconds; 0 while it is going on. */
+		ended_at: bigint({ mode: 'number' }).notNull().default(0),
+		/** Every round done, rather than ended early. */
+		finished: boolean().notNull().default(false),
+		/** Oldest first. */
+		sets: jsonb().$type<RutinaSet[]>().notNull()
+	},
+	(table) => [
+		index('rutina_sessions_user').on(table.user_id),
+		index('rutina_sessions_routine').on(table.routine_id),
+		ownRows('rutina_sessions_own')
+	]
+).enableRLS();
+
 /** A stretch of a «Caminadora» program: how long it lasts and how fast the treadmill goes meanwhile. */
 export interface CaminadoraSegment {
 	/** Whole seconds, at least one. */
@@ -454,4 +549,6 @@ export type LeogramLikeRow = typeof leogramLikes.$inferSelect;
 export type LeogramCommentRow = typeof leogramComments.$inferSelect;
 export type TransformaPromptRow = typeof transformaPrompts.$inferSelect;
 export type TransformaTextRow = typeof transformaTexts.$inferSelect;
+export type RutinaRoutineRow = typeof rutinaRoutines.$inferSelect;
+export type RutinaSessionRow = typeof rutinaSessions.$inferSelect;
 export type CaminadoraProgramRow = typeof caminadoraPrograms.$inferSelect;
