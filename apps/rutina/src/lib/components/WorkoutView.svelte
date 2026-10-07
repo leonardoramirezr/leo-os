@@ -5,7 +5,7 @@
 	//
 	// Both have a timer that sounds an alarm when it runs out, until the button that moves on is
 	// pressed; the set's falls silent while its effort is being typed. «Terminar» ends it all at
-	// any point.
+	// any point, and next to it a small stopwatch counts the whole workout from its start.
 	import { onMount } from 'svelte';
 	import { sync, type RutinaBlock } from '@leo-os/shared';
 	import {
@@ -18,7 +18,7 @@
 		unlockSound
 	} from '$lib/device';
 	import { blockLabel } from '$lib/effort';
-	import { formatClock } from '$lib/format';
+	import { formatClock, formatStopwatch } from '$lib/format';
 	import { entryName, expectedBlock, lastSessionWith, roundsOf, setsOf, slotsOf } from '$lib/routine';
 	import { sessions } from '$lib/sessions.svelte';
 	import { workout } from '$lib/workout.svelte';
@@ -66,6 +66,8 @@
 	/** Seconds left of the set's timer; `undefined` when it has none, and the time it has taken shows. */
 	const workLeft = $derived(slot && slot.entry.work > 0 ? slot.entry.work - elapsed : undefined);
 	const restLeft = $derived(workout.rest - elapsed);
+	/** Seconds since the workout started. */
+	const sinceStart = $derived(session ? Math.max(0, (now - session.startedAt) / 1000) : 0);
 
 	const rounds = $derived(day ? roundsOf(day) : 0);
 	const total = $derived(day ? slotsOf(day).length : 0);
@@ -170,6 +172,10 @@
 				<span style:width="{total ? (done / total) * 100 : 0}%"></span>
 			</div>
 			<span class="count">{done}/{total}</span>
+			<span class="since" aria-label="Tiempo desde el inicio">
+				<Icon name="history" size={14} stroke={2.25} />
+				{formatStopwatch(sinceStart)}
+			</span>
 		</header>
 
 		<!-- Portrait still works — a phone with the rotation locked cannot turn the page — but sideways
@@ -358,6 +364,16 @@
 	}
 
 	.count {
+		flex: none;
+		color: var(--muted);
+		font-size: 14px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.since {
+		display: flex;
+		align-items: center;
+		gap: 4px;
 		flex: none;
 		color: var(--muted);
 		font-size: 14px;
