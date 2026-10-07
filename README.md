@@ -11,6 +11,7 @@ phone home screen: every app is an icon.
 - Dictado: https://leonardoramirezr.github.io/leo-os/dictado/
 - Leogram: https://leonardoramirezr.github.io/leo-os/leogram/
 - Transforma: https://leonardoramirezr.github.io/leo-os/transforma/
+- Caminadora: https://leonardoramirezr.github.io/leo-os/caminadora/
 
 ## Layout
 
@@ -764,3 +765,52 @@ another makes it formal, another corrects it — whatever each one's instruction
   often closes this one meanwhile: undo, and what the prompt changed, are still there on coming back,
   and on another device. Both have a copy on the device, and the text's, when the database did not
   get it, is sent rather than read over the next time the app opens, as in Dictado.
+
+## Caminadora
+
+Training programs for a treadmill that has none of its own, or whose programs are not the ones
+wanted: the app says when to change the speed, as a mid- or high-end treadmill's programs do, and
+the speed is set by hand.
+
+- The first time, it asks for a program. A program is a name and its segments, one after another,
+  each with how long it lasts, in minutes and seconds, and the speed it goes at, in km/h with one
+  decimal at most, from 0.1 to 30. A new segment starts as a copy of the last one, since most
+  programs repeat more than they change; 90 seconds are written back as 1:30, and a speed typed
+  with a comma (`6,5`) is taken as 6.5. The program is drawn as it is typed. One left unnamed is
+  called «Programa N».
+- From then on the app opens on the list of programs, in alphabetical order, each with its length,
+  how many segments it has and a small drawing of them. Tapping one starts it; the pencil beside it
+  changes or deletes it.
+- A program runs on a screen made to look like a treadmill's display: black and white, the numbers
+  in seven segments, the ones off still faint as on an LCD. The whole program is drawn across the
+  middle, a bar per segment as wide as it lasts and as tall as its speed: the ones gone by dimmed,
+  the one running solid and the ones to come outlined, with the program's progress underneath.
+  Above it, the speed to set and the segment, with how long it has run and how long is left of it;
+  below it, the same for the whole program. With the phone lying down, the bars and the keys go on
+  the left and the numbers down the right.
+- The voice says «Minuto 10» on every whole minute of the program, and «Cambia la velocidad a 6 punto
+  5» as every segment starts, the first one included, without the unit: both at once when they
+  coincide, and «Programa terminado» at the end.
+- **Pausa** stops the clock, which blinks as a treadmill's does, and **Continuar** goes on. **Salir**
+  ends the program, after asking unless it is over. On a keyboard, Space pauses and goes on and Esc
+  leaves.
+- The time is read off the clock, never counted: a page that spent a while in the background comes
+  back to where the program truly is, which is where the treadmill is too. A segment that started
+  meanwhile has its speed said on coming back; the minutes gone by are not caught up on.
+- The screen is kept on while a program runs, and goes off as usual once it is over. iOS lets a
+  page speak only once it has spoken during a tap, which is why the tap that starts a program is
+  the one that says its first speed.
+- The back button and the back gesture leave the program running, with the list showing it on top
+  and how far it has got; tapping it goes back to it. Tapping another program while one runs asks
+  first.
+- The program running is kept on the device (`caminadora:run`), not in the database: iOS may close
+  the app while it sits in the background, and opening it again finds the program still running,
+  where the treadmill is, a tap away on the list. One paused for over an hour is let go, and so is
+  one already over.
+- The voice is the browser's own speech synthesis, in Mexican Spanish where the device has that
+  voice, or else the closest Spanish one. The device's own voices come before those that speak from
+  a server, such as Chrome's «Google» ones, which are sent what is said. Nothing else leaves the
+  device but the programs, to the account.
+- The programs live in the account, in the `caminadora_programs` table, one row per program with
+  its segments in a `jsonb` column, and a copy on the device so the app opens without waiting.
+  Coming back to the app reads them again, in case they changed on another device.
