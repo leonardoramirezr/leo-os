@@ -14,6 +14,8 @@ declare global {
 			edit?: boolean;
 			/** Pasting a routine as JSON. */
 			import?: boolean;
+			/** Describing a new routine in one's own words, typed or dictated, for a chat model to write. */
+			describe?: boolean;
 			/** The open routine's statistics. */
 			stats?: boolean;
 			/** The workout under way, or its summary once it is over. */

@@ -10,9 +10,17 @@
 	import { begin } from '$lib/workout.svelte';
 	import Icon from './Icon.svelte';
 	import SettingsSheet from './SettingsSheet.svelte';
+	import Sheet from './Sheet.svelte';
 	import UnderWay from './UnderWay.svelte';
 
 	let settingsOpen = $state(false);
+	let creating = $state(false);
+
+	/** A new routine, picked by hand or described in words. */
+	function create(state: App.PageState) {
+		creating = false;
+		pushState('', state);
+	}
 
 	const now = Date.now();
 
@@ -101,13 +109,42 @@
 		{/each}
 	</ul>
 
-	<button class="new" type="button" onclick={() => pushState('', { edit: true })}>
+	<button class="new" type="button" onclick={() => (creating = true)} aria-haspopup="dialog">
 		<Icon name="plus" />
 		Nueva rutina
 	</button>
 </div>
 
 <SettingsSheet bind:open={settingsOpen} />
+
+<Sheet bind:open={creating} title="Nueva rutina">
+	{#snippet leading()}
+		<button class="text-button" type="button" onclick={() => (creating = false)}>Cancelar</button>
+	{/snippet}
+
+	<ul class="group ways">
+		<li>
+			<button class="way" type="button" onclick={() => create({ edit: true })}>
+				<span class="way-icon"><Icon name="edit" /></span>
+				<span class="text">
+					<span class="way-name">Manual</span>
+					<span class="meta">Elige tú los ejercicios de cada día, con sus series y repeticiones.</span>
+				</span>
+				<span class="chevron"><Icon name="forward" size={18} /></span>
+			</button>
+		</li>
+		<li>
+			<button class="way" type="button" onclick={() => create({ describe: true })}>
+				<span class="way-icon"><Icon name="sparkles" /></span>
+				<span class="text">
+					<span class="way-name">Con texto natural</span>
+					<span class="meta">Escríbela o díctala con tus palabras, y la IA la arma con los ejercicios de la app.</span>
+				</span>
+				<span class="chevron"><Icon name="forward" size={18} /></span>
+			</button>
+		</li>
+	</ul>
+</Sheet>
 
 <style>
 	.routines {
@@ -220,6 +257,42 @@
 		background: var(--hover);
 		color: var(--text);
 		font-size: 16px;
+		font-weight: 600;
+	}
+
+	.ways {
+		margin-top: 4px;
+	}
+
+	.ways li + li {
+		border-top: 1px solid var(--border);
+	}
+
+	.way {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		width: 100%;
+		min-height: 76px;
+		padding: 12px 12px 12px 16px;
+		border: 0;
+		background: none;
+		text-align: left;
+	}
+
+	.way-icon {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 40px;
+		height: 40px;
+		border-radius: 12px;
+		background: color-mix(in srgb, var(--accent) 14%, transparent);
+		color: var(--tint);
+	}
+
+	.way-name {
+		font-size: 17px;
 		font-weight: 600;
 	}
 

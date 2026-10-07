@@ -562,6 +562,14 @@ export function normalize(text: string): string {
 		.trim();
 }
 
+/** The catalog as a chat model is shown it: one exercise per line, «id: name (other names)». */
+export function catalogText(): string {
+	return CATALOG.map((exercise) => {
+		const aliases = exercise.aliases.length ? ` (${exercise.aliases.join(', ')})` : '';
+		return `${exercise.id}: ${exercise.name}${aliases}`;
+	}).join('\n');
+}
+
 /** Every name an exercise answers to, normalized. */
 function namesOf(exercise: Exercise): string[] {
 	return [exercise.name, ...exercise.aliases].map(normalize);

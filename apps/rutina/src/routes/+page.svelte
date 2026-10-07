@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { pushState } from '$app/navigation';
 	import { page } from '$app/state';
+	import DescribeView from '$lib/components/DescribeView.svelte';
 	import EditorView from '$lib/components/EditorView.svelte';
 	import ImportView from '$lib/components/ImportView.svelte';
 	import RoutinesView from '$lib/components/RoutinesView.svelte';
@@ -29,6 +30,8 @@
 	<WorkoutView />
 {:else if page.state.import}
 	<ImportView />
+{:else if page.state.describe}
+	<DescribeView />
 {:else if page.state.edit}
 	{#key routine?.id}
 		<EditorView {routine} />

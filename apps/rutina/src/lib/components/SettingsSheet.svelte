@@ -2,9 +2,9 @@
 	import { untrack } from 'svelte';
 	import { AccountPanel } from '@leo-os/shared';
 	import { testAlarm } from '$lib/device';
-	import { chatModels, listModels } from '$lib/groq';
-	import { apiKey, model, models } from '$lib/settings.svelte';
+	import { apiKey, refreshModels } from '$lib/settings.svelte';
 	import GroqKeyField from './GroqKeyField.svelte';
+	import ModelField from './ModelField.svelte';
 	import Sheet from './Sheet.svelte';
 
 	let { open = $bindable() }: { open: boolean } = $props();
@@ -15,14 +15,6 @@
 	$effect(() => {
 		if (open && apiKey.value) untrack(refreshModels);
 	});
-
-	async function refreshModels() {
-		try {
-			models.value = await listModels(apiKey.value);
-		} catch {
-			// The list known already stays. If something is wrong, importing will say what.
-		}
-	}
 
 	function removeKey() {
 		const question =
@@ -46,25 +38,19 @@
 		iPhone, el interruptor de silencio también la silencia; la pantalla parpadea de todos modos.
 	</p>
 
-	<h3 class="section-title">Importar con IA</h3>
+	<h3 class="section-title">Inteligencia artificial</h3>
 	{#if apiKey.value}
 		<div class="group">
-			<label class="field inline">
-				<span>Modelo</span>
-				<select bind:value={model.value}>
-					{#each chatModels(models.value, model.value) as option (option)}
-						<option value={option}>{option}</option>
-					{/each}
-				</select>
-			</label>
+			<ModelField />
 			<div class="row key">
 				<code>{maskedKey}</code>
 				<button class="danger" type="button" onclick={removeKey}>Quitar</button>
 			</div>
 		</div>
 		<p class="hint">
-			Al importar una rutina como JSON, el modelo de Groq decide a qué ejercicio de la app corresponde cada
-			uno. La API key es la misma de las demás apps de Leo OS que usan Groq.
+			El modelo de Groq arma la rutina que describes con tus palabras y, al importar una como JSON, decide a
+			qué ejercicio de la app corresponde cada uno. Lo que dictas lo transcribe Whisper, también en Groq. La
+			API key es la misma de las demás apps de Leo OS que usan Groq.
 		</p>
 	{:else}
 		<GroqKeyField />

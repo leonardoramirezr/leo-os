@@ -780,6 +780,17 @@ every set and every rest, and how the effort has gone, day by day.
   is 15 repetitions with 72 kg; «15,15,12@72kg», three sets; «10,(10+3)@40kg», two, the second of
   13; «12», twelve with no weight. Whatever follows the numbers is a note, and is left out
   (`src/lib/effort.ts`).
+- **Two ways to a new one.** «Nueva rutina» asks how: «Manual», the editor above, or «Con texto
+  natural», a box to describe the routine in one's own words — the days, the exercises, their sets
+  and repetitions, the rest, the weight already moved, or only what it is for: «full body 3 días,
+  principiante». The microphone next to it records, and once the recording stops Whisper on Groq
+  (`whisper-large-v3`, told it is Spanish and given a few gym words to spell) writes it down into
+  the box, after whatever is already there. «Crear rutina» hands the text to a chat model on Groq —
+  `openai/gpt-oss-120b` until another is picked, there or in Ajustes —, shown the catalog and held
+  to a schema whose only exercise ids are the catalog's, and the editor opens with the routine it
+  wrote: nothing is saved until it has been looked over there, and «‹ Texto» goes back to the
+  description to say more and try again. The first time, with no list yet, the editor links to it
+  (`src/lib/writer.ts`).
 - **Pasting it as JSON.** «Pégala como JSON» shows the routine's JSON Schema, with what each key is
   for, and copies it: handed to a chat with an AI together with a routine kept elsewhere, it comes
   back as the JSON to paste. The exercises come by name, never by the catalog's ids: a chat model
@@ -788,7 +799,8 @@ every set and every rest, and how the effort has gone, day by day.
   matches have been looked over, and changed where they are wrong. Each exercise keeps the name the
   JSON gave it; the match gives it its animation. Without a Groq key, or when Groq cannot be
   reached, they are matched by name alone. The key is the one Lista, Repaso, Dictado and Transforma
-  use, `groq:api-key`, and only the key and the exercises' names are ever sent to `api.groq.com`.
+  use, `groq:api-key`, and all `api.groq.com` is ever sent is the key and, depending on the way in,
+  the exercises' names, a routine's description or the recording of it.
 - **The day.** The first screen lists the routines, each with the day to train: the one named after
   today's weekday, else the one after the day trained last. «Empezar» starts it, and any other day
   starts from the routine's own screen, which also shows each exercise's first and last block of

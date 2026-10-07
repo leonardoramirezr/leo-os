@@ -64,9 +64,10 @@
 		{checking ? 'Verificando…' : 'Guardar API key'}
 	</button>
 	<p class="hint">
-		Con ella, un modelo de Groq empareja los ejercicios de una rutina pegada como JSON con los de la app. Es
-		la misma API key de las demás apps de Leo OS que usan Groq: se guarda en tu cuenta, donde solo tú puedes
-		leerla, y solo se envía a api.groq.com, junto con los nombres de los ejercicios.
+		Con ella, un modelo de Groq arma la rutina que describes con tus palabras y empareja los ejercicios de una
+		rutina pegada como JSON con los de la app. Es la misma API key de las demás apps de Leo OS que usan Groq:
+		se guarda en tu cuenta, donde solo tú puedes leerla, y solo se envía a api.groq.com, junto con lo que
+		describes o dictas, o los nombres de los ejercicios.
 		<a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">Obtener una API key</a>
 	</p>
 </form>
