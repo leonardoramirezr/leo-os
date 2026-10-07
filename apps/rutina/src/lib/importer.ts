@@ -3,9 +3,9 @@
 // that it writes the JSON. The exercises come by name, never by the catalog's ids: a chat model on
 // Groq matches each one to the catalog, and the user checks the matches before anything is saved.
 import type { RutinaBlock, RutinaDay } from '@leo-os/shared';
-import { CATALOG, exerciseOf, findByName, normalize } from './catalog';
+import { CATALOG, catalogText, exerciseOf, findByName, normalize } from './catalog';
 import { parseBlocks } from './effort';
-import { complete, GroqError, type ChatRequest } from './groq';
+import { completeJSON, jsonIn } from './groq';
 import { shortId } from './ids';
 import { DEFAULTS, LIMITS } from './routine';
 
@@ -160,16 +160,6 @@ function integer(value: unknown): number | undefined {
 }
 
 /**
- * Takes the JSON out of whatever came with it: a chat model's answer may wrap it in a code block,
- * or a sentence before and after.
- */
-function extract(text: string): string {
-	const start = text.indexOf('{');
-	const end = text.lastIndexOf('}');
-	return start >= 0 && end > start ? text.slice(start, end + 1) : text;
-}
-
-/**
  * Reads a pasted routine. Gives back the routine, or every problem found — each one saying where —
  * so that they can all be fixed in one go.
  */
@@ -178,7 +168,7 @@ export function readDraft(text: string): { draft?: Draft; errors: string[] } {
 
 	let raw: unknown;
 	try {
-		raw = JSON.parse(extract(text));
+		raw = JSON.parse(jsonIn(text));
 	} catch (error) {
 		const reason = error instanceof Error ? error.message : '';
 		return { errors: [`No es un JSON válido${reason ? `: ${reason}` : '.'}`] };
@@ -358,72 +348,30 @@ const SCHEMA_FOR_MATCHES = {
 /** Room for the matches plus the reasoning of models that think before answering. */
 const MAX_TOKENS = 8192;
 
-/** Models that turned strict mode down during this visit: they get a plain JSON object straight away. */
-const withoutSchema = new Set<string>();
-
-function catalogText(): string {
-	return CATALOG.map((exercise) => {
-		const aliases = exercise.aliases.length ? ` (${exercise.aliases.join(', ')})` : '';
-		return `${exercise.id}: ${exercise.name}${aliases}`;
-	}).join('\n');
-}
-
 /**
  * Asks Groq which catalog exercise each name is. Gives back, for each name in `names`, the catalog
  * id or '' for none. A name the model leaves out, or answers with an id the catalog does not
  * have, falls back on `guess`.
  */
 export async function matchWithGroq(apiKey: string, model: string, names: string[]): Promise<string[]> {
-	const messages: ChatRequest['messages'] = [
-		{ role: 'system', content: INSTRUCTIONS },
-		{
-			role: 'user',
-			content: ['Catalog:', catalogText(), '', 'Names:', ...names.map((name) => `- ${name}`)].join('\n')
-		}
-	];
-
-	let content: string | undefined;
-	if (!withoutSchema.has(model)) {
-		try {
-			content = await complete(apiKey, {
-				model,
-				messages,
-				response_format: {
-					type: 'json_schema',
-					json_schema: { name: 'exercise_matches', strict: true, schema: SCHEMA_FOR_MATCHES }
-				},
-				max_completion_tokens: MAX_TOKENS
-			});
-		} catch (error) {
-			// «This model does not support response format `json_schema`»: which models do changes as
-			// Groq adds and retires them.
-			const refused =
-				error instanceof GroqError && error.status === 400 && /json_schema|response.format/i.test(error.message);
-			if (!refused) throw error;
-			withoutSchema.add(model);
-		}
-	}
-
-	content ??= await complete(apiKey, {
+	const answer = await completeJSON(apiKey, {
 		model,
-		messages,
-		response_format: { type: 'json_object' },
+		messages: [
+			{ role: 'system', content: INSTRUCTIONS },
+			{
+				role: 'user',
+				content: ['Catalog:', catalogText(), '', 'Names:', ...names.map((name) => `- ${name}`)].join('\n')
+			}
+		],
+		name: 'exercise_matches',
+		schema: SCHEMA_FOR_MATCHES,
 		max_completion_tokens: MAX_TOKENS
 	});
 
-	return readMatches(content, names);
+	return readMatches(answer, names);
 }
 
-function readMatches(content: string, names: string[]): string[] {
-	// Outside strict mode a model may think out loud first, or wrap the object in a sentence.
-	const text = content.replace(/<think>[\s\S]*?<\/think>/g, '');
-	let answer: unknown;
-	try {
-		answer = JSON.parse(extract(text));
-	} catch {
-		throw new Error('No se entendió la respuesta de Groq.');
-	}
-
+function readMatches(answer: unknown, names: string[]): string[] {
 	const list = isRecord(answer) && Array.isArray(answer.matches) ? answer.matches : [];
 	const byName = new Map<string, string>();
 	const inOrder: (string | undefined)[] = [];

@@ -1,6 +1,7 @@
 <script lang="ts">
 	// A routine being written or changed: its name, its days, and each day's exercises in the order
-	// they are done. Nothing is saved until «Guardar»; the first time the app opens, it opens here.
+	// they are done. Nothing is saved until «Guardar»; the first time the app opens, it opens here. A
+	// `draft` is a new routine written by a chat model from a description, to be looked over here.
 	import { untrack } from 'svelte';
 	import type { RutinaDay, RutinaEntry } from '@leo-os/shared';
 	import { pushState, replaceState } from '$app/navigation';
@@ -14,8 +15,17 @@
 	import ExerciseMedia from './ExerciseMedia.svelte';
 	import ExercisePicker from './ExercisePicker.svelte';
 	import Icon from './Icon.svelte';
+	import ReviseDock from './ReviseDock.svelte';
 
-	let { routine, first = false }: { routine?: Routine; first?: boolean } = $props();
+	interface Props {
+		routine?: Routine;
+		first?: boolean;
+		draft?: { name: string; days: RutinaDay[] };
+		/** In place of «Cancelar»: the way back to what the draft was written from. */
+		onback?: () => void;
+	}
+
+	let { routine, first = false, draft, onback }: Props = $props();
 
 	function copy(days: RutinaDay[]): RutinaDay[] {
 		return structuredClone($state.snapshot(days)) as RutinaDay[];
@@ -23,10 +33,10 @@
 
 	// The routine as it was when the editor opened: what is edited is a copy, saved only by «Guardar».
 	// (+page draws a new editor for each routine.)
-	const initial = untrack(() => ({
-		name: routine?.name ?? '',
-		days: routine ? copy(routine.days) : [newDay([])]
-	}));
+	const initial = untrack(() => {
+		const from = routine ?? draft;
+		return { name: from?.name ?? '', days: from ? copy(from.days) : [newDay([])] };
+	});
 	let name = $state(initial.name);
 	let days = $state<RutinaDay[]>(initial.days);
 	let error = $state('');
@@ -119,9 +129,22 @@
 		else replaceState('', { routine: created.id });
 	}
 
+	/** The routine on screen, for the AI to change. */
+	function current() {
+		return { name, days: copy(days) };
+	}
+
+	/** A change the AI made, or the routine before it: either way it replaces what is on screen. */
+	function revised(routine: { name: string; days: RutinaDay[] }) {
+		name = routine.name;
+		days = copy(routine.days);
+		error = '';
+	}
+
 	function cancel() {
 		if (dirty && !confirm('¿Descartar los cambios?')) return;
-		history.back();
+		if (onback) onback();
+		else history.back();
 	}
 
 	function removeRoutine() {
@@ -141,10 +164,15 @@
 	}
 </script>
 
-<div class="screen">
+<div class="screen" class:docked={draft}>
 	<header class="bar">
 		{#if first}
 			<span></span>
+		{:else if onback}
+			<button class="back" type="button" onclick={cancel}>
+				<Icon name="back" size={24} />
+				<span>Texto</span>
+			</button>
 		{:else}
 			<button class="text-button" type="button" onclick={cancel}>Cancelar</button>
 		{/if}
@@ -158,6 +186,11 @@
 			Ponle nombre a tu rutina y elige los ejercicios de cada día: cuántas series, de cuánto, y lo último
 			que levantaste si ya la venías haciendo.
 		</p>
+	{:else if draft}
+		<p class="lead">
+			La armó la IA con lo que describiste. Revísala antes de guardarla: cambia lo que haga falta aquí, o
+			pídeselo a la IA con los botones de abajo, escribiendo o hablando. Nada se guarda hasta entonces.
+		</p>
 	{/if}
 
 	<div class="group name">
@@ -167,7 +200,16 @@
 		</label>
 	</div>
 
-	{#if !routine}
+	{#if first}
+		<!-- The list's «Nueva rutina» offers the same; the first time, there is no list. On top of this
+		     screen, so that «back» comes here: saving the routine takes the description's place. -->
+		<button class="paste" type="button" onclick={() => pushState('', { describe: true })}>
+			<Icon name="sparkles" size={18} />
+			¿Prefieres contarla? Descríbela con tus palabras o tu voz
+		</button>
+	{/if}
+
+	{#if !routine && !draft}
 		<!-- In place of this screen rather than on top of it: once the JSON is saved, «back» goes to the
 		     list, not to an editor left blank. -->
 		<button class="paste" type="button" onclick={() => replaceState('', { edit: page.state.edit, import: true })}>
@@ -251,6 +293,10 @@
 
 <ExercisePicker bind:open={pickerOpen} onpick={picked} />
 
+{#if draft}
+	<ReviseDock {current} onrevised={revised} />
+{/if}
+
 {#if editing}
 	<EntrySheet
 		bind:open={sheetOpen}
@@ -265,6 +311,11 @@
 {/if}
 
 <style>
+	/* Room under «Guardar rutina» for the buttons that float over the end of the page. */
+	.docked {
+		padding-bottom: calc(120px + env(safe-area-inset-bottom));
+	}
+
 	.lead {
 		margin: 4px 4px 20px;
 		color: var(--muted);
@@ -286,6 +337,10 @@
 		color: var(--link);
 		font-size: 15px;
 		text-align: left;
+	}
+
+	.paste + .paste {
+		margin-top: 2px;
 	}
 
 	.day {
