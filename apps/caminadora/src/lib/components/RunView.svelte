@@ -6,7 +6,7 @@
 	import { unlock } from '$lib/voice';
 	import Digits from './Digits.svelte';
 	import Icon from './Icon.svelte';
-	import Profile from './Profile.svelte';
+	import Matrix from './Matrix.svelte';
 
 	let { run }: { run: Run } = $props();
 
@@ -84,7 +84,7 @@
 	</section>
 
 	<div class="chart">
-		<Profile {segments} at={runner.elapsed} gap={3} />
+		<Matrix {segments} at={runner.elapsed} />
 	</div>
 
 	<section class="panel program">

@@ -853,8 +853,10 @@ the speed is set by hand.
   changes or deletes it.
 - A program runs on a screen made to look like a treadmill's display: black and white, the numbers
   in seven segments, the ones off still faint as on an LCD. The whole program is drawn across the
-  middle, a bar per segment as wide as it lasts and as tall as its speed: the ones gone by dimmed,
-  the one running solid and the ones to come outlined, with the program's progress underneath.
+  middle on a dot matrix, as a Game Boy draws: square pixels, the ones off faint, a bar per segment
+  as wide as it lasts and as tall as its speed. The one running is solid, the ones gone by a
+  checkerboard of pixels and the ones to come outlined, with a row of pixels underneath for the
+  program's progress.
   Above it, the speed to set and the segment, with how long it has run and how long is left of it;
   below it, the same for the whole program. With the phone lying down, the bars and the keys go on
   the left and the numbers down the right.
