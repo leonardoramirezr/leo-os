@@ -18,20 +18,18 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const size = 180;
 
 /**
- * Writes `<project>/static/apple-touch-icon.png` from a square, full-bleed SVG: iOS applies the
- * rounded mask itself, and renders anything transparent as black.
+ * The apple-touch-icon.png for a square, full-bleed SVG: iOS applies the rounded mask itself, and
+ * renders anything transparent as black.
  */
-function writeAppleTouchIcon(svg, projectDir) {
-	const png = new Resvg(readFileSync(svg, 'utf8'), {
-		fitTo: { mode: 'width', value: size },
-		background: '#fff'
-	})
-		.render()
-		.asPng();
+export function appleTouchIcon(svg) {
+	return new Resvg(svg, { fitTo: { mode: 'width', value: size }, background: '#fff' }).render().asPng();
+}
 
+/** Writes `<project>/static/apple-touch-icon.png`. */
+function writeAppleTouchIcon(svg, projectDir) {
 	const out = join(projectDir, 'static', 'apple-touch-icon.png');
 	mkdirSync(dirname(out), { recursive: true });
-	writeFileSync(out, png);
+	writeFileSync(out, appleTouchIcon(readFileSync(svg, 'utf8')));
 	return out;
 }
 

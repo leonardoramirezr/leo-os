@@ -31,15 +31,16 @@ jobs:
           DELETED: ${{ github.event.ref }}
         run: echo "slug=$(scripts/preview-slug.sh "$DELETED")" >> "$GITHUB_OUTPUT"
 
+      # Before dropping the preview: rewriting the list of previews rasterizes its icon.
+      - if: steps.target.outputs.slug != ''
+        run: pnpm install --frozen-lockfile
+
       - name: Drop previews/<branch>
         if: steps.target.outputs.slug != ''
         env:
           SLUG: ${{ steps.target.outputs.slug }}
           PAGES_MESSAGE: Drop the preview of ${{ github.event.ref }}
         run: scripts/publish-pages.sh remove "$SLUG"
-
-      - if: steps.target.outputs.slug != ''
-        run: pnpm install --frozen-lockfile
 
       - name: Drop its schema
         if: steps.target.outputs.slug != ''
