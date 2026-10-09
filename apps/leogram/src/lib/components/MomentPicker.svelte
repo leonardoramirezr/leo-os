@@ -162,9 +162,7 @@
 	.times {
 		display: flex;
 		justify-content: space-between;
-		font-size: 15px;
-		font-variant-numeric: tabular-nums;
-		font-weight: 600;
+		font: 700 14px/1 var(--mono);
 	}
 
 	.muted {
@@ -174,9 +172,10 @@
 
 	.strip {
 		position: relative;
-		height: 72px;
-		border-radius: 10px;
-		background: var(--field);
+		height: 76px;
+		border: var(--line) solid var(--ink);
+		border-radius: 12px;
+		background: var(--card);
 		cursor: grab;
 		touch-action: none;
 		-webkit-user-select: none;
@@ -204,17 +203,18 @@
 	}
 
 	.bars span.lit {
-		background: var(--text);
+		background: var(--accent);
 		opacity: 1;
 	}
 
-	/* What plays, outlined. */
+	/* What plays, as a lime highlighter over the strip. */
 	.window {
 		position: absolute;
-		top: 0;
-		bottom: 0;
-		border: 3px solid var(--blue);
-		border-radius: 10px;
+		top: -2px;
+		bottom: -2px;
+		border: 3px solid var(--ink);
+		border-radius: 12px;
+		background: color-mix(in srgb, var(--lime) 35%, transparent);
 		pointer-events: none;
 	}
 
@@ -228,25 +228,25 @@
 	.play {
 		display: grid;
 		place-items: center;
-		width: 52px;
-		height: 52px;
+		width: 56px;
+		height: 56px;
 		padding: 0;
-		border: 0;
+		border: var(--line) solid var(--ink);
 		border-radius: 50%;
-		background: var(--text);
-		color: var(--bg);
+		background: var(--lime);
+		color: var(--on-lime);
+		box-shadow: 3px 3px 0 var(--ink);
 	}
 
 	.nudge {
 		display: flex;
 		align-items: center;
 		gap: 2px;
-		padding: 8px 10px;
-		border: 0;
-		border-radius: 8px;
-		background: var(--field);
-		font-size: 13px;
-		font-weight: 600;
+		padding: 8px 10px 7px;
+		border: 2px solid var(--ink);
+		border-radius: 10px;
+		background: var(--card);
+		font: 700 12px/1 var(--mono);
 	}
 
 	.hint {

@@ -7,10 +7,11 @@
 	import { untrack } from 'svelte';
 	import { readBio, type Bio } from '$lib/bio';
 	import { bioLink, linkOf } from '$lib/code';
-	import { count } from '$lib/format';
-	import Avatar from './Avatar.svelte';
+	import Burst from './Burst.svelte';
+	import Cover from './Cover.svelte';
 	import Grid from './Grid.svelte';
 	import Icon from './Icon.svelte';
+	import Ticker from './Ticker.svelte';
 	import Visitor from './Visitor.svelte';
 
 	let { username }: { username: string } = $props();
@@ -86,79 +87,76 @@
 		}
 	}
 
+	/** Whether «Añadir a favoritos» is there too, which leaves «Compartir» only room for one word. */
+	const favoring = $derived(session.status === 'in' && !!bio && !bio.mine);
+
 	/** The app itself, where an account's own posts are. */
 	const home = $derived(typeof location === 'undefined' ? './' : location.pathname);
 </script>
 
 <Visitor bind:door>
 	{#if problem}
-		<div class="note">
-			<h2>No se pudo abrir la bio</h2>
+		<div class="empty-note">
+			<h2 class="display">No se pudo abrir la bio</h2>
 			<p>{problem}</p>
 			<button class="secondary" type="button" onclick={() => read(username)}>Reintentar</button>
 		</div>
 	{:else if bio === null}
-		<div class="note">
-			<h2>Esta página no está disponible</h2>
+		<div class="empty-note">
+			<h2 class="display">Esta página no está disponible</h2>
 			<p>
 				Es posible que el enlace no funcione o que la cuenta haya cambiado su nombre de usuario.
 			</p>
 		</div>
 	{:else if bio === undefined}
 		<div class="profile" aria-busy="true" aria-label="Cargando la bio">
-			<section class="who">
+			<section class="loading">
+				<span class="lines">
+					<span class="bone line"></span>
+					<span class="bone line short"></span>
+				</span>
 				<span class="bone round"></span>
-				<span class="bone line"></span>
 			</section>
 		</div>
 	{:else}
 		<div class="profile">
-			<section class="who">
-				<Avatar src={bio.avatar ?? ''} username={bio.username} size={86} ring />
-				<div class="side">
-					<h1>{bio.username}</h1>
-					<p>
-						<strong>{count(bio.posts.length)}</strong>
-						{bio.posts.length === 1 ? 'publicación' : 'publicaciones'}
-					</p>
-				</div>
-			</section>
+			<Cover username={bio.username} avatar={bio.avatar ?? ''} posts={bio.posts.length} />
 
 			<div class="buttons">
 				{#if bio.mine}
 					<a class="secondary" href={home}>Ir a tu perfil</a>
 				{:else if session.status === 'in'}
 					<button
-						class={bio.favorite ? 'secondary' : 'primary'}
+						class={bio.favorite ? 'secondary wide' : 'primary wide'}
 						type="button"
 						onclick={toggleFavorite}
 						aria-pressed={bio.favorite}
 					>
-						<Icon name={bio.favorite ? 'starred' : 'star'} size={16} />
+						<Icon name={bio.favorite ? 'starred' : 'star'} size={18} stroke={2.4} />
 						{bio.favorite ? 'En favoritos' : 'Añadir a favoritos'}
 					</button>
 				{/if}
 				<button class="secondary" type="button" onclick={share}>
-					{copied ? 'Enlace copiado' : 'Compartir perfil'}
+					{copied ? 'Enlace copiado' : favoring ? 'Compartir' : 'Compartir perfil'}
 				</button>
 			</div>
 			{#if failed}<p class="error pad">{failed}</p>{/if}
 
-			<div class="tab" aria-hidden="true"><Icon name="grid" /></div>
+			<Ticker words="Publicaciones" />
 
 			{#if bio.posts.length > 0}
 				<Grid posts={bio.posts} href={linkOf} />
 			{:else}
-				<div class="empty">
-					<span class="circle"><Icon name="camera" size={40} stroke={1.5} /></span>
+				<div class="empty-note">
+					<Burst size={92} tilt={-8}><Icon name="camera" size={34} stroke={2} /></Burst>
 					{#if bio.mine}
-						<h2>Tu bio está vacía</h2>
+						<h2 class="display">Tu bio está vacía</h2>
 						<p>
 							Aquí aparecen las publicaciones que listas en tu bio, para quien pueda verlas: todos, o
 							solo los amigos para quienes son.
 						</p>
 					{:else}
-						<h2>Aún no hay publicaciones</h2>
+						<h2 class="display">Aún no hay publicaciones</h2>
 						<p>
 							{#if session.status === 'in'}
 								Cuando {bio.username} liste en su bio publicaciones que puedas ver, aparecerán aquí.
@@ -182,104 +180,38 @@
 		margin: 0 auto;
 	}
 
-	.who {
-		display: flex;
-		align-items: center;
-		gap: 24px;
-		padding: 16px 16px 0;
-	}
-
-	.side {
-		min-width: 0;
-	}
-
-	h1 {
-		margin: 0 0 6px;
-		overflow: hidden;
-		font-size: 20px;
-		font-weight: 600;
-		line-height: 25px;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.side p {
-		margin: 0;
-		font-size: 15px;
-	}
-
 	.buttons {
 		display: flex;
-		gap: 8px;
-		padding: 16px;
+		gap: 10px;
+		padding: 20px 16px 8px;
 	}
 
 	.buttons > * {
 		flex: 1;
-		min-height: 34px;
-		text-decoration: none;
+		white-space: nowrap;
+	}
+
+	.buttons > .wide {
+		flex: 1.4;
 	}
 
 	.pad {
-		margin: -8px 0 8px;
+		margin: 0;
 		padding: 0 16px;
 	}
 
-	.tab {
+	.loading {
 		display: flex;
-		justify-content: center;
-		padding: 10px 0;
-		border-top: 1px solid var(--border);
-		box-shadow: inset 0 -1px 0 var(--text);
+		align-items: flex-start;
+		gap: 16px;
+		padding: 24px 16px;
 	}
 
-	.empty {
+	.lines {
 		display: flex;
+		flex: 1;
 		flex-direction: column;
-		align-items: center;
-		gap: 12px;
-		padding: 48px 32px;
-		text-align: center;
-	}
-
-	.circle {
-		display: grid;
-		place-items: center;
-		width: 72px;
-		height: 72px;
-		border: 2px solid var(--text);
-		border-radius: 50%;
-	}
-
-	.empty h2 {
-		margin: 4px 0 0;
-		font-size: 24px;
-		font-weight: 800;
-		line-height: 30px;
-	}
-
-	.empty p {
-		max-width: 340px;
-		margin: 0;
-		color: var(--muted);
-	}
-
-	.note {
-		max-width: 470px;
-		margin: 0 auto;
-		padding: 48px 24px;
-		text-align: center;
-	}
-
-	.note h2 {
-		margin: 0 0 12px;
-		font-size: 20px;
-		line-height: 26px;
-	}
-
-	.note p {
-		margin: 0 0 20px;
-		color: var(--muted);
+		gap: 10px;
 	}
 
 	.bone {
@@ -287,15 +219,19 @@
 		background: var(--placeholder);
 	}
 
-	.bone.round {
-		width: 86px;
-		height: 86px;
-		border-radius: 50%;
+	.bone.line {
+		width: 100%;
+		height: 48px;
+		border-radius: 8px;
 	}
 
-	.bone.line {
-		width: 140px;
-		height: 16px;
-		border-radius: 8px;
+	.bone.short {
+		width: 70%;
+	}
+
+	.bone.round {
+		width: 110px;
+		height: 110px;
+		border-radius: 50%;
 	}
 </style>

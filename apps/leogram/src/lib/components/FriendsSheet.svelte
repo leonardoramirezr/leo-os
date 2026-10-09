@@ -72,7 +72,7 @@
 
 <Sheet bind:open title="Amigos">
 	{#snippet trailing()}
-		<button class="text-button blue" type="button" onclick={() => (open = false)}>Listo</button>
+		<button class="text-button accent" type="button" onclick={() => (open = false)}>Listo</button>
 	{/snippet}
 
 	<label class="search">
@@ -116,7 +116,7 @@
 			<p class="hint pad">Nadie tiene «{searched}» en su nombre de usuario.</p>
 		{/if}
 	{:else}
-		<h3>Favoritos</h3>
+		<h3 class="display">Favoritos</h3>
 		{#if favorites.list.length === 0}
 			<p class="hint pad">
 				Busca a tus amigos por su nombre de usuario y márcalos con la estrella: aparecerán aquí cada
@@ -165,10 +165,11 @@
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		margin: 12px 16px 4px;
+		margin: 14px 16px 6px;
 		padding: 0 12px;
-		border-radius: 10px;
-		background: var(--field);
+		border: var(--line) solid var(--ink);
+		border-radius: 12px;
+		background: var(--card);
 		color: var(--muted);
 	}
 
@@ -223,10 +224,10 @@
 		place-items: center;
 		width: 20px;
 		height: 20px;
-		border: 2px solid var(--sheet);
+		border: 2px solid var(--ink);
 		border-radius: 50%;
-		background: var(--muted);
-		color: var(--sheet);
+		background: var(--lilac);
+		color: var(--on-lilac);
 	}
 
 	.name {
@@ -238,9 +239,8 @@
 	}
 
 	h3 {
-		margin: 16px 16px 4px;
-		font-size: 16px;
-		font-weight: 700;
+		margin: 18px 16px 4px;
+		font-size: 22px;
 	}
 
 	.pad {
@@ -274,7 +274,7 @@
 		flex: 1;
 		min-width: 0;
 		overflow: hidden;
-		font-weight: 600;
+		font-weight: 800;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
@@ -287,15 +287,15 @@
 		place-items: center;
 		width: 24px;
 		height: 24px;
-		border: 2px solid var(--muted);
+		border: var(--line) solid var(--ink);
 		border-radius: 50%;
-		color: #fff;
+		background: var(--card);
+		color: var(--on-lime);
 		transform: translateY(-50%);
 	}
 
 	.row[aria-checked='true'] .check {
-		border-color: var(--blue);
-		background: var(--blue);
+		background: var(--lime);
 	}
 
 	.star {
@@ -314,6 +314,6 @@
 	}
 
 	.star.starred {
-		color: #f5b301;
+		color: var(--accent);
 	}
 </style>

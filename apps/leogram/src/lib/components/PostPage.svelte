@@ -16,8 +16,8 @@
 
 <Visitor bind:door>
 	{#if deleted}
-		<div class="note">
-			<h2>Eliminaste esta publicación</h2>
+		<div class="empty-note">
+			<h2 class="display">Eliminaste esta publicación</h2>
 			<p>Quien tenga el enlace ya no podrá verla.</p>
 			<a class="secondary" href={home}>Ir a tu perfil</a>
 		</div>
@@ -25,27 +25,3 @@
 		<PostView {code} onaccount={() => (door = true)} ondeleted={() => (deleted = true)} />
 	{/if}
 </Visitor>
-
-<style>
-	.note {
-		max-width: 470px;
-		margin: 0 auto;
-		padding: 48px 24px;
-		text-align: center;
-	}
-
-	.note h2 {
-		margin: 0 0 12px;
-		font-size: 20px;
-		line-height: 26px;
-	}
-
-	.note p {
-		margin: 0 0 20px;
-		color: var(--muted);
-	}
-
-	.note a {
-		text-decoration: none;
-	}
-</style>

@@ -45,7 +45,7 @@
 </script>
 
 <section class="visibility" aria-labelledby="{group}-title">
-	<h3 id="{group}-title" class:visually-hidden={!titled}>Quién la ve</h3>
+	<h3 id="{group}-title" class="display" class:visually-hidden={!titled}>Quién la ve</h3>
 
 	<div class="options" role="radiogroup" aria-labelledby="{group}-title">
 		<label class="option">
@@ -98,16 +98,15 @@
 
 <style>
 	.visibility {
-		/* The composer's sides and colour; a sheet passes its own, `--side` and `--behind`. */
+		/* The composer's sides; a sheet passes its own, `--side`. */
 		--pad: var(--side, 12px);
-		border-bottom: 1px solid var(--border);
+		border-bottom: var(--line) solid var(--ink);
 	}
 
 	h3 {
 		margin: 0;
-		padding: 14px var(--pad) 4px;
-		font-size: 16px;
-		font-weight: 700;
+		padding: 16px var(--pad) 4px;
+		font-size: 22px;
 	}
 
 	.option {
@@ -127,8 +126,8 @@
 	}
 
 	.text strong {
-		font-size: 15px;
-		font-weight: 600;
+		font-size: 16px;
+		font-weight: 800;
 	}
 
 	.text span {
@@ -138,35 +137,38 @@
 	}
 
 	.bio {
-		border-top: 1px solid var(--border);
+		border-top: var(--line) solid var(--ink);
 	}
 
-	/* Instagram's: a ring that fills in thick once chosen. */
+	/* An outlined ring, inked in the middle once chosen. */
 	input[type='radio'] {
 		flex: none;
-		width: 24px;
-		height: 24px;
+		width: 26px;
+		height: 26px;
 		margin: 0;
-		border: 2px solid var(--muted);
+		border: var(--line) solid var(--ink);
 		border-radius: 50%;
+		background: var(--card);
 		appearance: none;
 		cursor: pointer;
-		transition: border-width 0.15s;
+		transition: box-shadow 0.15s;
 	}
 
 	input[type='radio']:checked {
-		border: 7px solid var(--text);
+		background: var(--accent);
+		box-shadow: inset 0 0 0 4px var(--card);
 	}
 
-	/* iOS's switch, drawn by hand: a browser has none of its own. */
+	/* A switch drawn by hand, as the rest is: a browser has none of its own. Lime once on. */
 	input[role='switch'] {
 		position: relative;
 		flex: none;
-		width: 51px;
-		height: 31px;
+		width: 54px;
+		height: 32px;
 		margin: 0;
+		border: var(--line) solid var(--ink);
 		border-radius: 16px;
-		background: light-dark(#e9e9ea, #39393d);
+		background: var(--card);
 		appearance: none;
 		cursor: pointer;
 		transition: background 0.2s;
@@ -176,21 +178,21 @@
 		position: absolute;
 		top: 2px;
 		left: 2px;
-		width: 27px;
-		height: 27px;
+		width: 23px;
+		height: 23px;
+		border: 2px solid var(--ink);
 		border-radius: 50%;
-		background: #fff;
-		box-shadow: 0 2px 4px rgb(0 0 0 / 0.2);
+		background: var(--lilac);
 		content: '';
 		transition: transform 0.2s;
 	}
 
 	input[role='switch']:checked {
-		background: var(--blue);
+		background: var(--lime);
 	}
 
 	input[role='switch']:checked::before {
-		transform: translateX(20px);
+		transform: translateX(22px);
 	}
 
 	.friends {
@@ -200,9 +202,10 @@
 		width: calc(100% - 2 * var(--pad) - 34px);
 		margin: 0 var(--pad) 10px calc(var(--pad) + 34px);
 		padding: 8px 4px 8px 12px;
-		border: 1px solid var(--border);
-		border-radius: 10px;
-		background: none;
+		border: var(--line) solid var(--ink);
+		border-radius: 12px;
+		background: var(--card);
+		box-shadow: 3px 3px 0 var(--ink);
 		text-align: left;
 	}
 
@@ -214,14 +217,14 @@
 	/* Overlapping, as Instagram shows a few faces together. */
 	.faces > :global(*:not(:first-child)) {
 		margin-left: -8px;
-		box-shadow: 0 0 0 2px var(--behind, var(--bg));
+		box-shadow: 0 0 0 2px var(--card);
 	}
 
 	.names {
 		flex: 1;
 		min-width: 0;
 		overflow: hidden;
-		font-weight: 600;
+		font-weight: 800;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}

@@ -617,13 +617,20 @@ Voice to text: say something and it is written down, then go on dictating, or sa
 A parody of Instagram: carousel posts with a song, each with a link that opens for anybody, signed in
 or not, or only for some friends; and a bio that lists the ones its author picks.
 
-- Opening it shows the account's profile as Instagram has one: its photo, its username and its posts
-  in a grid of three, and «+» to write a new one. The grid comes in two tabs, «En tu bio» for the
-  posts the bio lists and «Solo con enlace» for those only their link opens, and two heads in a
-  corner mark a post for some friends. «Compartir perfil» copies or shares the bio's link, or opens
-  the bio itself. The first time, it asks for the username its posts and comments will carry,
-  suggested out of the account's name; «Editar perfil» changes it and the photo later. Usernames are
-  Instagram's: lowercase letters, digits, dots and underscores, and no two accounts share one.
+It works like Instagram but does not look like it: it is printed as a fanzine off a risograph. Two
+inks on paper, cobalt with a lime one a hair off it, lilac stickers, thick outlines and hard shadows;
+in the dark the paper goes black and the lime leads. The type is Bricolage Grotesque and Space Mono,
+which travel with the app (`src/lib/fonts`, under the SIL Open Font License) rather than coming from
+a font service. The icon is Leo's sign, ♌, printed the same way.
+
+- Opening it shows the account's profile as a fanzine's cover: its username in big capitals, its
+  photo stuck on a starburst, and its posts in a grid of three, pasted on a little crooked, and «+»
+  to write a new one. The grid comes in two tabs, «En tu bio» for the posts the bio lists and «Solo
+  con enlace» for those only their link opens, and two heads in a corner mark a post for some
+  friends. «Compartir perfil» copies or shares the bio's link, or opens the bio itself. The first
+  time, it asks for the username its posts and comments will carry, suggested out of the account's
+  name; «Editar perfil» changes it and the photo later. Usernames are Instagram's: lowercase
+  letters, digits, dots and underscores, and no two accounts share one.
 - A post is up to ten photos and videos, in one of Instagram's shapes — 1:1, 4:5 or 1.91:1,
   whichever crops the first one least until another is picked — and framed by dragging each one;
   the arrows and the bin under them reorder them and drop one. Then a caption and a song.
@@ -689,12 +696,11 @@ or not, or only for some friends; and a bio that lists the ones its author picks
   though the addresses to its files it already handed out keep working until they run out, two days
   at most. Posts from before there was a choice are for anybody with their link and out of the bio,
   as they always were; this is how one goes into it.
-- **The link opens for whoever the post is for**, with Leogram's name on top as Instagram has its
-  own: the photos and videos to swipe through, the song, who posted it, the likes, the caption and
-  the comments. A browser lets no page make sound before it is touched, so when the song cannot
-  start on its own it says so on the photo, and starts with the first tap anywhere. The video
-  showing plays on a loop, without sound: under the song if the post has one, and otherwise until
-  its speaker is tapped.
+- **The link opens for whoever the post is for**, with Leogram's name on top: the photos and videos
+  to swipe through, the song, who posted it, the likes, the caption and the comments. A browser lets
+  no page make sound before it is touched, so when the song cannot start on its own it says so on
+  the photo, and starts with the first tap anywhere. The video showing plays on a loop, without
+  sound: under the song if the post has one, and otherwise until its speaker is tapped.
 - **Liking and commenting take an account.** Signed out, the heart, a double tap on a photo or the
   comment box put up the same door as every app of Leo OS, with «Ahora no» to go back to the post;
   once signed in, the like is given, or the box is ready. An account's first comment gives it a

@@ -1,26 +1,77 @@
-/* Each colour is light-dark(light, dark): the device picks, unless a theme was picked in the home
-   screen's Ajustes (shared/src/theme.ts). They are Instagram's own: white and black, its greys, its
-   blue and the red of a like. */
+/* Leogram is printed, not lit: a fanzine run off a risograph. Two inks on paper that never quite
+   land on each other — cobalt, with a lime one a hair off it —, lilac stickers, thick black outlines
+   and hard shadows. In the dark the paper goes black, the lines go cream and the lime takes the
+   cobalt's place. Each colour is light-dark(light, dark): the device picks, unless a theme was
+   picked in the home screen's Ajustes (shared/src/theme.ts). */
+
+/* The type is part of the print, so it travels with the app instead of coming from a font service:
+   Bricolage Grotesque (wide for text, condensed for headlines) and Space Mono for what reads like a
+   label. Both under the SIL Open Font License 1.1, whose text is next to them in lib/fonts. */
+@font-face {
+	font-family: 'Bricolage Grotesque';
+	font-style: normal;
+	font-weight: 400 800;
+	font-stretch: 75% 100%;
+	font-display: swap;
+	src: url('./lib/fonts/bricolage-grotesque.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Space Mono';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('./lib/fonts/space-mono-400.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Space Mono';
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url('./lib/fonts/space-mono-700.woff2') format('woff2');
+}
+
 :root {
 	color-scheme: light dark;
 
-	--bg: light-dark(#ffffff, #000000);
-	--text: light-dark(#0c1014, #f5f5f5);
-	--muted: light-dark(#737373, #a8a8a8);
-	--border: light-dark(#dbdbdb, #262626);
-	--field: light-dark(#efefef, #262626);
-	--hover: light-dark(#f2f2f2, #1a1a1a);
-	--sheet: light-dark(#ffffff, #262626);
-	--blue: #0095f6;
-	--link: light-dark(#00376b, #e0f1ff);
-	--like: #ff3040;
-	--danger: #ed4956;
-	/* What sits behind a photo while it loads, and fills a slide that has none. */
-	--placeholder: light-dark(#efefef, #121212);
-	/* Instagram's gradient: the story ring, the first-run screen. */
-	--gradient: linear-gradient(45deg, #f9ce34, #ee2a7b 55%, #6228d7);
+	/* The paper, and the ink everything is drawn and outlined with. */
+	--bg: light-dark(#f2f2ec, #121218);
+	--text: light-dark(#15151c, #f2f2ec);
+	--ink: var(--text);
+	--muted: light-dark(#62626e, #a3a3b1);
+	/* A hairline between rows, where a full outline would be too much. */
+	--border: light-dark(#d4d4ca, #31313b);
+	--field: light-dark(#e4e4db, #26262f);
+	--hover: light-dark(#e9e9e1, #1c1c24);
+	--sheet: light-dark(#f7f7f2, #1a1a21);
+	/* What a button, a field or a chip is filled with when it is not inked. */
+	--card: light-dark(#ffffff, #23232c);
 
-	--font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	/* The main ink: the name, the links, whatever is picked. */
+	--accent: light-dark(#2c3be8, #c9f235);
+	--on-accent: light-dark(#f2f2ec, #15151c);
+	/* The second ink, printed a hair off the first. */
+	--misprint: light-dark(#9fd400, #3a49ff);
+	/* The main button, and the stars on the ticker. */
+	--lime: #c9f235;
+	--on-lime: #15151c;
+	--star: light-dark(#c9f235, #3a49ff);
+	/* Stickers: a face, a badge, the way home. */
+	--lilac: #d8cbff;
+	--on-lilac: #15151c;
+
+	--like: var(--accent);
+	--danger: light-dark(#d92d20, #ff6b5b);
+	/* What sits behind a photo while it loads, and fills a slide that has none. */
+	--placeholder: light-dark(#e2e2d9, #1d1d25);
+
+	/* An outline, and the hard shadow under whatever stands off the page. */
+	--line: 2.5px;
+	--lift: 4px 4px 0 var(--ink);
+
+	--font: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+	--mono: 'Space Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
 
 *,
@@ -36,8 +87,8 @@ body {
 	background: var(--bg);
 	color: var(--text);
 	font-family: var(--font);
-	font-size: 14px;
-	line-height: 18px;
+	font-size: 15px;
+	line-height: 20px;
 	-webkit-font-smoothing: antialiased;
 	-webkit-text-size-adjust: 100%;
 	-webkit-tap-highlight-color: transparent;
@@ -60,7 +111,7 @@ button:disabled {
 }
 
 :focus-visible {
-	outline: 2px solid var(--blue);
+	outline: 2px solid var(--accent);
 	outline-offset: 2px;
 }
 
@@ -69,7 +120,7 @@ dialog {
 }
 
 dialog::backdrop {
-	background: rgb(0 0 0 / 0.65);
+	background: rgb(21 21 28 / 0.55);
 }
 
 /* A glyph alone: the actions under a post, the corners of a bar. */
@@ -88,38 +139,65 @@ dialog::backdrop {
 	opacity: 0.3;
 }
 
-/* Instagram's blue button: «Compartir», «Seguir»… */
-.primary {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-	min-height: 44px;
-	padding: 0 16px;
-	border: 0;
-	border-radius: 8px;
-	background: var(--blue);
-	color: #fff;
-	font-weight: 600;
+/* The bars' way home is a sticker too. Shared by every app, so only its looks change here: where it
+   sits, and what it does, stay as they are everywhere. The Leo OS door keeps its own. */
+:root :where(.masthead, .welcome-bar) .home-button.home-button {
+	width: 38px;
+	height: 38px;
+	border: var(--line) solid var(--ink);
+	border-radius: 10px;
+	background: var(--lilac);
+	color: var(--on-lilac);
+	box-shadow: 3px 3px 0 var(--ink);
 }
 
-.primary:disabled {
-	opacity: 0.5;
+@media (hover: hover) {
+	:root :where(.masthead, .welcome-bar) .home-button.home-button:hover {
+		background: var(--lilac);
+	}
 }
 
-/* The grey one beside it: «Editar perfil», «Copiar enlace». */
+/* Buttons stand off the page on a hard shadow, and press down into it. */
+.primary,
 .secondary {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
-	min-height: 34px;
+	min-height: 46px;
 	padding: 0 16px;
-	border: 0;
-	border-radius: 8px;
-	background: var(--field);
+	border: var(--line) solid var(--ink);
+	border-radius: 14px;
+	box-shadow: var(--lift);
+	font-weight: 800;
+	letter-spacing: -0.01em;
+	text-decoration: none;
+	transition:
+		transform 0.08s,
+		box-shadow 0.08s;
+}
+
+/* «Compartir», «Añadir a favoritos», «Entrar»: lime. */
+.primary {
+	background: var(--lime);
+	color: var(--on-lime);
+}
+
+/* Beside it: «Compartir perfil», «Copiar enlace». */
+.secondary {
+	background: var(--card);
 	color: var(--text);
-	font-weight: 600;
+}
+
+.primary:active:not(:disabled),
+.secondary:active:not(:disabled) {
+	transform: translate(3px, 3px);
+	box-shadow: 1px 1px 0 var(--ink);
+}
+
+.primary:disabled,
+.secondary:disabled {
+	opacity: 0.5;
 }
 
 /* A word in a bar's corner: «Cancelar», «Siguiente». */
@@ -129,29 +207,115 @@ dialog::backdrop {
 	background: none;
 	color: var(--text);
 	font-size: 16px;
+	font-weight: 600;
 }
 
-.text-button.blue {
-	color: var(--blue);
-	font-weight: 600;
+.text-button.accent {
+	color: var(--accent);
+	font-weight: 800;
 }
 
 .text-button:disabled {
 	opacity: 0.4;
 }
 
+/* Headlines: condensed, heavy and in capitals, as a poster sets them. */
+.display {
+	font-weight: 800;
+	font-stretch: 75%;
+	letter-spacing: -0.01em;
+	line-height: 0.95;
+	text-transform: uppercase;
+}
+
+/* The main ink with the second one a hair off it. */
+.misprint {
+	color: var(--accent);
+	text-shadow: 0.04em 0.03em 0 var(--misprint);
+}
+
+/* A label in a typewriter's letters, inside an outline. */
+.tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px 10px 4px;
+	border: var(--line) solid var(--ink);
+	border-radius: 999px;
+	background: var(--card);
+	font: 700 12px/1 var(--mono);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+/* The top of a screen: a rule under it as thick as the outlines. */
+.masthead {
+	display: flex;
+	position: sticky;
+	z-index: 10;
+	top: 0;
+	align-items: center;
+	gap: 4px;
+	height: 56px;
+	padding: 0 10px 0 16px;
+	border-bottom: 3px solid var(--ink);
+	background: var(--bg);
+}
+
+.masthead h1 {
+	flex: 1;
+	min-width: 0;
+	margin: 0;
+	overflow: hidden;
+	font-size: 22px;
+	text-align: center;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* What is said when there is nothing to show: a big headline, and the why under it. */
+.empty-note {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 14px;
+	max-width: 420px;
+	margin: 0 auto;
+	padding: 44px 28px;
+	text-align: center;
+}
+
+.empty-note h2 {
+	margin: 4px 0 0;
+	font-size: 30px;
+}
+
+.empty-note p {
+	max-width: 340px;
+	margin: 0;
+	color: var(--muted);
+}
+
 .error {
 	margin: 8px 0 0;
 	color: var(--danger);
-	font-size: 13px;
+	font-size: 14px;
+	font-weight: 600;
 	line-height: 1.4;
 }
 
 .hint {
 	margin: 8px 0 0;
 	color: var(--muted);
-	font-size: 12px;
-	line-height: 16px;
+	font-size: 13px;
+	line-height: 17px;
+}
+
+/* A field of the profile or a search: an outlined card. */
+.field-box {
+	border: var(--line) solid var(--ink);
+	border-radius: 12px;
+	background: var(--card);
 }
 
 .spinner {

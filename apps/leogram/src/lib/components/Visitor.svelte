@@ -31,7 +31,7 @@
 </script>
 
 <div class="page">
-	<header>
+	<header class="masthead">
 		{#if back}
 			<button class="icon-button" type="button" onclick={() => history.back()} aria-label="Atrás">
 				<Icon name="back" size={28} />
@@ -50,8 +50,8 @@
 		{#if configured}
 			{@render children()}
 		{:else}
-			<div class="note">
-				<h2>Sin base de datos</h2>
+			<div class="empty-note">
+				<h2 class="display">Sin base de datos</h2>
 				<p>Esta versión se publicó sin la configuración de Neon, así que no hay publicaciones.</p>
 			</div>
 		{/if}
@@ -73,55 +73,30 @@
 	}
 
 	header {
-		display: flex;
-		position: sticky;
-		z-index: 10;
-		top: 0;
-		align-items: center;
-		gap: 4px;
-		height: 52px;
-		padding: 0 8px 0 16px;
-		border-bottom: 1px solid var(--border);
-		background: var(--bg);
+		gap: 10px;
 	}
 
 	header .icon-button {
-		margin-left: -12px;
+		margin: 0 -8px 0 -12px;
 	}
 
 	.brand {
 		display: block;
 		margin-right: auto;
-		padding-top: 6px;
-		color: var(--text);
+		text-decoration: none;
 	}
 
+	/* «Entrar» stays a button, only as tall as the way home beside it. */
 	header .primary {
-		min-height: 32px;
-		padding: 0 16px;
+		min-height: 38px;
+		padding: 0 14px;
+		box-shadow: 3px 3px 0 var(--ink);
 	}
 
 	main {
 		padding-bottom: env(safe-area-inset-bottom);
 	}
 
-	.note {
-		max-width: 470px;
-		margin: 0 auto;
-		padding: 48px 24px;
-		text-align: center;
-	}
-
-	.note h2 {
-		margin: 0 0 12px;
-		font-size: 20px;
-		line-height: 26px;
-	}
-
-	.note p {
-		margin: 0;
-		color: var(--muted);
-	}
 
 	.door {
 		position: fixed;

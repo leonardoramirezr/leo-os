@@ -43,7 +43,7 @@
 		<button class="text-button" type="button" onclick={() => (open = false)}>Cancelar</button>
 	{/snippet}
 	{#snippet trailing()}
-		<button class="text-button blue" type="button" onclick={save} disabled={saving}>
+		<button class="text-button accent" type="button" onclick={save} disabled={saving}>
 			{saving ? 'Guardando…' : 'Listo'}
 		</button>
 	{/snippet}

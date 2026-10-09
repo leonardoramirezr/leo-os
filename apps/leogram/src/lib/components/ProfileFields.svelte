@@ -62,7 +62,7 @@
 
 <div class="fields">
 	<button class="photo" type="button" onclick={() => picker.click()} disabled={reading}>
-		<Avatar src={avatar} {username} size={96} />
+		<Avatar src={avatar} {username} size={124} ring />
 		<span>{reading ? 'Leyendo…' : avatar ? 'Cambiar foto' : 'Elegir foto de perfil'}</span>
 	</button>
 	{#if avatar}
@@ -79,7 +79,7 @@
 	{/if}
 	<input bind:this={picker} type="file" accept="image/*" hidden onchange={pick} />
 
-	<label class="username">
+	<label class="username field-box">
 		<span>Nombre de usuario</span>
 		<input
 			value={username}
@@ -117,8 +117,8 @@
 	}
 
 	.photo span {
-		color: var(--blue);
-		font-weight: 600;
+		color: var(--accent);
+		font-weight: 800;
 	}
 
 	.remove {
@@ -128,6 +128,7 @@
 		background: none;
 		color: var(--danger);
 		font-size: 13px;
+		font-weight: 600;
 	}
 
 	.username {
@@ -138,13 +139,15 @@
 		max-width: 360px;
 		margin-top: 24px;
 		padding: 8px 12px;
-		border: 1px solid var(--border);
-		border-radius: 12px;
+		box-shadow: 3px 3px 0 var(--ink);
+		text-align: left;
 	}
 
 	.username span {
 		color: var(--muted);
-		font-size: 12px;
+		font: 700 11px/1.4 var(--mono);
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
 	}
 
 	.username input {
@@ -153,7 +156,8 @@
 		outline: none;
 		background: none;
 		/* Under 16px iOS zooms in on the field. */
-		font-size: 16px;
+		font-size: 17px;
+		font-weight: 700;
 	}
 
 	.hint {

@@ -23,6 +23,7 @@
 	import { MAX_SLIDES, posts, type DraftMusic, type DraftSlide } from '$lib/posts.svelte';
 	import { profile } from '$lib/profile.svelte';
 	import Avatar from './Avatar.svelte';
+	import Burst from './Burst.svelte';
 	import Icon from './Icon.svelte';
 	import MusicSheet from './MusicSheet.svelte';
 	import TextEditor from './TextEditor.svelte';
@@ -251,12 +252,12 @@
 </script>
 
 <div class="screen">
-	<header>
+	<header class="masthead">
 		{#if published}
 			<span class="side"></span>
-			<h1>Publicado</h1>
+			<h1 class="display">Publicado</h1>
 			<span class="side end">
-				<button class="text-button blue" type="button" onclick={() => history.back()}>Listo</button>
+				<button class="text-button accent" type="button" onclick={() => history.back()}>Listo</button>
 				<HomeButton />
 			</span>
 		{:else}
@@ -265,10 +266,10 @@
 					Cancelar
 				</button>
 			</span>
-			<h1>Nueva publicación</h1>
+			<h1 class="display">Nueva publicación</h1>
 			<span class="side end">
 				<button
-					class="text-button blue"
+					class="text-button accent"
 					type="button"
 					onclick={share}
 					disabled={slides.length === 0 || progress !== undefined || reading || friendless}
@@ -284,8 +285,10 @@
 
 	{#if published}
 		<div class="done">
-			<span class="check"><Icon name="check" size={40} stroke={2.4} /></span>
-			<h2>Tu publicación ya tiene enlace</h2>
+			<Burst size={104} tilt={-8} fill="var(--lime)">
+				<Icon name="check" size={40} stroke={3} />
+			</Burst>
+			<h2 class="display">Tu publicación ya tiene enlace</h2>
 			{#if audience === 'friends'}
 				<p>
 					Solo {people(friends.map((friend) => friend.username))}
@@ -317,8 +320,8 @@
 		</div>
 	{:else if slides.length === 0}
 		<div class="empty">
-			<span class="circle"><Icon name="photo" size={44} stroke={1.5} /></span>
-			<h2>Elige fotos y videos</h2>
+			<Burst size={104} tilt={-8}><Icon name="photo" size={38} stroke={2} /></Burst>
+			<h2 class="display">Elige fotos y videos</h2>
 			<p>Hasta {MAX_SLIDES}, que se verán en carrusel.</p>
 			<button class="primary" type="button" onclick={() => picker.click()} disabled={reading}>
 				{reading ? 'Leyendo…' : 'Seleccionar de la galería'}
@@ -540,39 +543,25 @@
 	}
 
 	header {
-		display: flex;
-		position: sticky;
 		z-index: 5;
-		top: 0;
-		align-items: center;
-		height: 52px;
-		padding: 0 8px 0 12px;
-		border-bottom: 1px solid var(--border);
-		background: var(--bg);
+		padding-left: 12px;
 	}
 
+	/* The title takes what the corners leave, and is centred in that: the right corner holds two
+	   things, so centring it on the screen would leave it no room. */
 	h1 {
-		flex: 0 1 auto;
-		min-width: 0;
-		margin: 0;
-		overflow: hidden;
-		font-size: 16px;
-		font-weight: 700;
-		text-align: center;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+		font-size: 20px;
 	}
 
-	/* Both sides grow alike, so the title stays centred while there is room for that. */
 	.side {
 		display: flex;
-		flex: 1 1 0;
+		flex: none;
 		align-items: center;
-		min-width: max-content;
 	}
 
 	.side.end {
 		justify-content: flex-end;
+		gap: 8px;
 	}
 
 	.editor {
@@ -585,10 +574,12 @@
 		position: relative;
 	}
 
+	/* The photo being framed: a print on the page, as the post will show it. */
 	.frame {
 		position: relative;
 		width: 100%;
 		overflow: hidden;
+		border-bottom: 3px solid var(--ink);
 		background: var(--placeholder);
 		cursor: grab;
 		touch-action: none;
@@ -616,13 +607,14 @@
 		bottom: 12px;
 		left: 12px;
 		place-items: center;
-		width: 36px;
-		height: 36px;
+		width: 40px;
+		height: 40px;
 		padding: 0;
-		border: 0;
+		border: var(--line) solid var(--ink);
 		border-radius: 50%;
-		background: rgb(18 18 18 / 0.7);
-		color: #fff;
+		background: var(--lilac);
+		color: var(--on-lilac);
+		box-shadow: 2px 2px 0 var(--ink);
 		cursor: pointer;
 	}
 
@@ -630,12 +622,12 @@
 		position: absolute;
 		top: 12px;
 		right: 12px;
-		padding: 3px 8px;
-		border-radius: 12px;
-		background: rgb(18 18 18 / 0.7);
-		color: #fff;
-		font-size: 12px;
-		font-weight: 600;
+		padding: 5px 9px 4px;
+		border: 2px solid var(--ink);
+		border-radius: 999px;
+		background: var(--lilac);
+		color: var(--on-lilac);
+		font: 700 11px/1 var(--mono);
 	}
 
 	.tools {
@@ -655,18 +647,17 @@
 		display: flex;
 		align-items: center;
 		gap: 4px;
-		padding: 6px 10px;
-		border: 1px solid var(--border);
-		border-radius: 16px;
-		background: none;
-		color: var(--muted);
-		font-size: 12px;
-		font-weight: 600;
+		padding: 6px 10px 5px;
+		border: 2px solid var(--ink);
+		border-radius: 999px;
+		background: var(--card);
+		color: var(--text);
+		font: 700 11px/1 var(--mono);
 	}
 
 	.shapes button[aria-checked='true'] {
-		border-color: var(--text);
-		color: var(--text);
+		background: var(--lilac);
+		color: var(--on-lilac);
 	}
 
 	.order {
@@ -691,13 +682,23 @@
 		height: 56px;
 		padding: 0;
 		overflow: hidden;
-		border: 2px solid transparent;
-		border-radius: 6px;
+		border: 2px solid var(--ink);
+		border-radius: 10px;
 		background: var(--field);
 	}
 
+	/* The one being framed is lifted off the page. */
+	.thumbs {
+		padding-top: 4px;
+	}
+
 	.thumbs button.current {
-		border-color: var(--blue);
+		box-shadow: 0 0 0 2px var(--accent);
+	}
+
+	.thumbs .add {
+		border-style: dashed;
+		background: none;
 	}
 
 	.thumbs img {
@@ -712,16 +713,17 @@
 		top: 3px;
 		right: 3px;
 		padding: 2px;
-		border-radius: 5px;
-		background: rgb(0 0 0 / 0.45);
-		color: #fff;
+		border: 1.5px solid var(--ink);
+		border-radius: 50%;
+		background: var(--lilac);
+		color: var(--on-lilac);
 	}
 
 	.caption {
 		display: flex;
 		gap: 12px;
-		padding: 12px;
-		border-top: 1px solid var(--border);
+		padding: 14px 12px;
+		border-top: var(--line) solid var(--ink);
 	}
 
 	.caption textarea {
@@ -755,8 +757,8 @@
 		min-height: 52px;
 		padding: 8px 12px;
 		border: 0;
-		border-top: 1px solid var(--border);
-		border-bottom: 1px solid var(--border);
+		border-top: var(--line) solid var(--ink);
+		border-bottom: var(--line) solid var(--ink);
 		background: none;
 		text-align: left;
 	}
@@ -764,6 +766,7 @@
 	.music > span {
 		flex: 1;
 		font-size: 16px;
+		font-weight: 700;
 	}
 
 	.music .names {
@@ -808,8 +811,7 @@
 	.empty h2,
 	.done h2 {
 		margin: 4px 0 0;
-		font-size: 20px;
-		line-height: 26px;
+		font-size: 30px;
 	}
 
 	.empty p,
@@ -818,26 +820,15 @@
 		color: var(--muted);
 	}
 
-	.circle,
-	.check {
-		display: grid;
-		place-items: center;
-		width: 88px;
-		height: 88px;
-		border: 2px solid var(--text);
-		border-radius: 50%;
-	}
-
-	.check {
-		border: 0;
-		background: var(--gradient);
-		color: #fff;
-	}
-
 	.link {
 		max-width: 100%;
+		padding: 8px 12px 7px;
 		overflow: hidden;
-		color: var(--link);
+		border: var(--line) solid var(--ink);
+		border-radius: 12px;
+		background: var(--card);
+		color: var(--accent);
+		font: 700 13px/1.2 var(--mono);
 		text-decoration: none;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -846,13 +837,9 @@
 	.buttons {
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
+		gap: 12px;
 		width: 100%;
 		margin-top: 8px;
-	}
-
-	.buttons .secondary {
-		min-height: 44px;
 	}
 
 	.publishing {
@@ -864,27 +851,30 @@
 		align-items: center;
 		justify-content: center;
 		gap: 16px;
-		background: rgb(0 0 0 / 0.6);
+		background: rgb(21 21 28 / 0.7);
 		color: #fff;
-		font-weight: 600;
+		font-weight: 800;
 	}
 
 	.publishing p {
 		margin: 0;
 	}
 
+	/* The progress as a lime strip filling an outlined one. */
 	.publishing .bar {
 		width: min(280px, 70%);
-		height: 4px;
+		height: 18px;
 		overflow: hidden;
-		border-radius: 2px;
-		background: rgb(255 255 255 / 0.3);
+		border: var(--line) solid #15151c;
+		border-radius: 9px;
+		background: #f2f2ec;
+		box-shadow: 4px 4px 0 #15151c;
 	}
 
 	.publishing .bar span {
 		display: block;
 		height: 100%;
-		background: #fff;
+		background: var(--lime);
 		transition: width 0.2s;
 	}
 </style>

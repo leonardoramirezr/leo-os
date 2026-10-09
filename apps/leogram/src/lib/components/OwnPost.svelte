@@ -24,18 +24,18 @@
 </script>
 
 <div class="screen">
-	<header>
+	<header class="masthead">
 		<button class="icon-button" type="button" onclick={() => history.back()} aria-label="Atrás">
-			<Icon name="back" size={28} />
+			<Icon name="back" size={28} stroke={2.4} />
 		</button>
-		<h1>Publicación</h1>
+		<h1 class="display">Publicación</h1>
 		<span class="side">
 			<HomeButton />
 		</span>
 	</header>
 
 	<div class="link">
-		<Icon name="link" size={18} />
+		<Icon name="link" size={18} stroke={2.2} />
 		<a href={link} target="_blank" rel="noopener">{link.replace(/^https?:\/\//, '')}</a>
 		<button class="secondary" type="button" onclick={copy}>{copied ? 'Copiado' : 'Copiar'}</button>
 	</div>
@@ -61,23 +61,8 @@
 	}
 
 	header {
-		display: flex;
-		position: sticky;
 		z-index: 5;
-		top: 0;
-		align-items: center;
-		height: 52px;
-		padding: 0 8px 0 4px;
-		border-bottom: 1px solid var(--border);
-		background: var(--bg);
-	}
-
-	h1 {
-		flex: 1;
-		margin: 0;
-		font-size: 16px;
-		font-weight: 700;
-		text-align: center;
+		padding-left: 4px;
 	}
 
 	/* As wide as «Atrás», so the title stays centred. */
@@ -87,22 +72,42 @@
 		width: 44px;
 	}
 
+	/* Its link, typed on a label, with «Copiar» at its end. */
 	.link {
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		max-width: 470px;
-		margin: 12px auto;
-		padding: 0 12px;
+		max-width: 446px;
+		margin: 16px 12px 4px;
+		padding: 6px 6px 6px 12px;
+		border: var(--line) solid var(--ink);
+		border-radius: 14px;
+		background: var(--card);
+	}
+
+	@media (min-width: 470px) {
+		.link {
+			margin: 16px auto 4px;
+		}
 	}
 
 	.link a {
 		flex: 1;
 		min-width: 0;
 		overflow: hidden;
-		color: var(--link);
+		color: var(--accent);
+		font: 700 13px/1 var(--mono);
 		text-decoration: none;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+
+	.link .secondary {
+		min-height: 34px;
+		padding: 0 12px;
+		border-width: 2px;
+		border-radius: 10px;
+		box-shadow: 2px 2px 0 var(--ink);
+		font-size: 14px;
 	}
 </style>
