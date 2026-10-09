@@ -7,7 +7,7 @@
 	// pressed; the set's falls silent while its effort is being typed. «Terminar» ends it all at
 	// any point.
 	import { onMount } from 'svelte';
-	import { sync, type RutinaBlock } from '@leo-os/shared';
+	import { HomeButton, sync, type RutinaBlock } from '@leo-os/shared';
 	import {
 		keepAwake,
 		letSleep,
@@ -140,6 +140,9 @@
 <svelte:window {onkeydown} />
 
 {#if !session || !day || !routine}
+	<header class="bar gone-bar">
+		<HomeButton />
+	</header>
 	<div class="gone">
 		<p>Este entrenamiento ya no está: su rutina o su día se borraron.</p>
 		<button class="primary" type="button" onclick={close}>Volver</button>
@@ -170,6 +173,7 @@
 				<span style:width="{total ? (done / total) * 100 : 0}%"></span>
 			</div>
 			<span class="count">{done}/{total}</span>
+			<HomeButton />
 		</header>
 
 		<!-- Portrait still works — a phone with the rotation locked cannot turn the page — but sideways
@@ -293,12 +297,14 @@
 		}
 	}
 
+	/* Out to the corner where every other screen has the way home, so it stays put. */
 	.top {
 		display: flex;
 		flex: none;
 		align-items: center;
 		gap: 12px;
 		min-height: 40px;
+		margin: -2px -8px 0 0;
 	}
 
 	.end {
@@ -537,6 +543,13 @@
 
 	.ringing .go {
 		color: var(--alarm);
+	}
+
+	.gone-bar {
+		justify-content: flex-end;
+		max-width: 560px;
+		margin: 0 auto;
+		padding-right: 8px;
 	}
 
 	.gone {

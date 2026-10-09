@@ -1,7 +1,7 @@
 <script lang="ts">
 	import icon from '../../../icon.svg';
 	import { pushState } from '$app/navigation';
-	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import { prompts, titleOf, type Prompt } from '$lib/prompts.svelte';
 	import Icon from './Icon.svelte';
 	import PromptSheet from './PromptSheet.svelte';
@@ -17,9 +17,6 @@
 
 <div class="screen">
 	<header class="bar">
-		<a class="icon-button" href="{resolve('/')}../" aria-label="Apps" title="Apps" data-sveltekit-reload>
-			<Icon name="apps" />
-		</a>
 		<button
 			class="icon-button"
 			onclick={() => (settingsOpen = true)}
@@ -29,6 +26,7 @@
 		>
 			<Icon name="settings" />
 		</button>
+		<HomeButton />
 	</header>
 
 	<h1>Transforma</h1>

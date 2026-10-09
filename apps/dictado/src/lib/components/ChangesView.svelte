@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { HomeButton } from '@leo-os/shared';
 	import { compare, type Segment } from '$lib/diff';
 	import { draft } from '$lib/draft.svelte';
 	import Icon from './Icon.svelte';
@@ -74,7 +75,9 @@
 			</button>
 		</div>
 		<h1>Cambios</h1>
-		<div class="side"></div>
+		<div class="side end">
+			<HomeButton />
+		</div>
 	</header>
 
 	{#if comparison && changes}
@@ -123,6 +126,10 @@
 	.side {
 		display: flex;
 		flex: 1 1 0;
+	}
+
+	.side.end {
+		justify-content: flex-end;
 	}
 
 	h1 {

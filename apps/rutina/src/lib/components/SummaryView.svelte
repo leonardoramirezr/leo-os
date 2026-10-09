@@ -1,7 +1,7 @@
 <script lang="ts">
 	// The end of a workout: congratulations when every round was done, a plain «terminado» when it was
 	// cut short, and in both cases what it came to — exercise by exercise, against the time before.
-	import type { RutinaDay } from '@leo-os/shared';
+	import { HomeButton, type RutinaDay } from '@leo-os/shared';
 	import { blockLabel } from '$lib/effort';
 	import { formatDuration, formatNumber } from '$lib/format';
 	import { entryName, type Routine, type Session } from '$lib/routine';
@@ -34,6 +34,10 @@
 </script>
 
 <div class="summary">
+	<header class="top">
+		<HomeButton />
+	</header>
+
 	<section class="hero">
 		<div class="headline">
 			<span class="badge" class:finished={session.finished}>
@@ -108,6 +112,14 @@
 			calc(env(safe-area-inset-bottom) + 24px) calc(env(safe-area-inset-left) + 20px);
 	}
 
+	/* Pulled up and out to the corner where every other screen has the way home, so it stays put. */
+	.top {
+		display: flex;
+		grid-column: 1 / -1;
+		justify-content: flex-end;
+		margin: -14px -12px -8px 0;
+	}
+
 	.hero {
 		display: flex;
 		flex-direction: column;
@@ -128,6 +140,10 @@
 			grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
 			align-items: start;
 			padding-top: calc(env(safe-area-inset-top) + 12px);
+		}
+
+		.top {
+			margin-top: -6px;
 		}
 
 		.hero {

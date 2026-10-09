@@ -1,7 +1,7 @@
 <script lang="ts">
 	// One routine: every day with its exercises and where each one stands — the first block of work
 	// the app knows of and the last —, ready to start any of them.
-	import type { RutinaEntry } from '@leo-os/shared';
+	import { HomeButton, type RutinaEntry } from '@leo-os/shared';
 	import { pushState } from '$app/navigation';
 	import { blocksText } from '$lib/effort';
 	import { formatAgo, plural } from '$lib/format';
@@ -36,9 +36,12 @@
 			<Icon name="back" size={24} />
 			<span>Rutinas</span>
 		</button>
-		<button class="text-button" type="button" onclick={() => pushState('', { routine: routine.id, edit: true })}>
-			Editar
-		</button>
+		<div class="bar-end">
+			<button class="text-button" type="button" onclick={() => pushState('', { routine: routine.id, edit: true })}>
+				Editar
+			</button>
+			<HomeButton />
+		</div>
 	</header>
 
 	<h1 class="page-title">{routine.name}</h1>

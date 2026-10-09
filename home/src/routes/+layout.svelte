@@ -9,7 +9,8 @@
 	<link rel="icon" href={icon} />
 </svelte:head>
 
-<Account>
+<!-- The home screen is where the way home leads: the door here has none. -->
+<Account home={false}>
 	{@render children()}
 </Account>
 

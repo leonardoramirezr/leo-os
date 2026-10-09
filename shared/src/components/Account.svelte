@@ -10,18 +10,22 @@
 	import { loadSettings } from '../settings.svelte';
 	import { sync } from '../sync.svelte';
 	import { applyTheme, theme } from '../theme';
+	import HomeButton from './HomeButton.svelte';
 	import { text, type Lang } from './text';
 
 	let {
 		children,
 		load,
 		lang = 'es',
+		home = true,
 		oncancel
 	}: {
 		children: import('svelte').Snippet;
 		/** The app's own data, read once the account is known. Must not throw. */
 		load?: (userId: string) => Promise<void>;
 		lang?: Lang;
+		/** The way back to the home screen while the door is up: an app's, not the home screen's. */
+		home?: boolean;
 		/**
 		 * For a door that can be left without signing in, put up in front of something anybody may
 		 * see — a Leogram post, before liking it. Signing in stays the way to everything else.
@@ -45,6 +49,9 @@
 	let password = $state('');
 	let code = $state('');
 	let ready = $state(false);
+
+	/** Whether the app itself shows, rather than the door or what comes before it. */
+	const open = $derived(configured && session.status === 'in' && ready);
 
 	// Runs once per account: the settings every app shares, then whatever this app keeps of its own.
 	$effect(() => {
@@ -201,6 +208,13 @@
 	{@render children()}
 {/if}
 
+<!-- In the corner where every screen of the app has it, over the door's purple. -->
+{#if home && !open}
+	<div class="home">
+		<HomeButton label={t.apps} />
+	</div>
+{/if}
+
 <!-- What iOS 26 colours the status bar after (README.md, «Home»): the project's --status-bar, or else
      its --bg, and the door's own purple while the door is up. WebKit keeps reading the background of
      a fixed element as wide as the screen and shorter than it, like this strip; one that fills the
@@ -341,6 +355,13 @@
 	/* The top of the door's gradient. */
 	.top-edge.door {
 		background-color: #4a2a8a;
+	}
+
+	.home {
+		position: fixed;
+		top: calc(env(safe-area-inset-top) + 6px);
+		right: max(8px, env(safe-area-inset-right));
+		color: #fff;
 	}
 
 	/* Above whatever the app draws: a write that did not make it has to be seen. */

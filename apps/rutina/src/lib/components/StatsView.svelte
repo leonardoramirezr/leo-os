@@ -2,7 +2,7 @@
 	// How the effort has gone, day by day of the routine: the whole day's and each exercise's, one
 	// point per session. «Volumen» — series × repetitions × kilograms — unless «Promedio» is picked,
 	// which shows a set's repetitions and its weight on average, each in a chart of its own.
-	import type { RutinaDay } from '@leo-os/shared';
+	import { HomeButton, type RutinaDay } from '@leo-os/shared';
 	import { formatNumber } from '$lib/format';
 	import { dayFor, entryName, type Routine } from '$lib/routine';
 	import { sessions } from '$lib/sessions.svelte';
@@ -83,6 +83,7 @@
 			<Icon name="back" size={24} />
 			<span>{routine.name}</span>
 		</button>
+		<HomeButton />
 	</header>
 
 	<h1 class="page-title">Estadísticas</h1>

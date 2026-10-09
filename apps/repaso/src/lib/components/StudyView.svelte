@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { MediaQuery, SvelteSet } from 'svelte/reactivity';
 	import { fly } from 'svelte/transition';
+	import { HomeButton } from '@leo-os/shared';
 	import { collection, type Deck } from '$lib/collection.svelte';
 	import { formatWait, plural } from '$lib/format';
 	import { ratings, wait, type Rating } from '$lib/schedule';
@@ -142,6 +143,7 @@
 		>
 			<Icon name="edit" />
 		</button>
+		<HomeButton />
 	</header>
 
 	{#if card}

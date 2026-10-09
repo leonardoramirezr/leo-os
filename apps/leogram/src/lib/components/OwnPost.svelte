@@ -1,6 +1,7 @@
 <script lang="ts">
 	// One of the account's own posts, over its grid: the post as whoever it is for sees it, with its
 	// link on top to copy or share, and who it is for, to change, above the post.
+	import { HomeButton } from '@leo-os/shared';
 	import { linkOf } from '$lib/code';
 	import { posts } from '$lib/posts.svelte';
 	import Icon from './Icon.svelte';
@@ -28,7 +29,9 @@
 			<Icon name="back" size={28} />
 		</button>
 		<h1>Publicación</h1>
-		<span class="side"></span>
+		<span class="side">
+			<HomeButton />
+		</span>
 	</header>
 
 	<div class="link">
@@ -64,7 +67,7 @@
 		top: 0;
 		align-items: center;
 		height: 52px;
-		padding: 0 4px;
+		padding: 0 8px 0 4px;
 		border-bottom: 1px solid var(--border);
 		background: var(--bg);
 	}
@@ -77,7 +80,10 @@
 		text-align: center;
 	}
 
+	/* As wide as «Atrás», so the title stays centred. */
 	.side {
+		display: flex;
+		justify-content: flex-end;
 		width: 44px;
 	}
 

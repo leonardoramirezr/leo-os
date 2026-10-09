@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { HomeButton } from '@leo-os/shared';
 	import MovementSheet from '$lib/components/MovementSheet.svelte';
 	import PersonSheet from '$lib/components/PersonSheet.svelte';
 	import { ledger, type Person } from '$lib/ledger.svelte';
@@ -17,7 +18,10 @@
 
 <div class="screen">
 	<header>
-		<h1>Me deben en total</h1>
+		<div class="title">
+			<h1>Me deben en total</h1>
+			<HomeButton />
+		</div>
 		<p class="amount total">{formatMoney(ledger.total)}</p>
 		<p class="caption">
 			{#if ledger.debtors.length === 0}
@@ -121,7 +125,16 @@
 	}
 
 	header {
-		padding: calc(24px + env(safe-area-inset-top)) 4px 24px;
+		padding: calc(6px + env(safe-area-inset-top)) 4px 24px;
+	}
+
+	/* The way home out in the corner, where every other app has it. */
+	.title {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		margin-right: -12px;
 	}
 
 	h1 {

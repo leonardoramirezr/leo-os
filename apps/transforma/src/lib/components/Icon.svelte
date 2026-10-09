@@ -1,6 +1,5 @@
 <script lang="ts" module>
 	const icons = {
-		apps: '<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',
 		settings: '<path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>',
 		back: '<path d="m15 18-6-6 6-6"/>',
 		forward: '<path d="m9 18 6-6-6-6"/>',

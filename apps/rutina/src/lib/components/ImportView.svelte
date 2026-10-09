@@ -5,6 +5,7 @@
 	// matches have been looked over.
 	import { pushState, replaceState } from '$app/navigation';
 	import { page } from '$app/state';
+	import { HomeButton } from '@leo-os/shared';
 	import { exerciseOf, normalize } from '$lib/catalog';
 	import { describe } from '$lib/groq';
 	import { daysFrom, guess, matchWithGroq, namesIn, readDraft, SCHEMA_TEXT, type Draft } from '$lib/importer';
@@ -125,7 +126,9 @@
 			<span>{step === 'paste' ? 'Volver' : 'JSON'}</span>
 		</button>
 		<h1 class="bar-title">Importar rutina</h1>
-		<span class="spacer"></span>
+		<div class="spacer">
+			<HomeButton />
+		</div>
 	</header>
 
 	{#if step === 'paste'}
@@ -229,7 +232,10 @@
 <ExercisePicker bind:open={pickerOpen} title="Elegir ejercicio" onpick={(id) => picked(id)} />
 
 <style>
+	/* As wide as the way back, so the title stays centred. */
 	.spacer {
+		display: flex;
+		justify-content: flex-end;
 		width: 64px;
 	}
 

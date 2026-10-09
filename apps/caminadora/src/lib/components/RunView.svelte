@@ -1,6 +1,7 @@
 <script lang="ts">
 	// The program running, on a screen made to look like a treadmill's: black and white, its numbers
 	// in segments, the whole program in bars along the middle. Big enough to be read at a run.
+	import { HomeButton } from '@leo-os/shared';
 	import { clock, speed } from '$lib/format';
 	import { runner, type Run } from '$lib/runner.svelte';
 	import { unlock } from '$lib/voice';
@@ -55,6 +56,7 @@
 		{:else if runner.paused}
 			<span class="badge">En pausa</span>
 		{/if}
+		<HomeButton />
 	</header>
 
 	<section class="panel speed">
@@ -145,16 +147,18 @@
 		user-select: none;
 	}
 
+	/* Pulled up and out to the corner where the list of programs has the way home, so it stays put. */
 	.head {
 		display: flex;
 		grid-area: head;
 		align-items: center;
-		justify-content: space-between;
 		gap: 12px;
 		min-height: 30px;
+		margin: -6px -8px 0 0;
 	}
 
 	h1 {
+		flex: 1;
 		overflow: hidden;
 		margin: 0;
 		font-size: 17px;

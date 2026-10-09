@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { pushState } from '$app/navigation';
+	import { HomeButton } from '@leo-os/shared';
 	import { collection, type Card, type Deck } from '$lib/collection.svelte';
 	import { formatWait, plural } from '$lib/format';
 	import { isDue } from '$lib/schedule';
@@ -61,7 +62,10 @@
 			<Icon name="back" size={24} />
 			Mazos
 		</button>
-		<button class="text-button" onclick={() => (editingDeck = true)} aria-haspopup="dialog">Editar</button>
+		<div class="end">
+			<button class="text-button" onclick={() => (editingDeck = true)} aria-haspopup="dialog">Editar</button>
+			<HomeButton />
+		</div>
 	</header>
 
 	<h1>{deck.name}</h1>
@@ -160,6 +164,14 @@
 		background: none;
 		color: var(--link);
 		font-size: 17px;
+	}
+
+	/* Out to where the list of decks has the way home, so it stays put. */
+	.end {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-right: -8px;
 	}
 
 	h1 {

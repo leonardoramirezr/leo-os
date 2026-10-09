@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import { list } from '$lib/list.svelte';
 	import { voice } from '$lib/voice.svelte';
 	import Icon from './Icon.svelte';
@@ -51,9 +51,6 @@
 
 <div class="screen">
 	<header>
-		<a class="icon-button" href="{resolve('/')}../" aria-label="Apps" title="Apps" data-sveltekit-reload>
-			<Icon name="apps" />
-		</a>
 		<button
 			class="icon-button"
 			onclick={() => (settingsOpen = true)}
@@ -63,6 +60,7 @@
 		>
 			<Icon name="settings" />
 		</button>
+		<HomeButton />
 	</header>
 
 	<h1>Lista</h1>

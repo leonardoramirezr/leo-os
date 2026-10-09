@@ -110,6 +110,14 @@ dialog::backdrop {
 	padding-top: calc(env(safe-area-inset-top) + 6px);
 }
 
+/* What sits on the right of a bar, ending with the way home. */
+.bar-end {
+	display: flex;
+	flex: none;
+	align-items: center;
+	gap: 4px;
+}
+
 .bar-title {
 	overflow: hidden;
 	margin: 0;

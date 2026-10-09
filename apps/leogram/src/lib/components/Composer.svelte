@@ -3,7 +3,7 @@
 	// dragging each one, text written on any of the photos, a caption, a song, and who it is for.
 	// «Compartir» publishes it, and its link is ready right away: there is no other step, and nobody
 	// finds it but through the link — or the bio, if it is listed there.
-	import { isExpired, session } from '@leo-os/shared';
+	import { HomeButton, isExpired, session } from '@leo-os/shared';
 	import { replaceState } from '$app/navigation';
 	import { flushSync, onDestroy, onMount } from 'svelte';
 	import { linkOf } from '$lib/code';
@@ -255,22 +255,28 @@
 		{#if published}
 			<span class="side"></span>
 			<h1>Publicado</h1>
-			<button class="text-button blue side end" type="button" onclick={() => history.back()}>
-				Listo
-			</button>
+			<span class="side end">
+				<button class="text-button blue" type="button" onclick={() => history.back()}>Listo</button>
+				<HomeButton />
+			</span>
 		{:else}
-			<button class="text-button side" type="button" onclick={cancel} disabled={progress !== undefined}>
-				Cancelar
-			</button>
+			<span class="side">
+				<button class="text-button" type="button" onclick={cancel} disabled={progress !== undefined}>
+					Cancelar
+				</button>
+			</span>
 			<h1>Nueva publicación</h1>
-			<button
-				class="text-button blue side end"
-				type="button"
-				onclick={share}
-				disabled={slides.length === 0 || progress !== undefined || reading || friendless}
-			>
-				Compartir
-			</button>
+			<span class="side end">
+				<button
+					class="text-button blue"
+					type="button"
+					onclick={share}
+					disabled={slides.length === 0 || progress !== undefined || reading || friendless}
+				>
+					Compartir
+				</button>
+				<HomeButton />
+			</span>
 		{/if}
 	</header>
 
@@ -540,26 +546,33 @@
 		top: 0;
 		align-items: center;
 		height: 52px;
-		padding: 0 12px;
+		padding: 0 8px 0 12px;
 		border-bottom: 1px solid var(--border);
 		background: var(--bg);
 	}
 
 	h1 {
-		flex: 1;
+		flex: 0 1 auto;
+		min-width: 0;
 		margin: 0;
+		overflow: hidden;
 		font-size: 16px;
 		font-weight: 700;
 		text-align: center;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
+	/* Both sides grow alike, so the title stays centred while there is room for that. */
 	.side {
-		width: 96px;
-		text-align: left;
+		display: flex;
+		flex: 1 1 0;
+		align-items: center;
+		min-width: max-content;
 	}
 
 	.side.end {
-		text-align: right;
+		justify-content: flex-end;
 	}
 
 	.editor {
