@@ -1,7 +1,7 @@
 <script lang="ts">
 	import icon from '../../../icon.svg';
 	import { pushState } from '$app/navigation';
-	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import { collection, type Deck } from '$lib/collection.svelte';
 	import { plural } from '$lib/format';
 	import AnkiWebSheet from './AnkiWebSheet.svelte';
@@ -33,9 +33,6 @@
 
 <div class="screen">
 	<header class="bar">
-		<a class="icon-button" href="{resolve('/')}../" aria-label="Apps" title="Apps" data-sveltekit-reload>
-			<Icon name="apps" />
-		</a>
 		<button
 			class="icon-button"
 			onclick={() => (settingsOpen = true)}
@@ -45,6 +42,7 @@
 		>
 			<Icon name="settings" />
 		</button>
+		<HomeButton />
 	</header>
 
 	<h1>Repaso</h1>

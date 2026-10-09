@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
-	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import icon from '../../../icon.svg';
 	import { chat } from '$lib/chat.svelte';
 	import { t } from '$lib/i18n';
@@ -79,21 +79,6 @@
 
 <div class="app" bind:this={app}>
 	<header>
-		<a
-			class="icon-button"
-			href="{resolve('/')}../"
-			aria-label={t.apps}
-			title={t.apps}
-			data-sveltekit-reload
-		>
-			<Icon name="apps" />
-		</a>
-
-		<button class="title" onclick={() => (settingsOpen = true)} aria-haspopup="dialog">
-			<span class="name">WillChat <Icon name="chevron" size={16} /></span>
-			<span class="models">{textModel.value} · {imageModel.value}</span>
-		</button>
-
 		<button
 			class="icon-button"
 			onclick={newChat}
@@ -103,6 +88,13 @@
 		>
 			<Icon name="compose" />
 		</button>
+
+		<button class="title" onclick={() => (settingsOpen = true)} aria-haspopup="dialog">
+			<span class="name">WillChat <Icon name="chevron" size={16} /></span>
+			<span class="models">{textModel.value} · {imageModel.value}</span>
+		</button>
+
+		<HomeButton label={t.apps} />
 	</header>
 
 	<main class="scroller" bind:this={scroller} {onscroll}>

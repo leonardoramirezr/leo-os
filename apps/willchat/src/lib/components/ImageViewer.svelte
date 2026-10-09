@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { HomeButton } from '@leo-os/shared';
 	import { t } from '$lib/i18n';
 	import { saveImage } from '$lib/images';
 	import Icon from './Icon.svelte';
@@ -19,14 +20,18 @@
 		if (event.target === dialog || event.target === stage) dialog.close();
 	}}
 >
+	<!-- It fills the screen, so the way home is here too, where the chat has it. -->
 	<div class="toolbar">
-		<button onclick={() => saveImage(src)}>
-			<Icon name="download" />
-			{t.save}
-		</button>
 		<button onclick={() => dialog.close()} aria-label={t.close} title={t.close}>
 			<Icon name="close" />
 		</button>
+		<div class="end">
+			<button onclick={() => saveImage(src)}>
+				<Icon name="download" />
+				{t.save}
+			</button>
+			<HomeButton label={t.apps} />
+		</div>
 	</div>
 	<div class="stage" bind:this={stage}>
 		<img {src} alt="" />
@@ -56,8 +61,14 @@
 		display: flex;
 		flex: none;
 		justify-content: space-between;
-		padding: calc(env(safe-area-inset-top) + 8px) max(12px, env(safe-area-inset-right)) 8px
-			max(12px, env(safe-area-inset-left));
+		padding: calc(env(safe-area-inset-top) + 6px) max(10px, env(safe-area-inset-right)) 6px
+			max(10px, env(safe-area-inset-left));
+	}
+
+	.end {
+		display: flex;
+		align-items: center;
+		gap: 8px;
 	}
 
 	button {

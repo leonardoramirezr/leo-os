@@ -2,6 +2,7 @@
 // both. Everything else in here is theirs to leave alone.
 export { default as Account } from './components/Account.svelte';
 export { default as AccountPanel } from './components/AccountPanel.svelte';
+export { default as HomeButton } from './components/HomeButton.svelte';
 export type { Lang } from './components/text';
 
 export { readCache, writeCache } from './cache';

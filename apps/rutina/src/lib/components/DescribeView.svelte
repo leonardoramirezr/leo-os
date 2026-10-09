@@ -5,6 +5,7 @@
 	// result: nothing is saved until it has been looked over there. Back from the editor, the
 	// description is still here, to say more and try again.
 	import { onMount } from 'svelte';
+	import { HomeButton } from '@leo-os/shared';
 	import { Dictation } from '$lib/dictation.svelte';
 	import { formatClock } from '$lib/format';
 	import { describe, GroqError } from '$lib/groq';
@@ -104,7 +105,9 @@
 				<span>{step === 'writing' ? 'Texto' : 'Volver'}</span>
 			</button>
 			<h1 class="bar-title">Nueva rutina</h1>
-			<span class="spacer"></span>
+			<div class="spacer">
+				<HomeButton />
+			</div>
 		</header>
 
 		{#if !apiKey.value}
@@ -203,7 +206,10 @@
 {/if}
 
 <style>
+	/* As wide as the way back, so the title stays centred. */
 	.spacer {
+		display: flex;
+		justify-content: flex-end;
 		width: 64px;
 	}
 

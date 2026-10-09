@@ -1,7 +1,7 @@
 <script lang="ts">
 	// The first time the account opens Leogram: it picks the username its posts will carry. One is
 	// suggested out of its name, and anything here can be changed later in «Editar perfil».
-	import { session } from '@leo-os/shared';
+	import { HomeButton, session } from '@leo-os/shared';
 	import { profile, suggestUsername, USERNAME } from '$lib/profile.svelte';
 	import ProfileFields from './ProfileFields.svelte';
 	import Wordmark from './Wordmark.svelte';
@@ -29,6 +29,10 @@
 	}
 </script>
 
+<header class="bar">
+	<HomeButton />
+</header>
+
 <form class="welcome" onsubmit={start}>
 	<Wordmark height={52} />
 	<h1>Elige tu nombre de usuario</h1>
@@ -48,14 +52,25 @@
 </form>
 
 <style>
+	/* As tall as the profile's bar, so the way home is where it will be there. */
+	.bar {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		max-width: 935px;
+		height: 52px;
+		margin: 0 auto;
+		padding: 0 8px;
+	}
+
 	.welcome {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		max-width: 420px;
-		min-height: 100dvh;
+		min-height: calc(100dvh - 52px);
 		margin: 0 auto;
-		padding: 48px 24px calc(24px + env(safe-area-inset-bottom));
+		padding: 0 24px calc(24px + env(safe-area-inset-bottom));
 		text-align: center;
 	}
 

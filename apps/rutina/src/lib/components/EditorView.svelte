@@ -3,7 +3,7 @@
 	// they are done. Nothing is saved until «Guardar»; the first time the app opens, it opens here. A
 	// `draft` is a new routine written by a chat model from a description, to be looked over here.
 	import { untrack } from 'svelte';
-	import type { RutinaDay, RutinaEntry } from '@leo-os/shared';
+	import { HomeButton, type RutinaDay, type RutinaEntry } from '@leo-os/shared';
 	import { pushState, replaceState } from '$app/navigation';
 	import { page } from '$app/state';
 	import { blocksText } from '$lib/effort';
@@ -177,7 +177,10 @@
 			<button class="text-button" type="button" onclick={cancel}>Cancelar</button>
 		{/if}
 		<h1 class="bar-title">{routine ? 'Editar rutina' : first ? '' : 'Nueva rutina'}</h1>
-		<button class="text-button strong" type="button" onclick={save}>Guardar</button>
+		<div class="bar-end">
+			<button class="text-button strong" type="button" onclick={save}>Guardar</button>
+			<HomeButton />
+		</div>
 	</header>
 
 	{#if first}

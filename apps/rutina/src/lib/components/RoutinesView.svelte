@@ -2,7 +2,7 @@
 	// The first screen: every routine, each with the day to train today, ready to start, and the
 	// way to its statistics. A workout under way goes on top, to be picked up again.
 	import { pushState } from '$app/navigation';
-	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import { formatAgo, plural, sameDay } from '$lib/format';
 	import { dayFor, type Routine } from '$lib/routine';
 	import { routines } from '$lib/routines.svelte';
@@ -39,9 +39,6 @@
 
 <div class="screen">
 	<header class="bar">
-		<a class="icon-button" href="{resolve('/')}../" aria-label="Apps" title="Apps" data-sveltekit-reload>
-			<Icon name="apps" />
-		</a>
 		<button
 			class="icon-button"
 			onclick={() => (settingsOpen = true)}
@@ -51,6 +48,7 @@
 		>
 			<Icon name="settings" />
 		</button>
+		<HomeButton />
 	</header>
 
 	<h1 class="page-title">Rutina</h1>

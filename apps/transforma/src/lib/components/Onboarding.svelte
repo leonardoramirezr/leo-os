@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { HomeButton } from '@leo-os/shared';
 	import icon from '../../../icon.svg';
 	import { GroqError, listModels } from '$lib/groq';
 	import { apiKey, models } from '$lib/settings.svelte';
@@ -37,6 +38,10 @@
 		}
 	}
 </script>
+
+<header class="bar">
+	<HomeButton />
+</header>
 
 <main class="onboarding">
 	<form {onsubmit}>
@@ -80,11 +85,21 @@
 </main>
 
 <style>
+	/* Where the list of prompts has its own bar, so the way home stays put. */
+	.bar {
+		display: flex;
+		justify-content: flex-end;
+		max-width: 560px;
+		margin: 0 auto;
+		padding: calc(env(safe-area-inset-top) + 6px) 8px 0;
+	}
+
+	/* Centred in what the bar leaves of the screen. */
 	.onboarding {
 		display: grid;
 		place-items: center;
-		min-height: 100dvh;
-		padding: calc(env(safe-area-inset-top) + 24px) 20px calc(env(safe-area-inset-bottom) + 24px);
+		min-height: calc(100dvh - env(safe-area-inset-top) - 46px);
+		padding: 0 20px calc(env(safe-area-inset-bottom) + 24px);
 	}
 
 	form {

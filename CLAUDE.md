@@ -108,6 +108,11 @@ to register it.
   `{@render children()}` in its `<Account load={…}>`: nothing of the app draws until there is an
   account and its rows have been read. The two screens outside it are Leogram's post links (`?p=`)
   and bios (`?u=`), on purpose: they open signed in or not.
+- Every screen has the way back to the home screen, `<HomeButton />` from `@leo-os/shared`, always in
+  the same place: last in the bar along the top, out in the top right corner where the app's other
+  screens have it (a screen with no bar gets one for it). Whatever covers the whole screen is a screen
+  too, an editor, a viewer or a workout; a sheet or a dialog that leaves part of the screen showing
+  may cover the button and leave it out of reach. The door `Account` puts up has its own.
 - Colours that change with the theme are `light-dark(light, dark)` under `color-scheme: light dark`,
   never an `@media (prefers-color-scheme)` block: only that way does the theme picked in the home
   screen's Ajustes reach the app (`shared/src/theme.ts`).

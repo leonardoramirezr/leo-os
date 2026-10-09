@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { HomeButton } from '@leo-os/shared';
 	import icon from '../../../icon.svg';
 	import { t } from '$lib/i18n';
 	import { fetchModelIds } from '$lib/models';
@@ -29,6 +30,10 @@
 		}
 	}
 </script>
+
+<header class="bar">
+	<HomeButton label={t.apps} />
+</header>
 
 <main class="onboarding">
 	<form {onsubmit}>
@@ -67,11 +72,20 @@
 </main>
 
 <style>
+	/* Where the chat has its own bar, so the way home stays put. */
+	.bar {
+		display: flex;
+		justify-content: flex-end;
+		padding: calc(env(safe-area-inset-top) + 6px) max(10px, env(safe-area-inset-right)) 0
+			max(10px, env(safe-area-inset-left));
+	}
+
+	/* Centred in what the bar leaves of the screen. */
 	.onboarding {
 		display: grid;
 		place-items: center;
-		min-height: 100dvh;
-		padding: calc(env(safe-area-inset-top) + 24px) 20px calc(env(safe-area-inset-bottom) + 24px);
+		min-height: calc(100dvh - env(safe-area-inset-top) - 46px);
+		padding: 0 20px calc(env(safe-area-inset-bottom) + 24px);
 	}
 
 	form {

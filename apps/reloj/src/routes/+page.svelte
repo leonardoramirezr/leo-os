@@ -1,7 +1,7 @@
 <script lang="ts">
 	// The three of them on one display, black and white with its numbers in segments, as Caminadora's
 	// running program is, and a key along the bottom for each.
-	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import { unlockSound } from '$lib/device';
 	import { unlock } from '$lib/voice';
 	import { tab, watch, type Mode } from '$lib/watch.svelte';
@@ -63,11 +63,12 @@
 
 <div class="lcd" {onpointerdown} role="presentation">
 	<header class="head">
-		<a class="home" href="{resolve('/')}../" aria-label="Apps" title="Apps" data-sveltekit-reload>
-			<Icon name="apps" />
-		</a>
 		<h1>Reloj</h1>
 	</header>
+
+	<div class="corner">
+		<HomeButton />
+	</div>
 
 	<main class="body">
 		{#if mode === 'stopwatch'}
@@ -110,8 +111,9 @@
 		--pick: min(calc((var(--room) - 40px) / 4.2), 12dvh, 88px);
 
 		display: grid;
+		grid-template-columns: 1fr auto;
 		grid-template-rows: auto 1fr auto;
-		grid-template-areas: 'head' 'body' 'tabs';
+		grid-template-areas: 'head home' 'body body' 'tabs tabs';
 		gap: 12px;
 		max-width: 560px;
 		min-height: 100dvh;
@@ -130,18 +132,14 @@
 		display: flex;
 		grid-area: head;
 		align-items: center;
-		gap: 8px;
 		min-height: 40px;
-		margin-left: -8px;
 	}
 
-	.home {
-		display: grid;
-		place-items: center;
-		width: 40px;
-		height: 40px;
-		border-radius: 12px;
-		color: var(--ink);
+	/* Pulled up and out to the corner where every other app has the way home, so it stays put. */
+	.corner {
+		display: flex;
+		grid-area: home;
+		margin: -2px -8px 0 0;
 	}
 
 	h1 {
@@ -230,9 +228,9 @@
 			--clock: min(calc(var(--room) / 4.7), 30dvh, 140px);
 			--pick: min(calc((var(--room) - 40px) / 4.2), 17dvh, 88px);
 
-			grid-template-columns: auto 1fr;
+			grid-template-columns: auto 1fr auto;
 			grid-template-rows: auto 1fr;
-			grid-template-areas: 'head tabs' 'body body';
+			grid-template-areas: 'head tabs home' 'body body body';
 			gap: 10px 20px;
 			max-width: 960px;
 		}

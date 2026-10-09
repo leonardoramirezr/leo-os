@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { pushState } from '$app/navigation';
+	import { HomeButton } from '@leo-os/shared';
 	import { draft } from '$lib/draft.svelte';
 	import { titleOf, type Prompt } from '$lib/prompts.svelte';
 	import { transformer } from '$lib/transformer.svelte';
@@ -201,6 +202,7 @@
 					<Icon name="edit" />
 				</button>
 			{/if}
+			<HomeButton />
 		</div>
 	</header>
 

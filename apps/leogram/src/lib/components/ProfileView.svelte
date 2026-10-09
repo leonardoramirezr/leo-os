@@ -3,6 +3,7 @@
 	// has published in a grid of three — in one tab those its bio lists, as others find them there,
 	// and in the other those that only open by their link. «+» writes a new one.
 	import { goto, pushState } from '$app/navigation';
+	import { HomeButton } from '@leo-os/shared';
 	import { bioLink } from '$lib/code';
 	import { count } from '$lib/format';
 	import { posts } from '$lib/posts.svelte';
@@ -55,14 +56,17 @@
 <div class="profile">
 	<header class="top">
 		<Wordmark />
-		<button
-			class="icon-button"
-			type="button"
-			onclick={() => pushState('', { composing: true })}
-			aria-label="Nueva publicación"
-		>
-			<Icon name="create" size={26} />
-		</button>
+		<div class="end">
+			<button
+				class="icon-button"
+				type="button"
+				onclick={() => pushState('', { composing: true })}
+				aria-label="Nueva publicación"
+			>
+				<Icon name="create" size={26} />
+			</button>
+			<HomeButton />
+		</div>
 	</header>
 
 	<section class="who">
@@ -149,9 +153,14 @@
 		top: 0;
 		align-items: center;
 		justify-content: space-between;
-		height: 56px;
-		padding: 6px 8px 0 16px;
+		height: 52px;
+		padding: 0 8px 0 16px;
 		background: var(--bg);
+	}
+
+	.end {
+		display: flex;
+		align-items: center;
 	}
 
 	.who {

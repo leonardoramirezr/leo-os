@@ -18,6 +18,7 @@
 	// what is done with the colour, the alignment and the size are at hand, as Instagram and TikTok
 	// keep them. Nothing reaches the composer until «Listo».
 	import { flushSync, onMount, untrack } from 'svelte';
+	import { HomeButton } from '@leo-os/shared';
 	import { newId } from '$lib/code';
 	import { ASPECTS, type Aspect, type Focus } from '$lib/images';
 	import {
@@ -436,6 +437,7 @@
 		<button class="text-button" type="button" onclick={cancel}>Cancelar</button>
 		<h1>Texto</h1>
 		<button class="text-button done" type="button" onclick={done}>Listo</button>
+		<HomeButton />
 	</header>
 
 	<div class="work">
@@ -516,6 +518,7 @@
 				<button class="text-button done" type="button" onpointerdown={keep} onclick={finish}>
 					Listo
 				</button>
+				<HomeButton />
 			</div>
 
 			<div class="middle">
@@ -646,7 +649,7 @@
 		flex: none;
 		align-items: center;
 		height: 52px;
-		padding: 0 12px;
+		padding: 0 8px 0 12px;
 	}
 
 	h1 {

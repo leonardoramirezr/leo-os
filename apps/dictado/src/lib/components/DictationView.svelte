@@ -6,7 +6,7 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import { pushState } from '$app/navigation';
-	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import icon from '../../../icon.svg';
 	import { draft } from '$lib/draft.svelte';
 	import { voice } from '$lib/voice.svelte';
@@ -182,9 +182,16 @@
 					<Icon name="redo" />
 				</button>
 			{:else}
-				<a class="icon-button" href="{resolve('/')}../" aria-label="Apps" title="Apps" data-sveltekit-reload>
-					<Icon name="apps" />
-				</a>
+				<button
+					class="icon-button"
+					type="button"
+					onclick={() => (settingsOpen = true)}
+					aria-label="Ajustes"
+					title="Ajustes"
+					aria-haspopup="dialog"
+				>
+					<Icon name="settings" />
+				</button>
 			{/if}
 		</div>
 
@@ -215,17 +222,8 @@
 						<Icon name="compose" />
 					</button>
 				{/if}
-				<button
-					class="icon-button"
-					type="button"
-					onclick={() => (settingsOpen = true)}
-					aria-label="Ajustes"
-					title="Ajustes"
-					aria-haspopup="dialog"
-				>
-					<Icon name="settings" />
-				</button>
 			{/if}
+			<HomeButton />
 		</div>
 	</header>
 

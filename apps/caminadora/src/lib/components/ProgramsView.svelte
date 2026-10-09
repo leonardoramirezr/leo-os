@@ -1,7 +1,7 @@
 <script lang="ts">
 	import icon from '../../../icon.svg';
 	import { pushState } from '$app/navigation';
-	import { resolve } from '$app/paths';
+	import { HomeButton } from '@leo-os/shared';
 	import { clock, length, plural } from '$lib/format';
 	import { lengthOf, programs, type Program } from '$lib/programs.svelte';
 	import { runner } from '$lib/runner.svelte';
@@ -47,9 +47,7 @@
 
 <div class="screen">
 	<header class="bar">
-		<a class="icon-button" href="{resolve('/')}../" aria-label="Apps" title="Apps" data-sveltekit-reload>
-			<Icon name="apps" />
-		</a>
+		<HomeButton />
 	</header>
 
 	<h1>Caminadora</h1>
@@ -129,7 +127,7 @@
 	.bar {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
+		justify-content: flex-end;
 		margin: 0 -8px;
 		padding-top: calc(env(safe-area-inset-top) + 6px);
 	}

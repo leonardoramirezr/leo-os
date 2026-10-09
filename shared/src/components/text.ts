@@ -18,6 +18,7 @@ const es = {
 	working: 'Un momento…',
 	loading: 'Cargando tus datos…',
 	account: 'Cuenta',
+	apps: 'Apps',
 	signOut: 'Cerrar sesión',
 	notConfiguredTitle: 'Sin base de datos',
 	notConfigured:
@@ -69,6 +70,7 @@ const en: typeof es = {
 	working: 'One moment…',
 	loading: 'Loading your data…',
 	account: 'Account',
+	apps: 'Apps',
 	signOut: 'Sign out',
 	notConfiguredTitle: 'No database',
 	notConfigured:

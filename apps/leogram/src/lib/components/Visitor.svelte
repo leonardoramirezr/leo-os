@@ -2,7 +2,7 @@
 	// What a post's link and a bio open, for anybody: Leogram's name on top, and «Entrar» while
 	// signed out. Nobody is asked to sign in to see what is there for them; the Leo OS door only comes
 	// up when asked for (`door`), over the page, which stays where it was, and «Ahora no» closes it.
-	import { Account, configured, session } from '@leo-os/shared';
+	import { Account, configured, HomeButton, session } from '@leo-os/shared';
 	import { afterNavigate } from '$app/navigation';
 	import type { Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
@@ -43,6 +43,7 @@
 		{#if session.status === 'out'}
 			<button class="primary" type="button" onclick={() => (door = true)}>Entrar</button>
 		{/if}
+		<HomeButton />
 	</header>
 
 	<main>
@@ -78,8 +79,8 @@
 		top: 0;
 		align-items: center;
 		gap: 4px;
-		height: 60px;
-		padding: 0 16px;
+		height: 52px;
+		padding: 0 8px 0 16px;
 		border-bottom: 1px solid var(--border);
 		background: var(--bg);
 	}
