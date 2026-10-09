@@ -1,4 +1,4 @@
-// The other accounts of Leogram, as an author picks who a post is for: found by username, and kept
+// The other accounts of Leo Partī, as an author picks who a post is for: found by username, and kept
 // at hand as favourites, which is what makes picking them again, post after post, take one tap.
 import {
 	eq,

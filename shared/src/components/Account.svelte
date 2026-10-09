@@ -28,7 +28,7 @@
 		home?: boolean;
 		/**
 		 * For a door that can be left without signing in, put up in front of something anybody may
-		 * see — a Leogram post, before liking it. Signing in stays the way to everything else.
+		 * see — a Leo Partī post, before liking it. Signing in stays the way to everything else.
 		 */
 		oncancel?: () => void;
 	} = $props();

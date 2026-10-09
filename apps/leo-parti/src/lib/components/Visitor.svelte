@@ -1,5 +1,5 @@
 <script lang="ts">
-	// What a post's link and a bio open, for anybody: Leogram's name on top, and «Entrar» while
+	// What a post's link and a bio open, for anybody: Leo Partī's name on top, and «Entrar» while
 	// signed out. Nobody is asked to sign in to see what is there for them; the Leo OS door only comes
 	// up when asked for (`door`), over the page, which stays where it was, and «Ahora no» closes it.
 	import { Account, configured, HomeButton, session } from '@leo-os/shared';
@@ -37,7 +37,7 @@
 				<Icon name="back" size={28} />
 			</button>
 		{/if}
-		<a class="brand" href={home} aria-label="Leogram">
+		<a class="brand" href={home} aria-label="Leo Partī">
 			<Wordmark />
 		</a>
 		{#if session.status === 'out'}

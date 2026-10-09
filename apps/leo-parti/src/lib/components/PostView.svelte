@@ -260,7 +260,7 @@
 		if (!post) return;
 		if (!navigator.share) return copyLink();
 		try {
-			await navigator.share({ title: 'Leogram', url: linkOf(post.id) });
+			await navigator.share({ title: 'Leo Partī', url: linkOf(post.id) });
 		} catch {
 			// Closed without sharing.
 		}

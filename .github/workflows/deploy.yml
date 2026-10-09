@@ -103,11 +103,11 @@ jobs:
           VITE_NEON_DATA_API_URL: ${{ vars.NEON_DATA_API_URL }}
         run: pnpm db:preview create "$SLUG"
 
-      # Leogram's photos, videos and songs live in a bucket of the project's Object Storage, and the
+      # Leo Partī's photos, videos and songs live in a bucket of the project's Object Storage, and the
       # database signs the addresses that reach it. This makes the bucket if it is not there, gives
-      # the database its key and deletes the files nothing points to any more. It concerns Leogram
-      # alone: when it fails, the site is published all the same. «Leogram» in README.md.
-      - name: Get Leogram's bucket ready
+      # the database its key and deletes the files nothing points to any more. It concerns Leo Partī
+      # alone: when it fails, the site is published all the same. «Leo Partī» in README.md.
+      - name: Get Leo Partī's bucket ready
         continue-on-error: true
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

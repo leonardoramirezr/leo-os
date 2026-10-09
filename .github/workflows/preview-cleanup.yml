@@ -1,7 +1,7 @@
 name: Drop the preview
 
 # A deleted branch leaves its preview behind: its folder in gh-pages, its database schema, and what
-# it uploaded to Leogram's bucket.
+# it uploaded to Leo Partī's bucket.
 on:
   delete:
 

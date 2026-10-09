@@ -1,6 +1,6 @@
 // The Neon API, for the Data API's sake: it is where the Data API is told which schemas to serve, and
 // to read the tables again after a migration — until then it answers from what it read before. It
-// is also where Leogram's bucket and the key to it are made (storage.mjs).
+// is also where Leo Partī's bucket and the key to it are made (storage.mjs).
 //
 // It takes NEON_API_KEY and NEON_PROJECT_ID, and finds the Data API from VITE_NEON_DATA_API_URL. They
 // are read when called, not on import: the scripts load the root .env first.

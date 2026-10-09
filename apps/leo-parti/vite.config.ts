@@ -13,7 +13,7 @@ export default defineConfig({
 				runes: ({ filename }) => filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 			adapter: adapter(),
-			// Set by scripts/build.mjs: this app's path inside the site (e.g. "/apps/leogram").
+			// Set by scripts/build.mjs: this app's path inside the site (e.g. "/apps/leo-parti").
 			paths: { base: (process.env.BASE_PATH ?? '') as '' | `/${string}` }
 		})
 	]

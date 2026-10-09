@@ -1,8 +1,8 @@
-// Gets Leogram's bucket ready, and hands the database the key it signs with.
+// Gets Leo Partī's bucket ready, and hands the database the key it signs with.
 //
 //   node storage.mjs
 //
-// Leogram keeps photos, videos and songs in a bucket of the Neon project's Object Storage, and the
+// Leo Partī keeps photos, videos and songs in a bucket of the Neon project's Object Storage, and the
 // browser reaches them through addresses the database signs (0007_leogram_public.sql). For that the
 // database needs where the bucket is and a key to sign with, in `leogram_private.bucket`, which the
 // Data API never serves. `deploy.yml` runs this on every push, after the migrations, and
@@ -16,7 +16,7 @@
 //   - sets the bucket's CORS rules, which let the pages upload and delete (bucket.mjs);
 //   - deletes the files nothing points to any more (`sweep`);
 //   - and tries what a browser does, with addresses the database signs (`tryOut`): what it says is
-//     what Leogram can do.
+//     what Leo Partī can do.
 //
 // It needs what preview.mjs needs: DATABASE_URL, NEON_API_KEY, NEON_PROJECT_ID, and
 // VITE_NEON_DATA_API_URL, whose branch is the one the bucket is made on. Without them it says so.
@@ -45,8 +45,8 @@ const HOUR = 60 * 60 * 1000;
 
 const missing = [...(process.env.DATABASE_URL ? [] : ['DATABASE_URL']), ...missingForNeon()];
 if (missing.length > 0) {
-	console.log(`\n▸ Without ${missing.join(', ')}, Leogram's bucket is not set up: Leogram cannot upload.\n`);
-	console.log('  «Leogram» in README.md says what it takes.\n');
+	console.log(`\n▸ Without ${missing.join(', ')}, Leo Partī's bucket is not set up: Leo Partī cannot upload.\n`);
+	console.log('  «Leo Partī» in README.md says what it takes.\n');
 	process.exit(0);
 }
 
@@ -220,11 +220,11 @@ async function tryOut(sql) {
 }
 
 async function main(sql) {
-	console.log(`\n▸ Leogram's bucket, ${BUCKET}\n`);
+	console.log(`\n▸ Leo Partī's bucket, ${BUCKET}\n`);
 
 	const [{ ready }] = await sql`select to_regclass('leogram_private.bucket') is not null as ready`;
 	if (!ready) {
-		console.log("  ▸ The database has no leogram_private.bucket yet: Leogram's migrations come first.\n");
+		console.log("  ▸ The database has no leogram_private.bucket yet: Leo Partī's migrations come first.\n");
 		return;
 	}
 
@@ -289,7 +289,7 @@ try {
 	await main(sql);
 } catch (error) {
 	console.error(`\n✖ ${error.message}\n`);
-	console.error('  Every deploy tries again; until one gets through, Leogram signs with the key it had.\n');
+	console.error('  Every deploy tries again; until one gets through, Leo Partī signs with the key it had.\n');
 	process.exitCode = 1;
 } finally {
 	await sql.end();

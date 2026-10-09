@@ -91,7 +91,7 @@ async function s3(bucket, method, path, options = {}) {
 /**
  * Its CORS rules: pages may read, upload and delete, wherever they are served from. That is no
  * wider than it sounds: the bucket is private, so nothing gets through without an address the
- * database signed, and those only go to Leogram's own pages. Any origin is what lets `pnpm dev`
+ * database signed, and those only go to Leo Partī's own pages. Any origin is what lets `pnpm dev`
  * upload too, a phone's included, over the local network.
  */
 const CORS =

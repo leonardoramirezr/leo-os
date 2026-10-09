@@ -1,5 +1,5 @@
 <script lang="ts">
-	// The first time the account opens Leogram: it picks the username its posts will carry. One is
+	// The first time the account opens Leo Partī: it picks the username its posts will carry. One is
 	// suggested out of its name, and anything here can be changed later in «Editar perfil».
 	import { HomeButton, session } from '@leo-os/shared';
 	import { profile, suggestUsername, USERNAME } from '$lib/profile.svelte';

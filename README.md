@@ -9,7 +9,7 @@ phone home screen: every app is an icon.
 - Lista: https://leonardoramirezr.github.io/leo-os/lista/
 - Repaso: https://leonardoramirezr.github.io/leo-os/repaso/
 - Dictado: https://leonardoramirezr.github.io/leo-os/dictado/
-- Leogram: https://leonardoramirezr.github.io/leo-os/leogram/
+- Leo Partī: https://leonardoramirezr.github.io/leo-os/leo-parti/
 - Transforma: https://leonardoramirezr.github.io/leo-os/transforma/
 - Rutina: https://leonardoramirezr.github.io/leo-os/rutina/
 - Caminadora: https://leonardoramirezr.github.io/leo-os/caminadora/
@@ -30,7 +30,7 @@ phone home screen: every app is an icon.
 │   ├── schema.ts            # The models: the tables and their row level security policies
 │   ├── migrations/          # Generated from the models; the deploy applies them
 │   ├── preview.mjs          # Gives each preview a copy of the database of its own
-│   └── storage.mjs          # Gets Leogram's bucket ready (see «Leogram»)
+│   └── storage.mjs          # Gets Leo Partī's bucket ready (see «Leo Partī»)
 ├── neon/
 │   └── auth-proxy.ts        # Stands Neon Auth on an own domain (see «Own domain»)
 ├── scripts/
@@ -114,14 +114,14 @@ Neon Auth on that domain.
 - **One account, one set of rows.** Every table carries the account a row belongs to, and the
   policies in `db/schema.ts` only ever let `auth.user_id()` — the account behind the request's
   token — see its own. Signed out, the Data API sees the anonymous token Neon Auth hands anybody
-  and runs it as the `anonymous` role, which reaches no table: all it may do is open a Leogram post
-  whose link it has, or an account's bio ([Leogram](#leogram)).
+  and runs it as the `anonymous` role, which reaches no table: all it may do is open a Leo Partī post
+  whose link it has, or an account's bio ([Leo Partī](#leo-partī)).
 - **Images stay on the device.** The wallpaper and WillChat's conversation are far too large for
   rows read on every open, so they stay in `localStorage` and IndexedDB. Their keys carry the
   account too: two people using the same phone do not see each other's, and signing out drops the
-  lot. A Leogram post's photos and videos are the exception: they are meant to be seen on other
+  lot. A Leo Partī post's photos and videos are the exception: they are meant to be seen on other
   devices, so they go to a bucket of the project's Object Storage, which the database signs the way
-  into ([Leogram](#leogram)).
+  into ([Leo Partī](#leo-partī)).
 - **Offline.** Each app keeps a copy of its rows on the device, so it opens with something on
   screen and still shows it with no connection. The database is what counts: the copy is replaced
   whole every time a query comes back. A change is applied on screen first and sent right after; if
@@ -193,8 +193,8 @@ Then, in this repository under **Settings → Secrets and variables → Actions*
 | **Variables** | `NEON_DATA_API_URL` | The Data API URL from step 2 |
 | **Variables** | `NEON_PROJECT_ID` | The project's ID, from its settings in the console |
 | **Secrets** | `DATABASE_URL` | The project's connection string, for the migrations and the previews |
-| **Secrets** | `NEON_API_KEY` | A Neon API key, to tell the Data API what to serve and when to look again, and to make Leogram's bucket |
-| **Variables** | `LEOGRAM_BUCKET` | Optional: the name of [Leogram's bucket](#leograms-bucket), `leogram` if unset |
+| **Secrets** | `NEON_API_KEY` | A Neon API key, to tell the Data API what to serve and when to look again, and to make Leo Partī's bucket |
+| **Variables** | `LEOGRAM_BUCKET` | Optional: the name of [Leo Partī's bucket](#leo-partīs-bucket), `leogram` if unset |
 | **Secrets** | `LEOGRAM_STORAGE_ACCESS_KEY_ID`, `LEOGRAM_STORAGE_SECRET_ACCESS_KEY` | Optional: a key of your own to that bucket; without them the deploy makes one |
 
 The two URLs are not secrets: they are the public addresses of services that decide for themselves
@@ -292,7 +292,7 @@ it is merged.
   updated. The link also shows up in each run's summary, even before there is a PR.
 - `…/leo-os/previews/` lists the ones that exist, newest to oldest.
 - When the branch is deleted, `preview-cleanup.yml` drops its folder, its schema and what it
-  uploaded to [Leogram's bucket](#leograms-bucket). Once none are left, `previews/` disappears.
+  uploaded to [Leo Partī's bucket](#leo-partīs-bucket). Once none are left, `previews/` disappears.
   GitHub runs that workflow from `main`, so the cleanup starts working once the file lands there.
 - GitHub Pages takes about a minute to serve what was just published.
 
@@ -612,10 +612,16 @@ Voice to text: say something and it is written down, then go on dictating, or sa
   dictation is not lost to a moment without signal. Coming back to the app reads the text again, in
   case it changed on another device.
 
-## Leogram
+## Leo Partī
 
 A parody of Instagram: carousel posts with a song, each with a link that opens for anybody, signed in
 or not, or only for some friends; and a bio that lists the ones its author picks.
+
+It used to be Leogram, at `…/leogram/`, and links to there still open it: the build leaves a page at
+the old path that forwards to `…/leo-parti/`, query and all (`scripts/build.mjs`). What is stored
+kept the old name, since renaming it would mean moving every row and file: the tables and functions
+(`leogram_*`, `leogram_private`), the bucket, its credential and its variables (`LEOGRAM_*`), and
+the caches in the browser.
 
 It works like Instagram but does not look like it: it is printed as a fanzine off a risograph. Two
 inks on paper, cobalt with a lime one a hair off it, lilac stickers, thick outlines and hard shadows;
@@ -670,7 +676,7 @@ a font service. The icon is Leo's sign, ♌, printed the same way.
   cuts it out of the MP3's frames byte for byte, so it sounds exactly as the song did, with nothing
   decoded or encoded. What is not an MP3 is decoded and kept as a WAV of one channel at 22 kHz,
   which is what a browser can write by itself.
-- **«Compartir» publishes it, and its link is ready right away** (`…/leogram/?p=<code>`): there is no
+- **«Compartir» publishes it, and its link is ready right away** (`…/leo-parti/?p=<code>`): there is no
   other step. Nobody comes across a post without its link, whose code is eleven random characters,
   unless its author lists it in the bio. The link is copied or shared from there, from the post's
   «⋯», or from the paper plane under it.
@@ -680,11 +686,11 @@ a font service. The icon is Leo's sign, ♌, printed the same way.
   author. To anyone else with that link, signed out or with another account, it is only «Esta
   publicación es solo para algunos amigos», with «Entrar» while signed out: signing in is what tells
   a friend apart. Likes and comments, too, come only from whoever can open the post.
-- **Friends are found by username**, any account with a Leogram profile but one's own, and a tap
+- **Friends are found by username**, any account with a Leo Partī profile but one's own, and a tap
   picks them. The star keeps them among the favourites, which are what the picker shows before
   anything is typed, so that the usual ones are a tap away every time; a bio's «Añadir a
   favoritos» keeps its account there as well.
-- **«Listar en mi bio»**, the switch under it, puts the post in the bio, `…/leogram/?u=<username>`:
+- **«Listar en mi bio»**, the switch under it, puts the post in the bio, `…/leo-parti/?u=<username>`:
   the account's photo and username and a grid of its listed posts, for anybody, signed in or not,
   showing each post only to whoever can open it — everybody, for one for anybody with the link;
   those friends, for one for some friends. A post that is not listed is in nobody's view of the bio,
@@ -696,7 +702,7 @@ a font service. The icon is Leo's sign, ♌, printed the same way.
   though the addresses to its files it already handed out keep working until they run out, two days
   at most. Posts from before there was a choice are for anybody with their link and out of the bio,
   as they always were; this is how one goes into it.
-- **The link opens for whoever the post is for**, with Leogram's name on top: the photos and videos
+- **The link opens for whoever the post is for**, with Leo Partī's name on top: the photos and videos
   to swipe through, the song, who posted it, the likes, the caption and the comments. A browser lets
   no page make sound before it is touched, so when the song cannot start on its own it says so on
   the photo, and starts with the first tap anywhere. The video showing plays on a loop, without
@@ -704,7 +710,7 @@ a font service. The icon is Leo's sign, ♌, printed the same way.
 - **Liking and commenting take an account.** Signed out, the heart, a double tap on a photo or the
   comment box put up the same door as every app of Leo OS, with «Ahora no» to go back to the post;
   once signed in, the like is given, or the box is ready. An account's first comment gives it a
-  Leogram username out of its name. A comment can be deleted by whoever wrote it and by the post's
+  Leo Partī username out of its name. A comment can be deleted by whoever wrote it and by the post's
   author, and a post by its author, which takes its files, likes and comments with it.
 - **What is said goes to the database, the files to a bucket.** The database has `leogram_profiles`,
   `leogram_posts`, `leogram_likes` and `leogram_comments`, `leogram_audience` (who a post for some
@@ -734,7 +740,7 @@ a font service. The icon is Leo's sign, ♌, printed the same way.
   plays them; the photos, the videos, the songs from the device and everything else go nowhere but
   the project's database and its bucket.
 
-### Leogram's bucket
+### Leo Partī's bucket
 
 The deploy sets it up on its own: on every push, after the migrations, `db/storage.mjs` makes the
 bucket if it is not there (private, named `leogram` unless `LEOGRAM_BUCKET` says otherwise), hands
@@ -757,7 +763,7 @@ thing it needs is what the previews already need: `DATABASE_URL`, `NEON_API_KEY`
   `public/…` for the site, `preview_…/…` for a preview. A preview's copy of a published post shows
   the published files, and deleting it there deletes none of them.
 - Object Storage is in beta and only in some of Neon's regions. Where the branch has none, the step
-  says so and the site is published all the same: Leogram shows its posts, and says it cannot
+  says so and the site is published all the same: Leo Partī shows its posts, and says it cannot
   upload yet.
 
 ## Transforma

@@ -77,7 +77,7 @@ export interface Restricted {
 export const SONG = -1;
 
 /**
- * Calls one of Leogram's functions and gives back what it answered. PostgREST answers a function
+ * Calls one of Leo Partī's functions and gives back what it answered. PostgREST answers a function
  * of one value with that value itself, a list included; the same value as a row named after the
  * function — `[{ "leogram_post": … }]` — is taken as well. `visitor` lets it go out signed out,
  * for `leogram_post`.

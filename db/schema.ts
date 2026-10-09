@@ -8,11 +8,11 @@
 // it against `auth.user_id()`, the `sub` of the Neon Auth session behind the request. Signed out,
 // the token is the anonymous one Neon Auth hands anybody, which the Data API runs as the
 // `anonymous` role: it reaches no table at all, and may only call the functions that show a
-// Leogram post to whoever has its link and is meant to see it, and an account's bio
+// Leo Partī post to whoever has its link and is meant to see it, and an account's bio
 // (`migrations/0007_leogram_public.sql`, `migrations/0012_leogram_bio.sql`).
 //
 // Images never come here. The wallpaper and WillChat's conversation are far too large for rows
-// read on every open, and they stay in the browser's localStorage and IndexedDB; a Leogram post's
+// read on every open, and they stay in the browser's localStorage and IndexedDB; a Leo Partī post's
 // photos and videos, which open on any device with its link, go to the project's Neon bucket, and
 // here only where they are.
 //
@@ -200,7 +200,7 @@ export const dictations = pgTable(
 ).enableRLS();
 
 /**
- * «Leogram»: the name shown with a post and with every comment, to whoever opens the post. An
+ * «Leo Partī»: the name shown with a post and with every comment, to whoever opens the post. An
  * account gets one before it first posts, likes or comments.
  */
 export const leogramProfiles = pgTable(
