@@ -1,4 +1,4 @@
-// Leogram's files are in a private bucket of the Neon project, and the browser reaches it through
+// Leo Partī's files are in a private bucket of the Neon project, and the browser reaches it through
 // addresses the database signs: one to upload each file of a post of the account's own, for that
 // file's type and exact size, and one to read each file of a post whose link it has
 // (db/migrations/0007_leogram_public.sql). The key to the bucket never leaves the database, and

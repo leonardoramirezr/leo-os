@@ -45,7 +45,7 @@
 				label: 'Compartir…',
 				run: () =>
 					navigator
-						.share({ title: `${profile.username} en Leogram`, url: bioLink(profile.username) })
+						.share({ title: `${profile.username} en Leo Partī`, url: bioLink(profile.username) })
 						.catch(() => {})
 			});
 		}

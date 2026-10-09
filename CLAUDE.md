@@ -106,7 +106,7 @@ to register it.
   in `vite.config.ts` and `ssr = false` + `prerender = true` in `src/routes/+layout.ts`.
 - `@leo-os/shared` as a `workspace:*` dependency, and a `+layout.svelte` that wraps
   `{@render children()}` in its `<Account load={…}>`: nothing of the app draws until there is an
-  account and its rows have been read. The two screens outside it are Leogram's post links (`?p=`)
+  account and its rows have been read. The two screens outside it are Leo Partī's post links (`?p=`)
   and bios (`?u=`), on purpose: they open signed in or not.
 - Every screen has the way back to the home screen, `<HomeButton />` from `@leo-os/shared`, always in
   the same place: last in the bar along the top, out in the top right corner where the app's other
@@ -126,7 +126,7 @@ to register it.
   decisions here. Read them before "simplifying" something.
 - **Storage**: data goes to Neon through `shared/` — `setting(…)` for a preference, a table of its
   own for anything bigger — and every row carries the account it belongs to. Only images stay on
-  the device (`local(…)`, IndexedDB) — but Leogram's photos and videos, which are meant for other
+  the device (`local(…)`, IndexedDB) — but Leo Partī's photos and videos, which are meant for other
   people's devices and go to the project's bucket, at addresses the database signs —, under keys
   that carry the account too, and every read and write of those is wrapped in `try`/`catch`: the
   browser may have site data blocked. Keys keep their app's prefix either way (`home:wallpaper`,
@@ -153,7 +153,7 @@ to register it.
 - **Dependencies**: as few as possible. No UI or styling frameworks; CSS is written by hand inside
   each component.
 - **Nothing leaves the browser** but the user's own data, to the user's own database (and its
-  bucket, for Leogram's files), and what they asked for: no telemetry, nobody in the middle
+  bucket, for Leo Partī's files), and what they asked for: no telemetry, nobody in the middle
   (WillChat talks straight to `api.openai.com` with the user's own key).
 - The `apple-touch-icon.png` files are generated, never committed. `icon.svg` is the only source.
 

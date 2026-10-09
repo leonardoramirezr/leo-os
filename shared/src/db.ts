@@ -105,7 +105,7 @@ export async function remove(table: string, filter: string): Promise<void> {
 }
 
 /**
- * Calls a function of the database (`/rpc/<name>`), for what a policy cannot say: a Leogram post,
+ * Calls a function of the database (`/rpc/<name>`), for what a policy cannot say: a Leo Partī post,
  * which anyone with its link may see. `visitor` lets the call go out signed out as well, with the
  * anonymous token; signed in it carries the session's, so the function knows who is asking.
  */

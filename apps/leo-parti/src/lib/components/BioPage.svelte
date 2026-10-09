@@ -72,7 +72,7 @@
 		const url = bioLink(bio.username);
 		if (navigator.share) {
 			try {
-				await navigator.share({ title: `${bio.username} en Leogram`, url });
+				await navigator.share({ title: `${bio.username} en Leo Partī`, url });
 			} catch {
 				// Closed without sharing.
 			}

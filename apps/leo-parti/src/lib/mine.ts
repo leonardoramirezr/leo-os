@@ -1,4 +1,4 @@
-// The account's own side of Leogram, read in one go by `leogram_mine()`: its username and photo,
+// The account's own side of Leo Partī, read in one go by `leogram_mine()`: its username and photo,
 // its posts, newest first, with their thumbnails, and its favourites. The photos and the thumbnails
 // are in the bucket, so what comes are addresses the database signed for them, good for a day at
 // least.
