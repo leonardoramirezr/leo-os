@@ -4,7 +4,7 @@
 	// every half minute it lasts, a dark column between two, and as tall as its speed. The ones gone
 	// by are solid; the one running has its edge lit and its middle blinking; the ones to come are
 	// outlined, their sides dotted, so that the one running never looks like them. The bottom row is
-	// how far into the program it is.
+	// how far into the program it is, in time: it fills at an even pace, whatever the bars above.
 	import { lengthOf, segmentAt, type Segment } from '$lib/programs.svelte';
 
 	let { segments, at }: { segments: Segment[]; at: number } = $props();
@@ -69,7 +69,11 @@
 		// Which segment each column of the strip is in; the dark ones between two are in none.
 		const owner = new Array<number>(strip.length).fill(-1);
 		strip.starts.forEach((start, index) => owner.fill(index, start, start + strip.widths[index]));
-		const done = Math.round(playhead);
+		// The progress spans the program as it shows, not the strip: the strip gives a short segment as
+		// many columns as a half minute and puts a dark one between two, and it slides, so following it
+		// made the row rush, jump and stall. Its length on screen is the whole program's time.
+		const span = Math.min(columns, strip.length);
+		const done = Math.floor(Math.min(1, at / total) * span);
 
 		for (let column = 0; column < columns; column++) {
 			const x = column + scroll;
@@ -94,7 +98,7 @@
 				else off += square(column, row);
 			}
 			off += square(column, tall);
-			if (x < done) lit += square(column, rows - 1);
+			if (column < done) lit += square(column, rows - 1);
 			else off += square(column, rows - 1);
 		}
 		return { lit, off, blink };
