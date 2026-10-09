@@ -25,6 +25,15 @@ export function formatClock(seconds: number): string {
 	return `${over ? '+' : ''}${minutes}:${rest}`;
 }
 
+/** A stopwatch: «4:07», «1:02:05» once past the hour. */
+export function formatStopwatch(seconds: number): string {
+	const whole = Math.max(0, Math.floor(seconds));
+	const hours = Math.floor(whole / 3600);
+	const minutes = Math.floor((whole % 3600) / 60);
+	const rest = String(whole % 60).padStart(2, '0');
+	return hours ? `${hours}:${String(minutes).padStart(2, '0')}:${rest}` : `${minutes}:${rest}`;
+}
+
 /** A time span in words: «45 s», «12 min», «1 h 5 min». */
 export function formatDuration(milliseconds: number): string {
 	const seconds = Math.max(0, Math.round(milliseconds / 1000));

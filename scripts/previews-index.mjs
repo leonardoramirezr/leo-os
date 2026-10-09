@@ -5,9 +5,13 @@
 //   node scripts/previews-index.mjs <previews-folder>
 //
 // When no preview is left, the folder itself goes away.
+//
+// The page has an icon of its own, scripts/previews-icon.svg: without one, the tab shows none and
+// iOS saves it to the home screen with Leo OS's, from the root of the site.
 
 import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { appleTouchIcon } from './icons.mjs';
 
 const dir = process.argv[2];
 if (!dir) {
@@ -43,6 +47,10 @@ if (previews.length === 0) {
 	process.exit(0);
 }
 
+const icon = readFileSync(new URL('./previews-icon.svg', import.meta.url), 'utf8');
+writeFileSync(join(dir, 'icon.svg'), icon);
+writeFileSync(join(dir, 'apple-touch-icon.png'), appleTouchIcon(icon));
+
 const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
 const escape = (text) => text.replace(/[&<>"]/g, (char) => entities[char]);
 
@@ -71,6 +79,9 @@ writeFileSync(
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="icon" type="image/svg+xml" href="./icon.svg" />
+		<!-- Safari ignores an SVG here: scripts/icons.mjs rasterizes the same one. -->
+		<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 		<title>Previews · Leo OS</title>
 		<style>
 			:root {
