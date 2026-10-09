@@ -1,18 +1,19 @@
 <script lang="ts">
-	// The account's profile, as Instagram has it: its photo and username on top, and every post it
-	// has published in a grid of three — in one tab those its bio lists, as others find them there,
-	// and in the other those that only open by their link. «+» writes a new one.
+	// The account's profile: the same cover its bio opens with, and every post it has published in a
+	// grid of three — in one tab those its bio lists, as others find them there, and in the other
+	// those that only open by their link. «+» writes a new one.
 	import { goto, pushState } from '$app/navigation';
 	import { HomeButton } from '@leo-os/shared';
 	import { bioLink } from '$lib/code';
-	import { count } from '$lib/format';
 	import { posts } from '$lib/posts.svelte';
 	import { profile } from '$lib/profile.svelte';
 	import ActionSheet, { type Action } from './ActionSheet.svelte';
-	import Avatar from './Avatar.svelte';
+	import Burst from './Burst.svelte';
+	import Cover from './Cover.svelte';
 	import Grid from './Grid.svelte';
 	import Icon from './Icon.svelte';
 	import ProfileSheet from './ProfileSheet.svelte';
+	import Ticker from './Ticker.svelte';
 	import Wordmark from './Wordmark.svelte';
 
 	let editing = $state(false);
@@ -54,59 +55,52 @@
 </script>
 
 <div class="profile">
-	<header class="top">
+	<header class="masthead">
 		<Wordmark />
 		<div class="end">
 			<button
-				class="icon-button"
+				class="create"
 				type="button"
 				onclick={() => pushState('', { composing: true })}
 				aria-label="Nueva publicación"
 			>
-				<Icon name="create" size={26} />
+				<Icon name="plus" size={22} stroke={2.8} />
 			</button>
 			<HomeButton />
 		</div>
 	</header>
 
-	<section class="who">
-		<Avatar src={profile.avatar} username={profile.username} size={86} ring />
-		<div class="side">
-			<h1>{profile.username}</h1>
-			<p>
-				<strong>{count(posts.list.length)}</strong>
-				{posts.list.length === 1 ? 'publicación' : 'publicaciones'}
-			</p>
-		</div>
-	</section>
+	<Cover username={profile.username} avatar={profile.avatar} posts={posts.list.length} />
 
 	<div class="buttons">
 		<button class="secondary" type="button" onclick={() => (editing = true)}>Editar perfil</button>
-		<button class="secondary" type="button" onclick={() => (sharing = true)}>
+		<button class="primary" type="button" onclick={() => (sharing = true)}>
 			{copied ? 'Enlace copiado' : 'Compartir perfil'}
 		</button>
 	</div>
 
+	<Ticker words="Publicaciones" />
+
 	<div class="tabs" role="tablist" aria-label="Tus publicaciones">
 		<button role="tab" type="button" aria-selected={tab === 'bio'} onclick={() => (picked = 'bio')}>
-			<Icon name="grid" size={20} />
+			<Icon name="grid" size={18} stroke={2.2} />
 			<span>En tu bio</span>
 		</button>
 		<button role="tab" type="button" aria-selected={tab === 'link'} onclick={() => (picked = 'link')}>
-			<Icon name="link" size={20} />
+			<Icon name="link" size={18} stroke={2.2} />
 			<span>Solo con enlace</span>
 		</button>
 	</div>
 
 	{#if posts.list.length === 0}
-		<div class="empty">
-			<span class="circle"><Icon name="camera" size={40} stroke={1.5} /></span>
-			<h2>Comparte fotos</h2>
+		<div class="empty-note">
+			<Burst size={96} tilt={-8}><Icon name="camera" size={36} stroke={2} /></Burst>
+			<h2 class="display">Comparte fotos</h2>
 			<p>
 				Cuando compartas una publicación, aparecerá en tu perfil, con un enlace para quien tú elijas:
 				cualquiera, o solo algunos amigos.
 			</p>
-			<button class="link" type="button" onclick={() => pushState('', { composing: true })}>
+			<button class="primary" type="button" onclick={() => pushState('', { composing: true })}>
 				Comparte tu primera foto
 			</button>
 		</div>
@@ -117,8 +111,8 @@
 			</p>
 			<Grid posts={listed} onopen={open} />
 		{:else}
-			<div class="empty">
-				<h2>Tu bio está vacía</h2>
+			<div class="empty-note">
+				<h2 class="display">Tu bio está vacía</h2>
 				<p>
 					Al publicar, activa «Listar en mi bio» para que una publicación aparezca aquí y en tu bio,
 					para quien pueda verla. Las que ya tienes se cambian desde su «⋯».
@@ -129,7 +123,7 @@
 		<p class="hint pad">No aparecen en tu bio: solo se abren con su enlace.</p>
 		<Grid posts={unlisted} onopen={open} />
 	{:else}
-		<div class="empty">
+		<div class="empty-note">
 			<p>Todas tus publicaciones están en tu bio.</p>
 		</div>
 	{/if}
@@ -146,62 +140,54 @@
 		padding-bottom: env(safe-area-inset-bottom);
 	}
 
-	.top {
-		display: flex;
-		position: sticky;
-		z-index: 10;
-		top: 0;
-		align-items: center;
+	.masthead {
 		justify-content: space-between;
-		height: 52px;
-		padding: 0 8px 0 16px;
-		background: var(--bg);
 	}
 
 	.end {
 		display: flex;
 		align-items: center;
+		gap: 10px;
 	}
 
-	.who {
-		display: flex;
-		align-items: center;
-		gap: 24px;
-		padding: 12px 16px 0;
+	/* «+»: the one thing to do from here, so it is the lime one. */
+	.create {
+		display: grid;
+		place-items: center;
+		width: 38px;
+		height: 38px;
+		padding: 0;
+		border: var(--line) solid var(--ink);
+		border-radius: 10px;
+		background: var(--lime);
+		color: var(--on-lime);
+		box-shadow: 3px 3px 0 var(--ink);
 	}
 
-	.side {
-		min-width: 0;
-	}
-
-	h1 {
-		margin: 0 0 6px;
-		overflow: hidden;
-		font-size: 20px;
-		font-weight: 600;
-		line-height: 25px;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.side p {
-		margin: 0;
-		font-size: 15px;
+	.create:active {
+		transform: translate(2px, 2px);
+		box-shadow: 1px 1px 0 var(--ink);
 	}
 
 	.buttons {
 		display: flex;
-		gap: 8px;
-		padding: 16px;
+		gap: 10px;
+		padding: 20px 16px 8px;
 	}
 
-	.buttons .secondary {
+	.buttons > * {
 		flex: 1;
+		white-space: nowrap;
 	}
 
+	/* Two halves of one outlined strip: the tab showing is inked. */
 	.tabs {
 		display: flex;
-		border-top: 1px solid var(--border);
+		margin: 0 16px 6px;
+		overflow: hidden;
+		border: var(--line) solid var(--ink);
+		border-radius: 14px;
+		background: var(--card);
 	}
 
 	.tabs button {
@@ -210,62 +196,27 @@
 		align-items: center;
 		justify-content: center;
 		gap: 6px;
-		padding: 10px 0;
+		min-height: 40px;
+		padding: 0 8px;
 		border: 0;
 		background: none;
 		color: var(--muted);
-		font-size: 13px;
-		font-weight: 600;
+		font-size: 14px;
+		font-weight: 800;
 	}
 
-	/* As Instagram marks the tab showing: a line under it. */
+	.tabs button + button {
+		border-left: var(--line) solid var(--ink);
+	}
+
 	.tabs button[aria-selected='true'] {
-		color: var(--text);
-		box-shadow: inset 0 -1px 0 var(--text);
+		background: var(--lilac);
+		color: var(--on-lilac);
 	}
 
 	.pad {
 		margin: 0;
 		padding: 8px 16px 10px;
 		text-align: center;
-	}
-
-	.empty {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 12px;
-		padding: 48px 32px;
-		text-align: center;
-	}
-
-	.circle {
-		display: grid;
-		place-items: center;
-		width: 72px;
-		height: 72px;
-		border: 2px solid var(--text);
-		border-radius: 50%;
-	}
-
-	.empty h2 {
-		margin: 4px 0 0;
-		font-size: 24px;
-		font-weight: 800;
-		line-height: 30px;
-	}
-
-	.empty p {
-		max-width: 340px;
-		margin: 0;
-		color: var(--muted);
-	}
-
-	.empty .link {
-		padding: 0;
-		border: 0;
-		background: none;
-		color: var(--blue);
-		font-weight: 600;
 	}
 </style>

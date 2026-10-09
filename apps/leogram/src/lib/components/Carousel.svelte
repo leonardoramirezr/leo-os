@@ -1,6 +1,6 @@
 <script lang="ts">
 	// A post's photos side by side, one screen wide each: swiped through on a phone, and with arrows
-	// where there is a mouse, as Instagram has them. Scroll snapping does the swiping, so it moves
+	// where there is a mouse. Scroll snapping does the swiping, so it moves
 	// with the finger the way the system's own scrolling does.
 	import type { Snippet } from 'svelte';
 	import { ASPECTS, type Aspect } from '$lib/images';
@@ -126,16 +126,17 @@
 		scroll-snap-stop: always;
 	}
 
+	/* Stickers on the photo, as the grid's are. */
 	.counter {
 		position: absolute;
-		top: 14px;
-		right: 14px;
-		padding: 3px 8px;
-		border-radius: 12px;
-		background: rgb(18 18 18 / 0.7);
-		color: #fff;
-		font-size: 12px;
-		font-weight: 600;
+		top: 12px;
+		right: 12px;
+		padding: 5px 9px 4px;
+		border: 2px solid var(--ink);
+		border-radius: 999px;
+		background: var(--lilac);
+		color: var(--on-lilac);
+		font: 700 11px/1 var(--mono);
 		pointer-events: none;
 	}
 
@@ -149,11 +150,11 @@
 		height: 30px;
 		margin-top: -15px;
 		padding: 0;
-		border: 0;
+		border: 2px solid var(--ink);
 		border-radius: 50%;
-		background: rgb(255 255 255 / 0.8);
-		color: #262626;
-		box-shadow: 0 1px 4px rgb(0 0 0 / 0.2);
+		background: var(--card);
+		color: var(--text);
+		box-shadow: 2px 2px 0 var(--ink);
 	}
 
 	@media (hover: hover) {

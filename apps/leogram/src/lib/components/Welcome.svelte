@@ -29,13 +29,13 @@
 	}
 </script>
 
-<header class="bar">
+<header class="bar welcome-bar">
 	<HomeButton />
 </header>
 
 <form class="welcome" onsubmit={start}>
-	<Wordmark height={52} />
-	<h1>Elige tu nombre de usuario</h1>
+	<Wordmark height={64} />
+	<h1 class="display">Elige tu nombre de usuario</h1>
 	<p>
 		Es el nombre con el que aparecerán tus publicaciones y tus comentarios. Puedes cambiarlo
 		después.
@@ -58,9 +58,9 @@
 		align-items: center;
 		justify-content: flex-end;
 		max-width: 935px;
-		height: 52px;
+		height: 56px;
 		margin: 0 auto;
-		padding: 0 8px;
+		padding: 0 10px;
 	}
 
 	.welcome {
@@ -68,16 +68,15 @@
 		flex-direction: column;
 		align-items: center;
 		max-width: 420px;
-		min-height: calc(100dvh - 52px);
+		min-height: calc(100dvh - 56px);
 		margin: 0 auto;
 		padding: 0 24px calc(24px + env(safe-area-inset-bottom));
 		text-align: center;
 	}
 
 	h1 {
-		margin: 24px 0 8px;
-		font-size: 20px;
-		line-height: 26px;
+		margin: 28px 0 12px;
+		font-size: 30px;
 	}
 
 	p {
@@ -88,6 +87,6 @@
 	.primary {
 		width: 100%;
 		max-width: 360px;
-		margin-top: 16px;
+		margin-top: 20px;
 	}
 </style>

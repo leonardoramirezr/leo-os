@@ -32,7 +32,7 @@
 	<div class="sheet">
 		<header>
 			<div class="side">{#if leading}{@render leading()}{/if}</div>
-			<h2>{title}</h2>
+			<h2 class="display">{title}</h2>
 			<div class="side end">{#if trailing}{@render trailing()}{/if}</div>
 		</header>
 
@@ -43,6 +43,7 @@
 </dialog>
 
 <style>
+	/* A sheet of the same paper, slid up from the bottom, outlined in ink along its top. */
 	dialog {
 		width: 100%;
 		max-width: 100%;
@@ -51,12 +52,12 @@
 		margin: auto 0 0;
 		padding: 0;
 		border: 0;
-		border-radius: 20px 20px 0 0;
+		border-top: 3px solid var(--ink);
+		border-radius: 24px 24px 0 0;
 		background: var(--sheet);
 		overscroll-behavior: contain;
-		/* In the dark a sheet is the grey fields are: a field on it, or a face with no photo, takes
-		   the lighter one Instagram has its own sheets' fields in. */
-		--field: light-dark(#efefef, #363636);
+		/* In the dark a sheet is the grey fields are: a field on it takes a lighter one. */
+		--field: light-dark(#e4e4db, #30303a);
 	}
 
 	@media (min-width: 640px) {
@@ -65,7 +66,9 @@
 			height: 80dvh;
 			max-height: 80dvh;
 			margin: auto;
-			border-radius: 20px;
+			border: 3px solid var(--ink);
+			border-radius: 24px;
+			box-shadow: 6px 6px 0 var(--ink);
 		}
 	}
 
@@ -80,16 +83,16 @@
 		flex: none;
 		align-items: center;
 		gap: 8px;
-		padding: 8px 12px;
-		border-bottom: 1px solid var(--border);
+		min-height: 54px;
+		padding: 6px 12px;
+		border-bottom: var(--line) solid var(--ink);
 		background: var(--sheet);
 	}
 
 	h2 {
 		flex: 1;
 		margin: 0;
-		font-size: 16px;
-		font-weight: 700;
+		font-size: 22px;
 		text-align: center;
 	}
 

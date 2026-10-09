@@ -6,6 +6,7 @@
 	import { CLIP_SECONDS, decode, peaks, readUpload, type Upload } from '$lib/music/clip';
 	import { Player } from '$lib/music/player.svelte';
 	import type { DraftMusic } from '$lib/posts.svelte';
+	import Burst from './Burst.svelte';
 	import Icon from './Icon.svelte';
 	import MomentPicker from './MomentPicker.svelte';
 	import Sheet from './Sheet.svelte';
@@ -210,7 +211,7 @@
 	{/snippet}
 	{#snippet trailing()}
 		{#if choice}
-			<button class="text-button blue" type="button" onclick={done}>Listo</button>
+			<button class="text-button accent" type="button" onclick={done}>Listo</button>
 		{/if}
 	{/snippet}
 
@@ -325,7 +326,7 @@
 			</ul>
 		{:else}
 			<div class="upload">
-				<span class="circle"><Icon name="music" size={36} stroke={1.6} /></span>
+				<Burst size={92} tilt={-8}><Icon name="music" size={34} stroke={2} /></Burst>
 				<p>
 					Sube una canción tuya, como MP3. Solo se guarda el momento que elijas, nunca la canción
 					entera.
@@ -351,36 +352,44 @@
 </Sheet>
 
 <style>
+	/* Two halves of one outlined strip, as the profile's tabs: the one showing is a sticker. */
 	.tabs {
 		display: flex;
-		margin: 0 16px;
-		border-bottom: 1px solid var(--border);
+		margin: 14px 16px 0;
+		overflow: hidden;
+		border: var(--line) solid var(--ink);
+		border-radius: 14px;
+		background: var(--card);
 	}
 
 	.tabs button {
 		flex: 1;
-		padding: 12px 0;
+		min-height: 40px;
+		padding: 0 8px;
 		border: 0;
-		border-bottom: 1px solid transparent;
-		margin-bottom: -1px;
 		background: none;
 		color: var(--muted);
-		font-weight: 600;
+		font-weight: 800;
+	}
+
+	.tabs button + button {
+		border-left: var(--line) solid var(--ink);
 	}
 
 	.tabs button[aria-selected='true'] {
-		border-bottom-color: var(--text);
-		color: var(--text);
+		background: var(--lilac);
+		color: var(--on-lilac);
 	}
 
 	.search {
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		margin: 12px 16px 4px;
+		margin: 14px 16px 6px;
 		padding: 0 12px;
-		border-radius: 10px;
-		background: var(--field);
+		border: var(--line) solid var(--ink);
+		border-radius: 12px;
+		background: var(--card);
 		color: var(--muted);
 	}
 
@@ -434,7 +443,8 @@
 		flex: none;
 		width: 48px;
 		height: 48px;
-		border-radius: 4px;
+		border: 2px solid var(--ink);
+		border-radius: 8px;
 		object-fit: cover;
 	}
 
@@ -489,9 +499,10 @@
 		width: 36px;
 		height: 36px;
 		padding: 0;
-		border: 0;
+		border: 2px solid var(--ink);
 		border-radius: 50%;
-		background: var(--field);
+		background: var(--lilac);
+		color: var(--on-lilac);
 	}
 
 	.song {
@@ -516,12 +527,4 @@
 		color: var(--muted);
 	}
 
-	.circle {
-		display: grid;
-		place-items: center;
-		width: 72px;
-		height: 72px;
-		border: 2px solid var(--text);
-		border-radius: 50%;
-	}
 </style>

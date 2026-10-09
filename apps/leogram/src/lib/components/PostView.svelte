@@ -24,6 +24,7 @@
 	import { createProfile } from '$lib/profile.svelte';
 	import ActionSheet, { type Action } from './ActionSheet.svelte';
 	import Avatar from './Avatar.svelte';
+	import Burst from './Burst.svelte';
 	import Carousel from './Carousel.svelte';
 	import Icon from './Icon.svelte';
 	import VisibilitySheet from './VisibilitySheet.svelte';
@@ -331,15 +332,15 @@
 </script>
 
 {#if problem}
-	<div class="unavailable">
-		<h2>No se pudo abrir la publicación</h2>
+	<div class="empty-note">
+		<h2 class="display">No se pudo abrir la publicación</h2>
 		<p>{problem}</p>
 		<button class="secondary" type="button" onclick={() => read(code)}>Reintentar</button>
 	</div>
 {:else if restricted}
-	<div class="unavailable">
-		<span class="lock"><Icon name="lock" size={36} stroke={1.6} /></span>
-		<h2>Esta publicación es solo para algunos amigos</h2>
+	<div class="empty-note">
+		<Burst size={92} tilt={-8}><Icon name="lock" size={34} stroke={2} /></Burst>
+		<h2 class="display">Esta publicación es solo para algunos amigos</h2>
 		{#if session.status === 'in'}
 			<p>Quien la publicó no la compartió con esta cuenta.</p>
 		{:else}
@@ -350,8 +351,8 @@
 		{/if}
 	</div>
 {:else if post === null}
-	<div class="unavailable">
-		<h2>Esta publicación no está disponible</h2>
+	<div class="empty-note">
+		<h2 class="display">Esta publicación no está disponible</h2>
 		<p>Es posible que el enlace no funcione o que se haya eliminado la publicación.</p>
 	</div>
 {:else if post === undefined}
@@ -375,7 +376,7 @@
 		{/if}
 		<header>
 			<a class="face" href={bioLink(post.username)} aria-label="Bio de {post.username}">
-				<Avatar src={post.avatars[post.username]} username={post.username} />
+				<Avatar src={post.avatars[post.username]} username={post.username} size={40} />
 			</a>
 			<div class="who">
 				<span class="name">
@@ -399,66 +400,77 @@
 			</button>
 		</header>
 
-		<Carousel count={post.slides} aspect={post.aspect} bind:index ondoubletap={doubleTap}>
-			{#snippet slide(i)}
-				{@const item = items.get(i)}
-				{#if item?.kind === 'video'}
-					<!-- Framed as its author framed it: the file is the whole video, as recorded. -->
-					<video
-						class="photo"
-						bind:this={videos[i]}
-						src={item.url}
-						poster={item.poster ?? undefined}
-						style:object-position="{item.focus_x}% {item.focus_y}%"
-						muted
-						loop
-						playsinline
-						preload={i === index ? 'auto' : 'metadata'}
-						aria-label="Video {i + 1} de {post?.slides}"
-					></video>
-				{:else if item}
-					<img class="photo" src={item.url} alt="Foto {i + 1} de {post?.slides}" draggable={false} />
-				{:else}
-					<span class="bone fill" aria-hidden="true"></span>
-				{/if}
-			{/snippet}
-			{#snippet overlay()}
-				{#key burst}
-					{#if burst}
-						<span class="burst" aria-hidden="true"><Icon name="liked" size={96} /></span>
+		<div class="print">
+			<Carousel count={post.slides} aspect={post.aspect} bind:index ondoubletap={doubleTap}>
+				{#snippet slide(i)}
+					{@const item = items.get(i)}
+					{#if item?.kind === 'video'}
+						<!-- Framed as its author framed it: the file is the whole video, as recorded. -->
+						<video
+							class="photo"
+							bind:this={videos[i]}
+							src={item.url}
+							poster={item.poster ?? undefined}
+							style:object-position="{item.focus_x}% {item.focus_y}%"
+							muted
+							loop
+							playsinline
+							preload={i === index ? 'auto' : 'metadata'}
+							aria-label="Video {i + 1} de {post?.slides}"
+						></video>
+					{:else if item}
+						<img
+							class="photo"
+							src={item.url}
+							alt="Foto {i + 1} de {post?.slides}"
+							draggable={false}
+						/>
+					{:else}
+						<span class="bone fill" aria-hidden="true"></span>
 					{/if}
-				{/key}
-				{#if player}
-					{#if player.waiting}
-						<span class="tap" aria-hidden="true">Toca para escuchar</span>
+				{/snippet}
+				{#snippet overlay()}
+					{#key burst}
+						{#if burst}
+							<!-- A lime heart stuck on the photo, over its own hard shadow. -->
+							<span class="burst" aria-hidden="true">
+								<span class="behind"><Icon name="liked" size={104} /></span>
+								<span class="front"><Icon name="liked" size={104} /></span>
+							</span>
+						{/if}
+					{/key}
+					{#if player}
+						{#if player.waiting}
+							<span class="tap" aria-hidden="true">Toca para escuchar</span>
+						{/if}
+						<button
+							class="sound"
+							type="button"
+							onclick={(event) => {
+								// Not a tap on the photo: two of these are no like.
+								event.stopPropagation();
+								player?.toggle();
+							}}
+							aria-label={player.playing ? 'Silenciar la música' : 'Escuchar la música'}
+						>
+							<Icon name={player.playing ? 'sound' : 'muted'} size={12} stroke={2.4} />
+						</button>
+					{:else if showingVideo}
+						<button
+							class="sound"
+							type="button"
+							onclick={(event) => {
+								event.stopPropagation();
+								toggleVideoSound();
+							}}
+							aria-label={videoSound ? 'Silenciar el video' : 'Escuchar el video'}
+						>
+							<Icon name={videoSound ? 'sound' : 'muted'} size={12} stroke={2.4} />
+						</button>
 					{/if}
-					<button
-						class="sound"
-						type="button"
-						onclick={(event) => {
-							// Not a tap on the photo: two of these are no like.
-							event.stopPropagation();
-							player?.toggle();
-						}}
-						aria-label={player.playing ? 'Silenciar la música' : 'Escuchar la música'}
-					>
-						<Icon name={player.playing ? 'sound' : 'muted'} size={12} stroke={2.4} />
-					</button>
-				{:else if showingVideo}
-					<button
-						class="sound"
-						type="button"
-						onclick={(event) => {
-							event.stopPropagation();
-							toggleVideoSound();
-						}}
-						aria-label={videoSound ? 'Silenciar el video' : 'Escuchar el video'}
-					>
-						<Icon name={videoSound ? 'sound' : 'muted'} size={12} stroke={2.4} />
-					</button>
-				{/if}
-			{/snippet}
-		</Carousel>
+				{/snippet}
+			</Carousel>
+		</div>
 
 		<div class="bar">
 			<button
@@ -582,12 +594,14 @@
 		background: var(--bg);
 	}
 
+	/* Where there is room, the post is a card stuck on the page. */
 	@media (min-width: 520px) {
 		.post {
-			margin: 16px auto;
+			margin: 20px auto;
 			overflow: hidden;
-			border: 1px solid var(--border);
-			border-radius: 8px;
+			border: 3px solid var(--ink);
+			border-radius: 18px;
+			box-shadow: 6px 6px 0 var(--ink);
 		}
 	}
 
@@ -595,8 +609,8 @@
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		min-height: 56px;
-		padding: 8px 4px 8px 12px;
+		min-height: 62px;
+		padding: 10px 6px 10px 14px;
 	}
 
 	.who {
@@ -608,7 +622,7 @@
 
 	.username {
 		color: inherit;
-		font-weight: 600;
+		font-weight: 800;
 		text-decoration: none;
 	}
 
@@ -634,19 +648,20 @@
 		white-space: nowrap;
 	}
 
-	/* Instagram marks a post for close friends by its author's name; this is the same idea. */
+	/* A post for some friends only says so by its author's name, on a lime label. */
 	.friends {
 		display: inline-flex;
 		flex: none;
 		align-items: center;
-		gap: 3px;
-		padding: 1px 7px 1px 5px;
-		border-radius: 10px;
-		background: #1db954;
-		color: #fff;
-		font-size: 11px;
-		font-weight: 700;
-		line-height: 16px;
+		gap: 4px;
+		padding: 3px 7px 2px 5px;
+		border: 1.5px solid var(--ink);
+		border-radius: 999px;
+		background: var(--lime);
+		color: var(--on-lime);
+		font: 700 10px/1 var(--mono);
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
 	}
 
 	/* What only its author sees: who it is for, with «Cambiar» at hand. */
@@ -655,12 +670,14 @@
 		align-items: center;
 		gap: 8px;
 		width: 100%;
-		min-height: 40px;
-		padding: 8px 12px;
+		min-height: 44px;
+		padding: 8px 14px;
 		border: 0;
-		border-bottom: 1px solid var(--border);
-		background: var(--field);
-		font-size: 13px;
+		border-bottom: var(--line) solid var(--ink);
+		background: var(--lilac);
+		color: var(--on-lilac);
+		font-size: 14px;
+		font-weight: 600;
 		text-align: left;
 	}
 
@@ -673,31 +690,32 @@
 	}
 
 	.audience .change {
-		color: var(--blue);
-		font-weight: 600;
+		font-weight: 800;
+		text-decoration: underline;
+		text-underline-offset: 3px;
 	}
 
-	.lock {
-		display: inline-grid;
-		place-items: center;
-		width: 72px;
-		height: 72px;
-		margin-bottom: 16px;
-		border: 2px solid var(--text);
-		border-radius: 50%;
-	}
-
+	/* The song, as a label is typed. */
 	.song {
 		display: flex;
 		align-items: center;
-		gap: 4px;
+		gap: 5px;
 		max-width: 100%;
+		margin-top: 2px;
 		padding: 0;
 		border: 0;
 		background: none;
-		font-size: 12px;
-		line-height: 16px;
+		font: 400 12px/16px var(--mono);
 		text-align: left;
+	}
+
+	/* Its photos, as a print pasted on the page: outlined, on a hard shadow. */
+	.print {
+		margin: 0 12px;
+		overflow: hidden;
+		border: 3px solid var(--ink);
+		border-radius: 16px;
+		box-shadow: 5px 5px 0 var(--ink);
 	}
 
 	.song span {
@@ -716,16 +734,32 @@
 		-webkit-touch-callout: none;
 	}
 
-	/* The heart a double tap leaves on the photo. */
+	/* The heart a double tap leaves on the photo: a lime sticker over its shadow, no blur. */
 	.burst {
 		display: grid;
 		position: absolute;
 		inset: 0;
 		place-items: center;
-		color: #fff;
-		filter: drop-shadow(0 0 16px rgb(0 0 0 / 0.25));
 		pointer-events: none;
 		animation: burst 0.9s ease-out forwards;
+	}
+
+	.burst > span {
+		grid-area: 1 / 1;
+	}
+
+	.burst .behind {
+		color: #15151c;
+		translate: 6px 6px;
+	}
+
+	.burst .front {
+		color: var(--lime);
+	}
+
+	.burst .front :global(svg) {
+		stroke: #15151c;
+		stroke-width: 1.2;
 	}
 
 	@keyframes burst {
@@ -751,31 +785,34 @@
 		}
 	}
 
+	/* Stickers on the photo: the sound, and the word that asks for a tap. */
 	.sound {
 		display: grid;
 		position: absolute;
 		right: 12px;
 		bottom: 12px;
 		place-items: center;
-		width: 28px;
-		height: 28px;
+		width: 32px;
+		height: 32px;
 		padding: 0;
-		border: 0;
+		border: 2px solid var(--ink);
 		border-radius: 50%;
-		background: rgb(38 38 38 / 0.85);
-		color: #fff;
+		background: var(--lilac);
+		color: var(--on-lilac);
 	}
 
 	.tap {
 		position: absolute;
-		right: 46px;
+		right: 52px;
 		bottom: 14px;
-		padding: 4px 10px;
-		border-radius: 12px;
-		background: rgb(38 38 38 / 0.85);
-		color: #fff;
-		font-size: 12px;
-		font-weight: 600;
+		padding: 6px 10px 5px;
+		border: 2px solid var(--ink);
+		border-radius: 999px;
+		background: var(--lime);
+		color: var(--on-lime);
+		font: 700 11px/1 var(--mono);
+		letter-spacing: 0.03em;
+		text-transform: uppercase;
 		pointer-events: none;
 		animation: fade-in 0.3s ease-out;
 	}
@@ -790,8 +827,8 @@
 		display: flex;
 		position: relative;
 		align-items: center;
-		min-height: 46px;
-		padding: 2px 4px;
+		min-height: 50px;
+		padding: 8px 6px 2px;
 	}
 
 	.heart.liked {
@@ -814,23 +851,21 @@
 	}
 
 	.dots span {
-		width: 6px;
-		height: 6px;
+		width: 8px;
+		height: 8px;
+		border: 1.5px solid var(--ink);
 		border-radius: 50%;
-		background: var(--muted);
-		opacity: 0.4;
 	}
 
 	.dots span.current {
-		background: var(--blue);
-		opacity: 1;
+		background: var(--accent);
 	}
 
 	.details {
 		display: flex;
 		flex-direction: column;
 		gap: 6px;
-		padding: 0 12px 12px;
+		padding: 0 14px 14px;
 	}
 
 	.details p {
@@ -843,7 +878,7 @@
 		padding: 0;
 		border: 0;
 		background: none;
-		font-weight: 600;
+		font-weight: 800;
 		text-align: left;
 	}
 
@@ -882,12 +917,13 @@
 		min-width: 0;
 	}
 
+	/* Dates are stamped, as a label is. */
 	.comments .meta {
 		display: flex;
 		gap: 12px;
 		margin-top: 2px;
 		color: var(--muted);
-		font-size: 12px;
+		font: 400 11px/16px var(--mono);
 	}
 
 	.meta button {
@@ -895,32 +931,39 @@
 		border: 0;
 		background: none;
 		color: var(--muted);
-		font-size: 12px;
-		font-weight: 600;
+		font: 700 11px/16px var(--mono);
 	}
 
 	.date {
 		color: var(--muted);
-		font-size: 12px;
+		font: 400 11px/16px var(--mono);
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
 	}
 
 	.reply {
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		min-height: 52px;
-		padding: 8px 12px;
-		border-top: 1px solid var(--border);
+		min-height: 60px;
+		padding: 10px 14px;
+		border-top: var(--line) solid var(--ink);
+	}
+
+	/* The comment is written in an outlined pill, and so is the ask for one. */
+	.reply textarea,
+	.ask {
+		flex: 1;
+		min-width: 0;
+		padding: 8px 14px;
+		border: var(--line) solid var(--ink);
+		border-radius: 20px;
+		background: var(--card);
 	}
 
 	.reply textarea {
-		flex: 1;
-		min-width: 0;
-		max-height: 80px;
-		padding: 6px 0;
-		border: 0;
+		max-height: 96px;
 		outline: none;
-		background: none;
 		resize: none;
 		field-sizing: content;
 		/* Under 16px iOS zooms in on the field. */
@@ -936,8 +979,8 @@
 		padding: 4px;
 		border: 0;
 		background: none;
-		color: var(--blue);
-		font-weight: 600;
+		color: var(--accent);
+		font-weight: 800;
 	}
 
 	.publish:disabled {
@@ -945,30 +988,8 @@
 	}
 
 	.ask {
-		flex: 1;
-		padding: 6px 0;
-		border: 0;
-		background: none;
 		color: var(--muted);
 		text-align: left;
-	}
-
-	.unavailable {
-		max-width: 470px;
-		margin: 0 auto;
-		padding: 48px 24px;
-		text-align: center;
-	}
-
-	.unavailable h2 {
-		margin: 0 0 12px;
-		font-size: 20px;
-		line-height: 26px;
-	}
-
-	.unavailable p {
-		margin: 0 0 20px;
-		color: var(--muted);
 	}
 
 	.loading header {
@@ -993,6 +1014,8 @@
 	}
 
 	.bone.photo {
+		margin: 0 12px;
+		border-radius: 16px;
 		aspect-ratio: 4 / 5;
 	}
 
@@ -1015,11 +1038,13 @@
 		left: 50%;
 		max-width: calc(100% - 32px);
 		margin: 0;
-		padding: 10px 16px;
-		border-radius: 8px;
-		background: #262626;
-		color: #fff;
+		padding: 11px 16px;
+		border: var(--line) solid var(--ink);
+		border-radius: 12px;
+		background: var(--ink);
+		color: var(--bg);
+		font-weight: 700;
 		transform: translateX(-50%);
-		box-shadow: 0 4px 16px rgb(0 0 0 / 0.25);
+		box-shadow: 4px 4px 0 var(--lime);
 	}
 </style>

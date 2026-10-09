@@ -435,7 +435,7 @@
 <div class="editor" class:writing={typing} bind:this={editor}>
 	<header>
 		<button class="text-button" type="button" onclick={cancel}>Cancelar</button>
-		<h1>Texto</h1>
+		<h1 class="display">Texto</h1>
 		<button class="text-button done" type="button" onclick={done}>Listo</button>
 		<HomeButton />
 	</header>
@@ -628,8 +628,10 @@
 </div>
 
 <style>
-	/* Black, whatever the theme, as Instagram's editor: the photo is what has colour. */
+	/* Black, whatever the theme: the photo is what has colour. The outlines are cream on it, as they
+	   are in the dark. */
 	.editor {
+		--ink: #f2f2ec;
 		display: flex;
 		position: fixed;
 		z-index: 30;
@@ -655,8 +657,7 @@
 	h1 {
 		flex: 1;
 		margin: 0;
-		font-size: 16px;
-		font-weight: 700;
+		font-size: 22px;
 		text-align: center;
 	}
 
@@ -667,7 +668,8 @@
 	}
 
 	.editor .done {
-		font-weight: 700;
+		color: var(--lime);
+		font-weight: 800;
 		text-align: right;
 	}
 
@@ -707,7 +709,7 @@
 
 	.guide {
 		position: absolute;
-		background: #3897f0;
+		background: var(--lime);
 		pointer-events: none;
 	}
 
@@ -750,8 +752,10 @@
 
 	.add {
 		padding: 0;
-		border: 2px solid #fff;
-		background: none;
+		border: var(--line) solid var(--ink);
+		background: var(--lime);
+		color: var(--on-lime);
+		box-shadow: 3px 3px 0 var(--ink);
 	}
 
 	.bin {
