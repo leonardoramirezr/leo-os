@@ -58,18 +58,36 @@
 				list-style: none;
 			}
 
+			li {
+				display: flex;
+				align-items: center;
+			}
+
 			li + li {
 				border-top: 1px solid var(--border);
 			}
 
-			/* Stacked: a branch name is long and must not be cut off. */
 			a {
+				color: var(--link);
+				text-decoration: none;
+			}
+
+			/* Stacked: a branch name is long and must not be cut off. */
+			.preview {
 				display: flex;
+				flex: 1;
+				min-width: 0;
 				flex-direction: column;
 				gap: 3px;
 				padding: 14px 16px;
-				color: var(--link);
-				text-decoration: none;
+			}
+
+			/* Its own tap target, beside the preview's rather than inside it. */
+			.pr {
+				flex: none;
+				padding: 14px 16px 14px 8px;
+				font-size: 15px;
+				white-space: nowrap;
 			}
 
 			.branch {
@@ -88,94 +106,116 @@
 		<p>One per branch with unpublished changes. Deleting the branch removes it.</p>
 		<ul>
 			<li>
-				<a href="./claude-leo-parti/">
+				<a class="preview" href="./claude-previews-pr-link/">
+					<span class="branch">claude/previews-pr-link</span>
+					<span class="meta">112ed0a · 2026-10-09 14:37 UTC</span>
+				</a>
+				<a class="pr" href="https://github.com/leonardoramirezr/leo-os/pulls?q=is%3Apr+head%3Aclaude%2Fpreviews-pr-link">PR</a>
+			</li>
+			<li>
+				<a class="preview" href="./claude-leo-parti/">
 					<span class="branch">claude/leo-parti</span>
 					<span class="meta">59dcd4a · 2026-10-09 04:45 UTC</span>
 				</a>
+				<a class="pr" href="https://github.com/leonardoramirezr/leo-os/pulls?q=is%3Apr+head%3Aclaude%2Fleo-parti">PR</a>
 			</li>
 			<li>
-				<a href="./claude-leogram-electrico/">
+				<a class="preview" href="./claude-leogram-electrico/">
 					<span class="branch">claude/leogram-electrico</span>
 					<span class="meta">8512577 · 2026-10-09 04:03 UTC</span>
 				</a>
+				<a class="pr" href="https://github.com/leonardoramirezr/leo-os/pull/39">#39</a>
 			</li>
 			<li>
-				<a href="./claude-rutina-gym-app/">
+				<a class="preview" href="./claude-rutina-gym-app/">
 					<span class="branch">claude/rutina-gym-app</span>
 					<span class="meta">702d13d · 2026-10-07 04:07 UTC</span>
 				</a>
+				<a class="pr" href="https://github.com/leonardoramirezr/leo-os/pull/28">#28</a>
 			</li>
 			<li>
-				<a href="./claude-leogram-link-preview/">
+				<a class="preview" href="./claude-leogram-link-preview/">
 					<span class="branch">claude/leogram-link-preview</span>
 					<span class="meta">f703e7d · 2026-10-03 00:37 UTC</span>
 				</a>
+				<a class="pr" href="https://github.com/leonardoramirezr/leo-os/pulls?q=is%3Apr+head%3Aclaude%2Fleogram-link-preview">PR</a>
 			</li>
 			<li>
-				<a href="./claude-dictado-changes-improve/">
+				<a class="preview" href="./claude-dictado-changes-improve/">
 					<span class="branch">claude/dictado-changes-improve</span>
 					<span class="meta">268d6a6 · 2026-10-02 05:08 UTC</span>
 				</a>
+				<a class="pr" href="https://github.com/leonardoramirezr/leo-os/pull/26">#26</a>
 			</li>
 			<li>
-				<a href="./claude-transforma-text-prompts/">
+				<a class="preview" href="./claude-transforma-text-prompts/">
 					<span class="branch">claude/transforma-text-prompts</span>
 					<span class="meta">b017667 · 2026-10-02 03:07 UTC</span>
 				</a>
+				<a class="pr" href="https://github.com/leonardoramirezr/leo-os/pull/25">#25</a>
 			</li>
 			<li>
-				<a href="./claude-home-button-every-screen/">
+				<a class="preview" href="./claude-home-button-every-screen/">
 					<span class="branch">claude/home-button-every-screen</span>
 					<span class="meta">bfd96d9 · 2026-09-29 05:54 UTC</span>
 				</a>
+				<a class="pr" href="https://github.com/leonardoramirezr/leo-os/pulls?q=is%3Apr+head%3Aclaude%2Fhome-button-every-screen">PR</a>
 			</li>
 			<li>
-				<a href="./claude-home-dock-theme-status-bar/">
+				<a class="preview" href="./claude-home-dock-theme-status-bar/">
 					<span class="branch">claude/home-dock-theme-status-bar</span>
 					<span class="meta">77da836 · 2026-09-29 03:48 UTC</span>
 				</a>
+				<a class="pr" href="https://github.com/leonardoramirezr/leo-os/pull/23">#23</a>
 			</li>
 			<li>
-				<a href="./claude-voice-to-text-transcription-app-3kt6iy/">
+				<a class="preview" href="./claude-voice-to-text-transcription-app-3kt6iy/">
 					<span class="branch">claude/voice-to-text-transcription-app-3kt6iy</span>
 					<span class="meta">43ef78e · 2026-09-29 00:43 UTC</span>
 				</a>
+				<a class="pr" href="https://github.com/leonardoramirezr/leo-os/pull/21">#21</a>
 			</li>
 			<li>
-				<a href="./claude-happy-albattani-q7cqsy/">
+				<a class="preview" href="./claude-happy-albattani-q7cqsy/">
 					<span class="branch">claude/happy-albattani-q7cqsy</span>
 					<span class="meta">9479fa3 · 2026-09-27 20:23 UTC</span>
 				</a>
+				<a class="pr" href="https://github.com/leonardoramirezr/leo-os/pull/13">#13</a>
 			</li>
 			<li>
-				<a href="./claude-os-design-details-ykzpdr/">
+				<a class="preview" href="./claude-os-design-details-ykzpdr/">
 					<span class="branch">claude/os-design-details-ykzpdr</span>
 					<span class="meta">db517c8 · 2026-09-27 02:59 UTC</span>
 				</a>
+				<a class="pr" href="https://github.com/leonardoramirezr/leo-os/pull/19">#19</a>
 			</li>
 			<li>
-				<a href="./claude-beautiful-shannon-uq7svi/">
+				<a class="preview" href="./claude-beautiful-shannon-uq7svi/">
 					<span class="branch">claude/beautiful-shannon-uq7svi</span>
 					<span class="meta">65c66be · 2026-09-26 22:57 UTC</span>
 				</a>
+				<a class="pr" href="https://github.com/leonardoramirezr/leo-os/pull/18">#18</a>
 			</li>
 			<li>
-				<a href="./claude-preview-rama-schema-isolation-dga7fr/">
+				<a class="preview" href="./claude-preview-rama-schema-isolation-dga7fr/">
 					<span class="branch">claude/preview-rama-schema-isolation-dga7fr</span>
 					<span class="meta">1ecbd53 · 2026-09-24 17:10 UTC</span>
 				</a>
+				<a class="pr" href="https://github.com/leonardoramirezr/leo-os/pull/15">#15</a>
 			</li>
 			<li>
-				<a href="./claude-hopeful-mayer-bc6euw/">
+				<a class="preview" href="./claude-hopeful-mayer-bc6euw/">
 					<span class="branch">claude/hopeful-mayer-bc6euw</span>
 					<span class="meta">efa0594 · 2026-09-23 06:14 UTC</span>
 				</a>
+				<a class="pr" href="https://github.com/leonardoramirezr/leo-os/pull/11">#11</a>
 			</li>
 			<li>
-				<a href="./claude-admiring-wozniak-ux07hr/">
+				<a class="preview" href="./claude-admiring-wozniak-ux07hr/">
 					<span class="branch">claude/admiring-wozniak-ux07hr</span>
 					<span class="meta">87d6cd1 · 2026-09-21 21:20 UTC</span>
 				</a>
+				<a class="pr" href="https://github.com/leonardoramirezr/leo-os/pull/10">#10</a>
 			</li>
 		</ul>
 	</body>
