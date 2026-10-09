@@ -6,6 +6,11 @@
 //
 // When no preview is left, the folder itself goes away.
 //
+// Each preview links to its branch's pull request: in GitHub Actions the script asks GitHub for the
+// repository's pull requests once, since a PR is often opened after the push that published its
+// preview (the list is rewritten on every publish, of any branch). Without an answer, the link is a
+// search for the branch's pull requests, which still lands there.
+//
 // The page has an icon of its own, scripts/previews-icon.svg: without one, the tab shows none and
 // iOS saves it to the home screen with Leo OS's, from the root of the site.
 
@@ -47,6 +52,50 @@ if (previews.length === 0) {
 	process.exit(0);
 }
 
+const repo = process.env.GITHUB_REPOSITORY ?? '';
+
+/** Head branch → its pull request: the open one if there is one, else the newest. */
+async function pullRequests() {
+	const found = new Map();
+	if (!repo) return found;
+	const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+	try {
+		const response = await fetch(
+			`https://api.github.com/repos/${repo}/pulls?state=all&sort=created&direction=desc&per_page=100`,
+			{
+				headers: {
+					accept: 'application/vnd.github+json',
+					...(token ? { authorization: `Bearer ${token}` } : {})
+				},
+				signal: AbortSignal.timeout(10_000)
+			}
+		);
+		if (!response.ok) throw new Error(`HTTP ${response.status}`);
+		for (const pr of await response.json()) {
+			// A fork's branch of the same name is not this repository's.
+			if (pr.head?.repo?.full_name !== repo) continue;
+			const known = found.get(pr.head.ref);
+			if (!known || (known.state !== 'open' && pr.state === 'open')) {
+				found.set(pr.head.ref, { number: pr.number, url: pr.html_url, state: pr.state });
+			}
+		}
+	} catch (error) {
+		console.warn(`▸ Could not read the pull requests (${error.message}): linking a search instead.`);
+	}
+	return found;
+}
+
+const prs = await pullRequests();
+
+/** Where the branch's pull request is, and how the link reads. */
+function prLink(branch) {
+	const pr = prs.get(branch);
+	if (pr) return { href: pr.url, label: `#${pr.number}` };
+	if (!repo) return null;
+	const query = encodeURIComponent(`is:pr head:${branch}`).replace(/%20/g, '+');
+	return { href: `https://github.com/${repo}/pulls?q=${query}`, label: 'PR' };
+}
+
 const icon = readFileSync(new URL('./previews-icon.svg', import.meta.url), 'utf8');
 writeFileSync(join(dir, 'icon.svg'), icon);
 writeFileSync(join(dir, 'apple-touch-icon.png'), appleTouchIcon(icon));
@@ -63,11 +112,13 @@ function when(iso) {
 const items = previews
 	.map(({ slug, branch, sha, updated }) => {
 		const meta = [sha.slice(0, 7), when(updated)].filter(Boolean).join(' · ');
+		const pr = prLink(branch);
 		return `			<li>
-				<a href="./${encodeURIComponent(slug)}/">
+				<a class="preview" href="./${encodeURIComponent(slug)}/">
 					<span class="branch">${escape(branch)}</span>
 					${meta ? `<span class="meta">${escape(meta)}</span>` : ''}
 				</a>
+				${pr ? `<a class="pr" href="${escape(pr.href)}">${escape(pr.label)}</a>` : ''}
 			</li>`;
 	})
 	.join('\n');
@@ -134,18 +185,36 @@ writeFileSync(
 				list-style: none;
 			}
 
+			li {
+				display: flex;
+				align-items: center;
+			}
+
 			li + li {
 				border-top: 1px solid var(--border);
 			}
 
-			/* Stacked: a branch name is long and must not be cut off. */
 			a {
+				color: var(--link);
+				text-decoration: none;
+			}
+
+			/* Stacked: a branch name is long and must not be cut off. */
+			.preview {
 				display: flex;
+				flex: 1;
+				min-width: 0;
 				flex-direction: column;
 				gap: 3px;
 				padding: 14px 16px;
-				color: var(--link);
-				text-decoration: none;
+			}
+
+			/* Its own tap target, beside the preview's rather than inside it. */
+			.pr {
+				flex: none;
+				padding: 14px 16px 14px 8px;
+				font-size: 15px;
+				white-space: nowrap;
 			}
 
 			.branch {

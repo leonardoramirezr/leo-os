@@ -160,6 +160,8 @@ jobs:
           PREVIEW: ${{ steps.target.outputs.preview }}
           SLUG: ${{ steps.target.outputs.slug }}
           PAGES_MESSAGE: ${{ github.ref_name }} @ ${{ github.sha }}
+          # scripts/previews-index.mjs reads the pull requests to link each preview to its own.
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [ "$PREVIEW" = 'true' ]; then
             scripts/publish-pages.sh preview "$SLUG" dist
