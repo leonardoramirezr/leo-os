@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<!-- No viewport-fit=cover: iOS 26 draws home-screen web apps a status bar's height short of the
+		     screen. With cover the empty band is left at the bottom; without it, it sits under the status bar. -->
+		<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
+		<meta name="text-scale" content="scale" />
+		<meta name="color-scheme" content="light dark" />
+		<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f2ec" />
+		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121218" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-title" content="Leo Partī" />
+		<!-- What a shared link shows before it is opened: a post's own photo would take a server. -->
+		<meta name="description" content="Una publicación en Leo Partī." />
+		<meta property="og:title" content="Leo Partī" />
+		<meta property="og:description" content="Una publicación en Leo Partī." />
+		<!-- Safari ignores an SVG here, so scripts/icons.mjs rasterizes icon.svg into this PNG. -->
+		<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+		<title>Leo Partī</title>
+		<style>
+			html {
+				background: #f2f2ec;
+			}
+			@media (prefers-color-scheme: dark) {
+				html {
+					background: #121218;
+				}
+			}
+		</style>
+		<link href="./_app/immutable/entry/start.BhGuIRJ7.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/w8Y6VcC2.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/D5aRe0v4.js" rel="modulepreload">
+		<link href="./_app/immutable/entry/app.CahqSeU3.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/xihTtKlq.js" rel="modulepreload">
+		<link href="./_app/immutable/nodes/0.DvtrUI4b.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/BY86STK7.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/D4NXVTMx.js" rel="modulepreload">
+		<link href="./_app/immutable/nodes/2.DHyggx1l.js" rel="modulepreload">
+		
+		<link href="./_app/immutable/assets/posts.V7xa9qqq.css" rel="stylesheet">
+		<link href="./_app/immutable/assets/0.CJGUEBsn.css" rel="stylesheet">
+		<link href="./_app/immutable/assets/2.BEd2YnEi.css" rel="stylesheet">
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">
+			<script>
+				{
+					__sveltekit_16e4p20 = {
+						base: new URL(".", location).pathname.slice(0, -1),
+						assets: "/previews/claude-leo-parti/leo-parti"
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("./_app/immutable/entry/start.BhGuIRJ7.js"),
+						import("./_app/immutable/entry/app.CahqSeU3.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element);
+					});
+				}
+			</script>
+		</div>
+	</body>
+</html>
