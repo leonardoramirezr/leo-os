@@ -3,6 +3,10 @@
 //
 // iOS only lets a page speak once it has spoken during a tap; until then every utterance is dropped
 // without a word. So every tap on the app calls `unlock`.
+//
+// The voice does not go through the page's audio, so it cannot be made louder than the phone's own:
+// it follows the volume up to a third of the slider, and stays at the full voice beyond.
+import { gain } from './volume';
 
 /** Mexican Spanish first, then the Spanish closest to it. */
 const ACCENTS = ['es-mx', 'es-us', 'es-419'];
@@ -52,6 +56,7 @@ export function say(text: string) {
 	// Without a voice of its own, the language still steers the browser to one that speaks it.
 	utterance.lang = voice?.lang ?? 'es-MX';
 	if (voice) utterance.voice = voice;
+	utterance.volume = Math.min(1, gain());
 	speak(utterance);
 }
 

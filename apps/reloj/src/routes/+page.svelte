@@ -9,6 +9,7 @@
 	import Icon, { type IconName } from '$lib/components/Icon.svelte';
 	import Stopwatch from '$lib/components/Stopwatch.svelte';
 	import Timer from '$lib/components/Timer.svelte';
+	import Volume from '$lib/components/Volume.svelte';
 
 	const TABS: { mode: Mode; name: string; icon: IconName }[] = [
 		{ mode: 'stopwatch', name: 'Cronómetro', icon: 'stopwatch' },
@@ -64,6 +65,7 @@
 <div class="lcd" {onpointerdown} role="presentation">
 	<header class="head">
 		<h1>Reloj</h1>
+		<Volume />
 	</header>
 
 	<div class="corner">
@@ -132,6 +134,8 @@
 		display: flex;
 		grid-area: head;
 		align-items: center;
+		gap: 12px;
+		min-width: 0;
 		min-height: 40px;
 	}
 

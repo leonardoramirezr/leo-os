@@ -1,5 +1,7 @@
 // What the app asks of the phone: an alarm for the timer, which goes on until a button stops it, and a
-// screen that stays on while something is to be said. Rutina's, as it is there.
+// screen that stays on while something is to be said. Rutina's, as it is there, but as loud as the
+// volume says.
+import { gain } from './volume';
 
 let context: AudioContext | undefined;
 let ringing: ReturnType<typeof setInterval> | undefined;
@@ -37,17 +39,21 @@ export function unlockSound() {
 	}
 }
 
+/** How loud a beep is at the volume as it always was: three times it still does not clip. */
+const LEVEL = 0.22;
+
 function beep(ctx: AudioContext, at: number) {
+	const level = LEVEL * gain();
 	const oscillator = ctx.createOscillator();
-	const gain = ctx.createGain();
+	const envelope = ctx.createGain();
 	oscillator.type = 'square';
 	oscillator.frequency.value = 1400;
 	// Ramps in and out over a few milliseconds: a square wave switched on and off at once clicks.
-	gain.gain.setValueAtTime(0, at);
-	gain.gain.linearRampToValueAtTime(0.22, at + 0.008);
-	gain.gain.setValueAtTime(0.22, at + 0.07);
-	gain.gain.linearRampToValueAtTime(0, at + 0.08);
-	oscillator.connect(gain).connect(ctx.destination);
+	envelope.gain.setValueAtTime(0, at);
+	envelope.gain.linearRampToValueAtTime(level, at + 0.008);
+	envelope.gain.setValueAtTime(level, at + 0.07);
+	envelope.gain.linearRampToValueAtTime(0, at + 0.08);
+	oscillator.connect(envelope).connect(ctx.destination);
 	oscillator.start(at);
 	oscillator.stop(at + 0.09);
 }
@@ -61,6 +67,15 @@ function burst() {
 	for (let i = 0; i < 4; i++) beep(ctx, start + i * 0.14);
 	// Where a phone can vibrate from a page — not an iPhone —, it does too.
 	navigator.vibrate?.(450);
+}
+
+/** Two beeps, to hear what the volume just picked sounds like. Not while the alarm rings. */
+export function sample() {
+	const ctx = audio();
+	if (!ctx || ringing) return;
+	if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+	const start = ctx.currentTime + 0.02;
+	for (let i = 0; i < 2; i++) beep(ctx, start + i * 0.14);
 }
 
 export function startAlarm() {
