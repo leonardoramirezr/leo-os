@@ -479,6 +479,24 @@ export const transformaTexts = pgTable(
 	() => [ownRows('transforma_texts_own')]
 ).enableRLS();
 
+/**
+ * «Plantillas»: prompts with blanks. The body is plain text in which every `[[[question]]]` is a
+ * blank, filled in with its answer each time the prompt is put together.
+ */
+export const plantillasTemplates = pgTable(
+	'plantillas_templates',
+	{
+		id: uuid().primaryKey(),
+		user_id: account(),
+		/** What the user named it; '' goes by the first words of the body. */
+		title: text().notNull().default(''),
+		body: text().notNull(),
+		/** Epoch milliseconds. */
+		created_at: bigint({ mode: 'number' }).notNull().default(0)
+	},
+	(table) => [index('plantillas_templates_user').on(table.user_id), ownRows('plantillas_templates_own')]
+).enableRLS();
+
 /** A set's effort in «Rutina»: so many repetitions — or seconds, against the clock — with so much. */
 export interface RutinaBlock {
 	reps: number;
@@ -619,6 +637,7 @@ export type LeogramLikeRow = typeof leogramLikes.$inferSelect;
 export type LeogramCommentRow = typeof leogramComments.$inferSelect;
 export type TransformaPromptRow = typeof transformaPrompts.$inferSelect;
 export type TransformaTextRow = typeof transformaTexts.$inferSelect;
+export type PlantillasTemplateRow = typeof plantillasTemplates.$inferSelect;
 export type RutinaRoutineRow = typeof rutinaRoutines.$inferSelect;
 export type RutinaSessionRow = typeof rutinaSessions.$inferSelect;
 export type CaminadoraProgramRow = typeof caminadoraPrograms.$inferSelect;
