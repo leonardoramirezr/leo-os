@@ -35,9 +35,22 @@
 		}
 	}
 
+	/** Goes up with every «Borrar», so the answer boxes are drawn anew, empty. */
+	let cleared = $state(0);
+
 	function clear() {
+		// iOS keeps the word being typed in its own hands until the box loses the focus, and then hands
+		// it over as typed: emptied with the box still focused, the answer came back. Out of focus
+		// first, the word is in before anything is emptied.
+		if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
 		if (answered && !confirm('¿Borrar todas las respuestas?')) return;
 		templates.clearAnswers(template.id);
+		cleared++;
+	}
+
+	/** What a box says, unless it is one that «Borrar» has already taken off the screen. */
+	function oninput(question: string, event: Event & { currentTarget: HTMLTextAreaElement }) {
+		if (event.currentTarget.isConnected) templates.answer(template.id, question, event.currentTarget.value);
 	}
 </script>
 
@@ -84,12 +97,12 @@
 			</div>
 
 			<div class="group">
-				{#each asked as question, index (question)}
+				{#each asked as question, index (`${cleared}:${question}`)}
 					<label class="field">
 						<span>{index + 1}. {question}</span>
 						<textarea
 							value={answers[question] ?? ''}
-							oninput={(event) => templates.answer(template.id, question, event.currentTarget.value)}
+							oninput={(event) => oninput(question, event)}
 							rows="1"
 							placeholder="Tu respuesta"
 							autocapitalize="sentences"
