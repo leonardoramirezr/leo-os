@@ -618,6 +618,37 @@ export const caminadoraPrograms = pgTable(
 	(table) => [index('caminadora_programs_user').on(table.user_id), ownRows('caminadora_programs_own')]
 ).enableRLS();
 
+/** A file the user adds when running a WillChat mini app, besides answering its questions. */
+export interface WillchatMiniAppInput {
+	/** Random: the files picked for it are kept on the device under it, so it outlives renaming. */
+	id: string;
+	/** `image` only takes images, sent as images; `file` takes anything, a PDF or a text file. */
+	kind: 'image' | 'file';
+	/** What the field asks for, shown over it and sent to the model with what was picked. */
+	title: string;
+}
+
+/**
+ * «WillChat»: a mini app, a prompt that asks the user before it is sent. Every `[[[question]]]` in
+ * it is a text field, and `inputs` the files and images it asks for besides; running it gives one
+ * result, never a conversation. What was answered and the result stay on the device, as the
+ * conversation does: they carry images.
+ */
+export const willchatMiniApps = pgTable(
+	'willchat_mini_apps',
+	{
+		id: uuid().primaryKey(),
+		user_id: account(),
+		name: text().notNull(),
+		prompt: text().notNull(),
+		/** In the order the form shows them, after the questions. */
+		inputs: jsonb().$type<WillchatMiniAppInput[]>().notNull(),
+		/** Epoch milliseconds. */
+		created_at: bigint({ mode: 'number' }).notNull().default(0)
+	},
+	(table) => [index('willchat_mini_apps_user').on(table.user_id), ownRows('willchat_mini_apps_own')]
+).enableRLS();
+
 // What the browser reads and writes. `shared/` re-exports these, so a column is described once:
 // rename one here and the apps stop typechecking until they follow.
 export type SettingRow = typeof settings.$inferSelect;
@@ -641,3 +672,4 @@ export type PlantillasTemplateRow = typeof plantillasTemplates.$inferSelect;
 export type RutinaRoutineRow = typeof rutinaRoutines.$inferSelect;
 export type RutinaSessionRow = typeof rutinaSessions.$inferSelect;
 export type CaminadoraProgramRow = typeof caminadoraPrograms.$inferSelect;
+export type WillchatMiniAppRow = typeof willchatMiniApps.$inferSelect;

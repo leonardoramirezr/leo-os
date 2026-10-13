@@ -32,5 +32,7 @@ export type {
 	SettingRow,
 	TransformaPromptRow,
 	TransformaTextRow,
-	TransformaVersion
+	TransformaVersion,
+	WillchatMiniAppInput,
+	WillchatMiniAppRow
 } from '@leo-os/db/schema';
