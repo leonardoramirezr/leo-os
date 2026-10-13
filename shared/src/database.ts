@@ -22,6 +22,7 @@ export type {
 	ListItemRow,
 	MovementRow,
 	PersonRow,
+	PlantillasTemplateRow,
 	RutinaBlock,
 	RutinaDay,
 	RutinaEntry,

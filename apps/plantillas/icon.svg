@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="plantillas-bg" x1="0" y1="0" x2="1" y2="1">
+			<stop offset="0" stop-color="#2dd4bf" />
+			<stop offset="1" stop-color="#0f766e" />
+		</linearGradient>
+		<radialGradient id="plantillas-glow" cx="0.28" cy="0.18" r="0.9">
+			<stop offset="0" stop-color="#fff" stop-opacity="0.3" />
+			<stop offset="1" stop-color="#fff" stop-opacity="0" />
+		</radialGradient>
+	</defs>
+	<rect width="1024" height="1024" fill="url(#plantillas-bg)" />
+	<rect width="1024" height="1024" fill="url(#plantillas-glow)" />
+	<!-- The template: a page of text -->
+	<rect x="212" y="168" width="600" height="688" rx="72" fill="#fff" />
+	<g fill="none" stroke="#b7e4dd" stroke-width="44" stroke-linecap="round">
+		<path d="M312 300h400M312 412h112M312 524h400M312 748h220" />
+	</g>
+	<!-- …with blanks, one of them being filled in -->
+	<rect x="456" y="356" width="270" height="112" rx="28" fill="#d5f5ef" />
+	<rect x="360" y="580" width="270" height="112" rx="28" fill="#d5f5ef" />
+	<g fill="none" stroke="#0f766e" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+		<path d="M494 370h-24v84h24M688 370h24v84h-24" />
+		<path d="M398 594h-24v84h24M592 594h24v84h-24" />
+	</g>
+	<path d="M532 386v52" stroke="#0f766e" stroke-width="20" stroke-linecap="round" />
+	<path d="M444 636h104" stroke="#0f766e" stroke-width="44" stroke-linecap="round" />
+</svg>

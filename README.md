@@ -14,6 +14,7 @@ phone home screen: every app is an icon.
 - Rutina: https://leonardoramirezr.github.io/leo-os/rutina/
 - Caminadora: https://leonardoramirezr.github.io/leo-os/caminadora/
 - Reloj: https://leonardoramirezr.github.io/leo-os/reloj/
+- Plantillas: https://leonardoramirezr.github.io/leo-os/plantillas/
 
 ## Layout
 
@@ -986,3 +987,20 @@ white, the numbers in seven segments, the ones off still faint as on an LCD.
   page speak and sound from a tap, so every tap on the app unlocks both. On a keyboard, Space starts,
   pauses and goes on, or says the time.
 - The voice is Caminadora's: the device's own Spanish one, Mexican where it has it.
+
+## Plantillas
+
+Prompts with blanks: written once, filled in and copied every time they are needed.
+
+- A template is plain text, with every sentence or question to answer between three brackets:
+  `Escribe un correo para [[[¿A quién va dirigido?]]]`. **Insertar pregunta** puts the brackets around
+  what is selected, or around a word to type over, since they are a chore to type on a phone. The
+  same question written twice is one blank, answered once and put in both places. The title is
+  optional: without it the template goes by the first words of its text.
+- Opening it shows the templates in alphabetical order, each with the start of its text and how many
+  questions it asks. Tapping one lists its questions, each with a box for the answer.
+- **Ver prompt** shows the prompt as **Copiar** copies it: the answers marked, and the questions not
+  answered yet marked in yellow, which are left empty in what is copied.
+- The answers are not saved: they stay while the app is open, so going back to the list and in again
+  keeps them, and **Borrar** empties them for the next prompt.
+- The templates live in the account, in the `plantillas_templates` table, with a copy on the device.
