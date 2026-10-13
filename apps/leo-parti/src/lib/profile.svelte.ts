@@ -1,4 +1,4 @@
-// Who the account is on Leogram: the username and photo shown with its posts and its comments, to
+// Who the account is on Leo Partī: the username and photo shown with its posts and its comments, to
 // everyone who opens them. Unlike the rest of Leo OS, it is seen by others: no email, no real name
 // unless it is typed in as the username. The photo is in the bucket, like the posts' files.
 import {
@@ -40,7 +40,7 @@ export function suggestUsername(name: string, email: string): string {
 			.replace(/\.{2,}/g, '.')
 			.replace(/^\.+|\.+$/g, '')
 			.slice(0, 30);
-	return clean(name) || clean(email.split('@')[0]) || 'leogramer';
+	return clean(name) || clean(email.split('@')[0]) || 'leoparti';
 }
 
 class Profile {

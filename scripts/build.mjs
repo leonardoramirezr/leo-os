@@ -7,7 +7,7 @@
 // https://<user>.github.io/apps/. Leave it empty to serve from the root.
 
 import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { writeIcons } from './icons.mjs';
@@ -74,6 +74,26 @@ cpSync(build(join(root, 'home'), base), dist, { recursive: true });
 
 for (const { slug, dir } of apps) {
 	cpSync(build(dir, `${base}/${slug}`), join(dist, slug), { recursive: true });
+}
+
+// Apps that changed folder, old → new. Links to the old path are out there (a shared post, a bio, an
+// icon on someone's home screen), so the old path keeps a page that forwards to the new one, with the
+// query (`?p=`, `?u=`) and the hash it came with.
+const moved = { leogram: 'leo-parti' };
+
+for (const [from, to] of Object.entries(moved)) {
+	if (existsSync(join(dist, from))) fail(`${from}/ moved to ${to}/, but something else is published there`);
+	const target = JSON.stringify(`${base}/${to}/`);
+	mkdirSync(join(dist, from));
+	writeFileSync(
+		join(dist, from, 'index.html'),
+		`<!doctype html>
+<meta charset="utf-8" />
+<meta name="robots" content="noindex" />
+<script>location.replace(${target} + location.search + location.hash);</script>
+<a href=${target}>${to}</a>
+`
+	);
 }
 
 // SvelteKit writes its assets to `_app/`, which Jekyll would otherwise ignore.

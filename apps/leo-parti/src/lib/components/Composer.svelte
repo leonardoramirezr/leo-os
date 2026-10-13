@@ -244,7 +244,7 @@
 	async function shareLink() {
 		if (!navigator.share) return copy();
 		try {
-			await navigator.share({ title: 'Leogram', url: linkOf(published) });
+			await navigator.share({ title: 'Leo Partī', url: linkOf(published) });
 		} catch {
 			// Closed without sharing.
 		}

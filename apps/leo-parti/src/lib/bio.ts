@@ -1,4 +1,4 @@
-// An account's bio (`?u=<username>`), the one page of Leogram that lists posts to others: the ones
+// An account's bio (`?u=<username>`), the one page of Leo Partī that lists posts to others: the ones
 // its author lists there, to whoever can open each one — everybody for a post for anybody with its
 // link, and only those friends for one for some friends (`leogram_profile()` in
 // db/migrations/0012_leogram_bio.sql). Like a post's link, it opens signed in or not.
