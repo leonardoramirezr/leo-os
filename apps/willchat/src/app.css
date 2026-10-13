@@ -82,3 +82,64 @@ dialog::backdrop {
 		background-position: -100% 0;
 	}
 }
+
+/* A screen: the bar along the top, and what scrolls under it. */
+.screen {
+	position: fixed;
+	top: 0;
+	right: 0;
+	left: 0;
+	display: flex;
+	flex-direction: column;
+	height: 100dvh;
+}
+
+.scroller {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+
+.icon-button {
+	display: grid;
+	flex: none;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	border: 0;
+	border-radius: 12px;
+	background: transparent;
+	color: var(--text);
+}
+
+.icon-button:disabled {
+	opacity: 0.3;
+}
+
+/* «Cancel» and «Save» in a bar. */
+.text-button {
+	height: 40px;
+	padding: 0 10px;
+	border: 0;
+	border-radius: 12px;
+	background: transparent;
+	color: var(--link);
+	font-size: 17px;
+}
+
+.text-button.strong {
+	font-weight: 600;
+}
+
+.text-button:disabled {
+	opacity: 0.4;
+}
+
+@media (hover: hover) {
+	.icon-button:not(:disabled):hover,
+	.text-button:not(:disabled):hover {
+		background: var(--hover);
+	}
+}

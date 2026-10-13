@@ -12,9 +12,11 @@
 		last: boolean;
 		onview: (src: string) => void;
 		onchangekey: () => void;
+		/** What «Retry» does: the chat's own, unless a mini app shows its result here. */
+		onretry?: () => void;
 	}
 
-	let { message, last, onview, onchangekey }: Props = $props();
+	let { message, last, onview, onchangekey, onretry = () => chat.retry() }: Props = $props();
 
 	const html = $derived(message.role === 'assistant' && message.text ? renderMarkdown(message.text) : '');
 
@@ -93,7 +95,7 @@
 						{#if message.error?.auth}
 							<button onclick={onchangekey}>{t.updateKey}</button>
 						{/if}
-						<button onclick={() => chat.retry()}>{t.retry}</button>
+						<button onclick={onretry}>{t.retry}</button>
 					</div>
 				{/if}
 			</div>

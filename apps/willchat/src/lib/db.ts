@@ -34,3 +34,7 @@ export function get<T>(key: string) {
 export function set(key: string, value: unknown) {
 	return run('readwrite', (store) => store.put(value, key));
 }
+
+export function del(key: string) {
+	return run('readwrite', (store) => store.delete(key));
+}
