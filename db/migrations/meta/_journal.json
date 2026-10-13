@@ -99,6 +99,13 @@
       "when": 1791400105176,
       "tag": "0013_leogram_can_see",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791860869848,
+      "tag": "0014_willchat_mini_apps",
+      "breakpoints": true
     }
   ]
 }

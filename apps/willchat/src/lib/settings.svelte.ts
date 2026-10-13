@@ -15,3 +15,6 @@ export const groqKey = setting('groq:api-key', '');
  * what `/v1/models` answers, which is asked for again whenever the key changes.
  */
 export const availableModels = local<string[]>('willchat:models', []);
+
+/** Where the app was left: the chat, the list of mini apps, or one of them. Only this device's. */
+export const place = local<{ view: 'chat' | 'mini-apps'; app?: string }>('willchat:place', { view: 'chat' });

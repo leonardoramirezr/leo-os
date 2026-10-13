@@ -411,6 +411,18 @@ A ChatGPT-style chat for creating and editing images with the OpenAI API and you
   also recovered if you reload or switch apps.
 - The current conversation is stored in IndexedDB, under a key that carries the account: it is full
   of images, which is why it does not go to the database.
+- The ☰ button on the left of the bar opens the menu, as in ChatGPT: **Conversaciones** (the chat),
+  **Mini apps** and the settings.
+- A **mini app** is a prompt that asks before it is sent. Every `[[[question]]]` written in it
+  becomes a text field (the same question twice is one field), and fields for images or files can be
+  added on top, each with its title. Sending it gives one result, text or images, and no
+  conversation: the prompt goes as the system prompt with each answer on the lines right after its
+  `[[[question]]]`, and the files follow in the user's message, each after its field's title.
+  Images go as `input_image`; text files (`.txt`, `.md`, `.csv`, `.json`…) as their text; anything
+  else, a PDF for instance, as `input_file`, up to 25 MB.
+- The mini apps themselves are rows of `willchat_mini_apps`, so they are on every device. What was
+  answered, the files and the last result stay in IndexedDB, one entry per mini app, like the
+  conversation: the result is polled the same way, and is picked up again after a reload.
 
 ## Me deben
 

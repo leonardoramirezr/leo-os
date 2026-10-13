@@ -2,7 +2,11 @@
 
 const API_URL = 'https://api.openai.com/v1';
 
-export type InputContent = { type: 'input_image'; image_url: string } | { type: 'input_text'; text: string };
+export type InputContent =
+	| { type: 'input_image'; image_url: string }
+	| { type: 'input_text'; text: string }
+	/** A document, a PDF for instance, as a data URL. */
+	| { type: 'input_file'; filename: string; file_data: string };
 
 export type InputItem =
 	| { role: 'system' | 'assistant'; content: string }
