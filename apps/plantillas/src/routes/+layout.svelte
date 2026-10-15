@@ -2,6 +2,7 @@
 	import '../app.css';
 	import icon from '../../icon.svg';
 	import { Account } from '@leo-os/shared';
+	import { answers } from '$lib/answers.svelte';
 	import { templates } from '$lib/templates.svelte';
 
 	let { children } = $props();
@@ -14,12 +15,19 @@
 		document.addEventListener('visibilitychange', refresh);
 		return () => document.removeEventListener('visibilitychange', refresh);
 	});
+
+	$effect(() => answers.listen());
+
+	async function load(userId: string) {
+		await templates.load(userId);
+		await answers.load(userId, templates.list.map((template) => template.id));
+	}
 </script>
 
 <svelte:head>
 	<link rel="icon" type="image/svg+xml" href={icon} />
 </svelte:head>
 
-<Account load={(userId) => templates.load(userId)}>
+<Account {load}>
 	{@render children()}
 </Account>

@@ -34,6 +34,7 @@ import {
 	primaryKey,
 	smallint,
 	text,
+	timestamp,
 	uniqueIndex,
 	uuid
 } from 'drizzle-orm/pg-core';
@@ -497,6 +498,30 @@ export const plantillasTemplates = pgTable(
 	(table) => [index('plantillas_templates_user').on(table.user_id), ownRows('plantillas_templates_own')]
 ).enableRLS();
 
+/**
+ * The answers given to a template in «Plantillas», which outlive closing the app and follow the
+ * account to its other devices. One row per template, keyed by the template's own id.
+ *
+ * Every device edits its own copy offline and sends it later, so what settles two copies is the
+ * moment each was last edited, on the device it was edited on: the later one wins. They are written
+ * through `plantillas_save_answers` (`migrations/0017_plantillas_save_answers.sql`), which only
+ * replaces a row with a later one.
+ */
+export const plantillasAnswers = pgTable(
+	'plantillas_answers',
+	{
+		id: uuid()
+			.primaryKey()
+			.references(() => plantillasTemplates.id, { onDelete: 'cascade' }),
+		user_id: account(),
+		/** The answers by question, as JSON: `{ "Nombre visible de la app": "…" }`. */
+		content: text().notNull().default(''),
+		/** UTC, as every moment kept here: an ISO 8601 string ending in Z on the way in and out. */
+		edited_at: timestamp({ withTimezone: true, precision: 3, mode: 'string' }).notNull()
+	},
+	(table) => [index('plantillas_answers_user').on(table.user_id), ownRows('plantillas_answers_own')]
+).enableRLS();
+
 /** A set's effort in «Rutina»: so many repetitions — or seconds, against the clock — with so much. */
 export interface RutinaBlock {
 	reps: number;
@@ -669,6 +694,7 @@ export type LeogramCommentRow = typeof leogramComments.$inferSelect;
 export type TransformaPromptRow = typeof transformaPrompts.$inferSelect;
 export type TransformaTextRow = typeof transformaTexts.$inferSelect;
 export type PlantillasTemplateRow = typeof plantillasTemplates.$inferSelect;
+export type PlantillasAnswersRow = typeof plantillasAnswers.$inferSelect;
 export type RutinaRoutineRow = typeof rutinaRoutines.$inferSelect;
 export type RutinaSessionRow = typeof rutinaSessions.$inferSelect;
 export type CaminadoraProgramRow = typeof caminadoraPrograms.$inferSelect;

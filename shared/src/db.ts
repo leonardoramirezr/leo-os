@@ -47,7 +47,8 @@ async function request(
 	path: string,
 	body?: unknown,
 	prefer?: string,
-	bearer?: string
+	bearer?: string,
+	keepalive = false
 ) {
 	bearer ??= await token();
 
@@ -62,7 +63,9 @@ async function request(
 				...(body === undefined ? undefined : { 'content-type': 'application/json' }),
 				...(prefer === undefined ? undefined : { prefer })
 			},
-			body: body === undefined ? undefined : JSON.stringify(body)
+			body: body === undefined ? undefined : JSON.stringify(body),
+			// Lets the request outlive the page, when it is sent as the page goes away.
+			keepalive
 		});
 	} catch {
 		throw new DbError('Sin conexión con la base de datos.');
@@ -108,13 +111,15 @@ export async function remove(table: string, filter: string): Promise<void> {
  * Calls a function of the database (`/rpc/<name>`), for what a policy cannot say: a Leo Partī post,
  * which anyone with its link may see. `visitor` lets the call go out signed out as well, with the
  * anonymous token; signed in it carries the session's, so the function knows who is asking.
+ * `keepalive` is for a call made as the page is hidden or closed, which has to outlive it: the
+ * browser caps such a body at 64 KB.
  */
 export async function rpc<T>(
 	name: string,
 	args: Record<string, unknown>,
-	{ visitor = false } = {}
+	{ visitor = false, keepalive = false } = {}
 ): Promise<T> {
 	const bearer = visitor && session.status !== 'in' ? await anonymousToken() : undefined;
-	const response = await request('POST', `rpc/${name}`, args, undefined, bearer);
+	const response = await request('POST', `rpc/${name}`, args, undefined, bearer, keepalive);
 	return (await response.json()) as T;
 }

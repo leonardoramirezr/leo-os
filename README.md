@@ -1007,6 +1007,11 @@ Prompts with blanks: written once, filled in and copied every time they are need
   questions it asks. Tapping one lists its questions, each with a box for the answer.
 - **Ver prompt** shows the prompt as **Copiar** copies it: the answers marked, and the questions not
   answered yet marked in yellow, which are left empty in what is copied.
-- The answers are not saved: they stay while the app is open, so going back to the list and in again
-  keeps them, and **Borrar** empties them for the next prompt.
+- The answers are kept, offline first: every keystroke goes to IndexedDB at once, and to the
+  `plantillas_answers` table after a pause in the typing (1.5 s, never more than 10 s), or at once when
+  the app is hidden or closed. With no connection they wait on the device and go when it comes back.
+  When two devices edited them apart, the later edit wins, whole: the database only replaces a row
+  with a later one (`plantillas_save_answers`), and opening a template or reconnecting compares both
+  copies. Every moment is UTC; only the line under the answers shows local time. **Borrar** empties
+  them for the next prompt.
 - The templates live in the account, in the `plantillas_templates` table, with a copy on the device.

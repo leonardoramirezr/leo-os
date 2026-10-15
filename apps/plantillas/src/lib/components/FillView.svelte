@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { HomeButton } from '@leo-os/shared';
+	import { answers as saved } from '$lib/answers.svelte';
 	import { parse, questions, render } from '$lib/template';
-	import { templates, titleOf, type Template } from '$lib/templates.svelte';
+	import { titleOf, type Template } from '$lib/templates.svelte';
 	import Icon from './Icon.svelte';
 	import Sheet from './Sheet.svelte';
 	import TemplateSheet from './TemplateSheet.svelte';
@@ -16,7 +18,7 @@
 
 	const title = $derived(titleOf(template));
 	const asked = $derived(questions(template.body));
-	const answers = $derived(templates.answersTo(template.id));
+	const answers = $derived(saved.answersTo(template.id));
 	const parts = $derived(parse(template.body));
 	const prompt = $derived(render(template.body, answers));
 	const missing = $derived(asked.filter((question) => !answers[question]?.trim()).length);
@@ -44,14 +46,32 @@
 		// first, the word is in before anything is emptied.
 		if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
 		if (answered && !confirm('¿Borrar todas las respuestas?')) return;
-		templates.clearAnswers(template.id);
+		saved.clear(template.id);
 		cleared++;
 	}
 
 	/** What a box says, unless it is one that «Borrar» has already taken off the screen. */
 	function oninput(question: string, event: Event & { currentTarget: HTMLTextAreaElement }) {
-		if (event.currentTarget.isConnected) templates.answer(template.id, question, event.currentTarget.value);
+		if (event.currentTarget.isConnected) saved.answer(template.id, question, event.currentTarget.value);
 	}
+
+	// Opening a template compares its answers with the database's: another device may have edited
+	// them later.
+	$effect(() => {
+		template.id;
+		untrack(() => saved.sync());
+	});
+
+	/** When the answers were last edited, in this device's own time: the only place local time shows. */
+	const editedAt = $derived.by(() => {
+		const time = saved.editedAt(template.id);
+		if (!time) return '';
+		const date = new Date(time);
+		const today = date.toDateString() === new Date().toDateString();
+		return today
+			? `hoy, ${date.toLocaleTimeString('es', { hour: 'numeric', minute: '2-digit' })}`
+			: date.toLocaleString('es', { dateStyle: 'medium', timeStyle: 'short' });
+	});
 </script>
 
 <div class="screen">
@@ -110,6 +130,19 @@
 					</label>
 				{/each}
 			</div>
+
+			{#if editedAt}
+				<p class="saved">
+					Editado {editedAt} ·
+					{#if !saved.pending(template.id)}
+						guardado en la nube
+					{:else if saved.online}
+						guardando…
+					{:else}
+						sin conexión: guardado en este dispositivo
+					{/if}
+				</p>
+			{/if}
 		{:else}
 			<p class="none">
 				Esta plantilla no tiene preguntas: el prompt es su texto tal cual. Edítala y pon entre tres
@@ -255,6 +288,13 @@
 
 	.field textarea::placeholder {
 		color: var(--faint);
+	}
+
+	.saved {
+		margin: 8px 16px 0;
+		color: var(--muted);
+		font-size: 13px;
+		line-height: 1.4;
 	}
 
 	.none {
