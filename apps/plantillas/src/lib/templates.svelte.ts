@@ -1,8 +1,6 @@
-// The templates, and the answers given to them.
+// The templates. The answers given to them are kept apart, offline first (`answers.svelte.ts`).
 //
-// A change is on screen first and in the database right after, like everywhere else here. The
-// answers are not kept: they are about the prompt being put together now, and stay only while the
-// app is open, so that going back to the list and in again does not lose them.
+// A change is on screen first and in the database right after, like everywhere else here.
 import {
 	eq,
 	insert,
@@ -16,6 +14,7 @@ import {
 	writeCache,
 	type PlantillasTemplateRow
 } from '@leo-os/shared';
+import { answers } from './answers.svelte';
 import { shorten } from './template';
 
 export interface Template {
@@ -114,9 +113,6 @@ class Templates {
 		this.list.toSorted((a, b) => collator.compare(titleOf(a), titleOf(b)) || a.createdAt - b.createdAt)
 	);
 
-	/** The answers given so far, by template and then by question. Never saved. */
-	answers = $state<Record<string, Record<string, string>>>({});
-
 	/** The account everything on screen belongs to. Empty until `load` has run. */
 	#account = '';
 
@@ -125,20 +121,6 @@ class Templates {
 
 	find(id: string | undefined): Template | undefined {
 		return id ? this.list.find((template) => template.id === id) : undefined;
-	}
-
-	/** The answers given to a template so far, by question. */
-	answersTo(id: string): Record<string, string> {
-		return this.answers[id] ?? {};
-	}
-
-	answer(id: string, question: string, value: string) {
-		this.answers[id] = { ...this.answers[id], [question]: value };
-	}
-
-	/** Empties a template's answers, for the next prompt made out of it. */
-	clearAnswers(id: string) {
-		delete this.answers[id];
 	}
 
 	/**
@@ -177,7 +159,7 @@ class Templates {
 
 	remove(id: string) {
 		this.list = this.list.filter((template) => template.id !== id);
-		delete this.answers[id];
+		answers.forget(id);
 		this.#push(() => remove(TABLE, eq('id', id)));
 	}
 
@@ -203,6 +185,8 @@ class Templates {
 
 		this.list = parse(rows.map(templateOf));
 		this.#keep();
+		// Whatever was deleted on another device takes its answers along.
+		answers.keepOnly(this.list.map((template) => template.id));
 	}
 
 	#keep() {

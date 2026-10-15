@@ -6,7 +6,7 @@ export { default as HomeButton } from './components/HomeButton.svelte';
 export type { Lang } from './components/text';
 
 export { readCache, writeCache } from './cache';
-export { configured } from './config';
+export { configured, dataApiSchema } from './config';
 export type {
 	CaminadoraProgramRow,
 	CaminadoraSegment,
@@ -24,6 +24,7 @@ export type {
 	ListItemRow,
 	MovementRow,
 	PersonRow,
+	PlantillasAnswersRow,
 	PlantillasTemplateRow,
 	RutinaBlock,
 	RutinaDay,
