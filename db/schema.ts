@@ -522,6 +522,35 @@ export const plantillasAnswers = pgTable(
 	(table) => [index('plantillas_answers_user').on(table.user_id), ownRows('plantillas_answers_own')]
 ).enableRLS();
 
+/** How a column of a «Markdown Table» table lines up, as its delimiter row says it; '' for unsaid. */
+export type MarkdownTableAlign = '' | 'left' | 'center' | 'right';
+
+/**
+ * «Markdown Table»: a table, pasted as Markdown or made from scratch, edited cell by cell and
+ * exported as Markdown or as an image. Its cells are always read and written together, so they
+ * share a column; the whole row is written every time, edits and all.
+ */
+export const markdownTables = pgTable(
+	'markdown_tables',
+	{
+		id: uuid().primaryKey(),
+		user_id: account(),
+		/** What the user named it; '' goes by its header. */
+		title: text().notNull().default(''),
+		/** The header first, then every row: each a cell's Markdown, `|` unescaped. As long as `align`. */
+		cells: jsonb().$type<string[][]>().notNull(),
+		/** One per column. */
+		align: jsonb().$type<MarkdownTableAlign[]>().notNull(),
+		/** The look of its image, by its id in `apps/markdown-table/src/lib/styles.ts`. */
+		style: text().notNull().default(''),
+		/** Epoch milliseconds. */
+		created_at: bigint({ mode: 'number' }).notNull().default(0),
+		/** Epoch milliseconds: the last edited comes first. */
+		edited_at: bigint({ mode: 'number' }).notNull().default(0)
+	},
+	(table) => [index('markdown_tables_user').on(table.user_id), ownRows('markdown_tables_own')]
+).enableRLS();
+
 /** A set's effort in «Rutina»: so many repetitions — or seconds, against the clock — with so much. */
 export interface RutinaBlock {
 	reps: number;
@@ -695,6 +724,7 @@ export type TransformaPromptRow = typeof transformaPrompts.$inferSelect;
 export type TransformaTextRow = typeof transformaTexts.$inferSelect;
 export type PlantillasTemplateRow = typeof plantillasTemplates.$inferSelect;
 export type PlantillasAnswersRow = typeof plantillasAnswers.$inferSelect;
+export type MarkdownTableRow = typeof markdownTables.$inferSelect;
 export type RutinaRoutineRow = typeof rutinaRoutines.$inferSelect;
 export type RutinaSessionRow = typeof rutinaSessions.$inferSelect;
 export type CaminadoraProgramRow = typeof caminadoraPrograms.$inferSelect;

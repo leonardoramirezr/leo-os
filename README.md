@@ -15,6 +15,7 @@ phone home screen: every app is an icon.
 - Caminadora: https://leonardoramirezr.github.io/leo-os/caminadora/
 - Reloj: https://leonardoramirezr.github.io/leo-os/reloj/
 - Plantillas: https://leonardoramirezr.github.io/leo-os/plantillas/
+- Markdown Table: https://leonardoramirezr.github.io/leo-os/markdown-table/
 
 ## Layout
 
@@ -1015,3 +1016,33 @@ Prompts with blanks: written once, filled in and copied every time they are need
   copies. Every moment is UTC; only the line under the answers shows local time. **Borrar** empties
   them for the next prompt.
 - The templates live in the account, in the `plantillas_templates` table, with a copy on the device.
+
+## Markdown Table
+
+Tables in Markdown: pasted or made from scratch, edited cell by cell, and exported as Markdown or as
+an image.
+
+- **Nueva tabla** takes what is pasted: a GitHub Markdown table (the first one in the text, with its
+  alignments), cells copied from Numbers, Excel or Google Sheets (tab-separated, their numbers lined
+  up on the right), a CSV, or the ASCII tables a database console prints. A preview shows what was
+  read before it is created. **En blanco** starts from as many empty columns and rows as asked for.
+- **Tabla** edits it like a spreadsheet: a box per cell, Enter goes down a row and, past the last one,
+  adds another. Tapping a column's letter aligns it (left, centre, right), sorts the rows by it
+  (numbers as numbers, `1,234.5` and `1.234,5` alike, empty cells last), or inserts, duplicates,
+  moves or deletes it; a row's number does the same for rows, and makes one the header. A cell holds
+  Markdown of its own — `**bold**`, `` `code` ``, `<br>` for another line — kept as typed. Undo and
+  redo (also ⌘Z, ⇧⌘Z) go back over everything since the table was opened, typing in one cell
+  counting as a single change until it pauses.
+- **Markdown** is the table as GitHub's Markdown, every column padded to its longest cell (wide
+  characters, such as Chinese or emoji, counted as two), ready to copy. It can be edited there too:
+  whatever still reads as a table is applied as it is typed.
+- **Imagen** draws the table on a canvas, at three times its size, in one of nine styles kept with
+  the table (`apps/markdown-table/src/lib/styles.ts`). The preview is the PNG itself. The cells'
+  Markdown is drawn the way GitHub shows it, and a long cell wraps. **Compartir** opens the share sheet
+  on a phone, which is how it reaches Photos, and **Descargar** saves it elsewhere; **Copiar** puts it
+  on the clipboard. The image is drawn before the tap, since Safari only lets either through straight
+  from one.
+- The tables live in the account, in the `markdown_tables` table, with a copy on the device. A
+  change is on screen at once and sent after a pause in the typing (0.8 s), or at once when the app
+  is hidden; every write is the whole row. Until the database has it, the copy says so, and the next
+  time the app opens that copy is sent before anything is read.

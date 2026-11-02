@@ -22,6 +22,8 @@ export type {
 	LeogramPostRow,
 	LeogramProfileRow,
 	ListItemRow,
+	MarkdownTableAlign,
+	MarkdownTableRow,
 	MovementRow,
 	PersonRow,
 	PlantillasAnswersRow,

@@ -127,6 +127,13 @@
       "when": 1792096963123,
       "tag": "0017_plantillas_save_answers",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793655421446,
+      "tag": "0018_markdown_table",
+      "breakpoints": true
     }
   ]
 }
