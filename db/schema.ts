@@ -547,6 +547,8 @@ export const markdownTables = pgTable(
 		header_size: smallint().notNull().default(0),
 		/** The image's body text, in CSS pixels; 0 goes by its style. */
 		body_size: smallint().notNull().default(0),
+		/** How wide the image's columns may get before their text wraps, in CSS pixels; 0 goes by its style. */
+		column_width: smallint().notNull().default(0),
 		/** Epoch milliseconds. */
 		created_at: bigint({ mode: 'number' }).notNull().default(0),
 		/** Epoch milliseconds: the last edited comes first. */

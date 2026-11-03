@@ -233,3 +233,27 @@ export function sizesOf(style: Style, header: number, body: number): Sizes {
 	const own = defaultSizes(style);
 	return { header: sizeOf(header) || own.header, body: sizeOf(body) || own.body };
 }
+
+/** How wide a column's text may run before it wraps, at the style's own width. */
+export const COLUMN_TEXT = 320;
+
+/** How narrow and how wide the user may make the image's columns, padding and all, and by how much at a time. */
+export const MIN_WIDTH = 60;
+export const MAX_WIDTH = 1000;
+export const WIDTH_STEP = 20;
+
+/** A column width the user set, kept within bounds; 0 (or anything that is not one) for the style's own. */
+export function widthOf(value: unknown): number {
+	if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return 0;
+	return Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.round(value)));
+}
+
+/** The widest a column of the style gets, its padding included. */
+export function defaultWidth(style: Style): number {
+	return COLUMN_TEXT + 2 * style.padding.x;
+}
+
+/** The widest the image's columns get: the user's width where they set one, else the style's. */
+export function columnWidthOf(style: Style, width: number): number {
+	return widthOf(width) || defaultWidth(style);
+}

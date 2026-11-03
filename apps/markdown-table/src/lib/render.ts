@@ -17,11 +17,7 @@ const FAMILIES = {
 /** Of the text, times its size. */
 const LINE_HEIGHT = 1.45;
 
-/**
- * How wide a cell's text may run before it wraps, and how narrow a column may get, at the style's
- * own size: text made larger may run as much further, so it wraps after about as many words.
- */
-const MAX_TEXT = 320;
+/** How narrow a column's text may get. How wide, before it wraps, the caller says. */
 const MIN_TEXT = 24;
 
 /** Room on either side of a piece of code, inside its background. */
@@ -196,7 +192,7 @@ interface Layout {
 	bar: number;
 }
 
-function layout(table: TableData, style: Style, textSizes: Sizes, measure: Measure): Layout {
+function layout(table: TableData, style: Style, textSizes: Sizes, column: number, measure: Measure): Layout {
 	const read = table.cells.map((row, index) =>
 		row.map((cell) => inline(cell).map((runs) => piecesOf(runs, style, textSizes, index === 0, measure)))
 	);
@@ -207,7 +203,9 @@ function layout(table: TableData, style: Style, textSizes: Sizes, measure: Measu
 			Math.max(...lines.map((pieces) => wrap(pieces, Infinity, measure, spacingOf(style, index === 0))[0].width))
 		)
 	);
-	const most = MAX_TEXT * Math.max(1, Math.max(textSizes.header, textSizes.body) / style.size);
+	// The column's width is the user's to set, its padding included: larger text wraps sooner rather
+	// than widening the image, which would only be shown smaller.
+	const most = Math.max(MIN_TEXT, column - 2 * style.padding.x);
 	const columns = table.align.map((_, column) => {
 		const longest = Math.max(0, ...natural.map((row) => row[column]));
 		return Math.ceil(Math.min(most, Math.max(MIN_TEXT, longest)));
@@ -437,14 +435,23 @@ function toBlob(canvas: HTMLCanvasElement): Promise<Blob> {
 	);
 }
 
-/** The table as a PNG, in the style given and its text at `sizes`; `title` names it in a window's bar. */
-export async function render(table: TableData, style: Style, sizes: Sizes, title: string): Promise<Image> {
+/**
+ * The table as a PNG, in the style given, its text at `sizes` and no column wider than `column`
+ * (padding included) unless a single word needs it; `title` names it in a window's bar.
+ */
+export async function render(
+	table: TableData,
+	style: Style,
+	sizes: Sizes,
+	column: number,
+	title: string
+): Promise<Image> {
 	const canvas = document.createElement('canvas');
 	const context = canvas.getContext('2d');
 	if (!context) throw new Error('Este navegador no puede crear imágenes.');
 
 	const measure = new Measure(context);
-	const laid = layout(table, style, sizes, measure);
+	const laid = layout(table, style, sizes, column, measure);
 	const padding = style.frame?.padding ?? 0;
 	const width = laid.width + 2 * padding;
 	const height = laid.height + 2 * padding;

@@ -4,14 +4,19 @@
 	import type { TableData } from '$lib/markdown';
 	import { render } from '$lib/render';
 	import {
+		columnWidthOf,
 		defaultSizes,
+		defaultWidth,
 		MAX_SIZE,
+		MAX_WIDTH,
 		MIN_SIZE,
+		MIN_WIDTH,
 		sizesOf,
 		styleOf,
 		styles,
 		type Sizes,
-		type Style
+		type Style,
+		WIDTH_STEP
 	} from '$lib/styles';
 	import { tables, titleOf, type Table } from '$lib/tables.svelte';
 	import Icon from './Icon.svelte';
@@ -32,7 +37,8 @@
 
 	const style = $derived(styleOf(table.style));
 	const sizes = $derived(sizesOf(style, table.headerSize, table.bodySize));
-	const ownSizes = $derived(table.headerSize > 0 || table.bodySize > 0);
+	const width = $derived(columnWidthOf(style, table.columnWidth));
+	const ownSizes = $derived(table.headerSize > 0 || table.bodySize > 0 || table.columnWidth > 0);
 
 	let image = $state<Shown>();
 	let drawing = $state(true);
@@ -51,6 +57,7 @@
 		const data: TableData = $state.snapshot({ cells: table.cells, align: table.align });
 		const look = style;
 		const text = { ...sizes };
+		const column = width;
 		const title = table.title;
 		const name = titleOf(table);
 
@@ -59,7 +66,7 @@
 		const timer = setTimeout(
 			async () => {
 				try {
-					const drawn = await render(data, look, text, title);
+					const drawn = await render(data, look, text, column, title);
 					if (stale) return;
 					URL.revokeObjectURL(address);
 					address = URL.createObjectURL(drawn.blob);
@@ -104,12 +111,19 @@
 
 	function resize(part: keyof Sizes, size: number) {
 		// Back at the style's own size it goes by the style again, and follows it to another one.
+		size = Math.min(MAX_SIZE, Math.max(MIN_SIZE, size));
 		tables.resize(table.id, part, size === defaultSizes(style)[part] ? 0 : size);
+	}
+
+	function widen(next: number) {
+		next = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, next));
+		tables.widen(table.id, next === defaultWidth(style) ? 0 : next);
 	}
 
 	function resetSizes() {
 		tables.resize(table.id, 'header', 0);
 		tables.resize(table.id, 'body', 0);
+		tables.widen(table.id, 0);
 	}
 
 	/** What the frame around a style's table looks like, for its swatch. */
@@ -190,37 +204,38 @@
 	</div>
 
 	<div class="heading">
-		<h2 class="section-title">Tamaño de letra</h2>
+		<h2 class="section-title">Tamaño</h2>
 		{#if ownSizes}
 			<button class="text-button" type="button" onclick={resetSizes}>Restablecer</button>
 		{/if}
 	</div>
 	<div class="group">
-		{@render stepper('Títulos', 'header')}
-		{@render stepper('Celdas', 'body')}
+		{@render stepper('Letra de títulos', sizes.header, MIN_SIZE, MAX_SIZE, 1, (next) => resize('header', next))}
+		{@render stepper('Letra de celdas', sizes.body, MIN_SIZE, MAX_SIZE, 1, (next) => resize('body', next))}
+		{@render stepper('Ancho de columnas', width, MIN_WIDTH, MAX_WIDTH, WIDTH_STEP, widen)}
 	</div>
+	<p class="hint">
+		Ninguna columna pasa del ancho elegido: el texto más largo sigue en la línea de abajo, y una columna
+		con poco texto queda más angosta.
+	</p>
 </div>
 
-{#snippet stepper(label: string, part: keyof Sizes)}
-	{@const value = sizes[part]}
+{#snippet stepper(
+	label: string,
+	value: number,
+	min: number,
+	max: number,
+	step: number,
+	set: (next: number) => void
+)}
 	<div class="field inline">
 		<span>{label}</span>
 		<div class="stepper">
-			<button
-				type="button"
-				onclick={() => resize(part, value - 1)}
-				disabled={value <= MIN_SIZE}
-				aria-label={`${label}: letra más pequeña`}
-			>
+			<button type="button" onclick={() => set(value - step)} disabled={value <= min} aria-label={`${label}: menos`}>
 				−
 			</button>
 			<output>{value} px</output>
-			<button
-				type="button"
-				onclick={() => resize(part, value + 1)}
-				disabled={value >= MAX_SIZE}
-				aria-label={`${label}: letra más grande`}
-			>
+			<button type="button" onclick={() => set(value + step)} disabled={value >= max} aria-label={`${label}: más`}>
 				+
 			</button>
 		</div>
@@ -426,7 +441,7 @@
 	}
 
 	output {
-		min-width: 3.4em;
+		min-width: 4.2em;
 		font-size: 17px;
 		font-variant-numeric: tabular-nums;
 		text-align: center;
