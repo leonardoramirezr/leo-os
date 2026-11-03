@@ -19,7 +19,7 @@ import {
 } from '@leo-os/shared';
 import { tableOf } from './edit';
 import type { TableData } from './markdown';
-import { DEFAULT_STYLE, styleOf } from './styles';
+import { DEFAULT_STYLE, sizeOf, styleOf, type Sizes } from './styles';
 
 export interface Table extends TableData {
 	id: string;
@@ -27,13 +27,16 @@ export interface Table extends TableData {
 	title: string;
 	/** Its image's look, by id (`styles.ts`). */
 	style: string;
+	/** Of its image's text, in CSS pixels; 0 goes by the style. */
+	headerSize: number;
+	bodySize: number;
 	/** Epoch milliseconds. */
 	createdAt: number;
 	editedAt: number;
 }
 
 const TABLE = 'markdown_tables';
-const COLUMNS = 'id,title,cells,align,style,created_at,edited_at';
+const COLUMNS = 'id,title,cells,align,style,header_size,body_size,created_at,edited_at';
 
 /** What this account's tables look like on the device, so the app opens without waiting. */
 const CACHE = 'markdown-table:tables';
@@ -83,6 +86,9 @@ function parseTable(raw: unknown): Table | undefined {
 		title: text(item.title),
 		...data,
 		style: styleOf(text(item.style)).id,
+		// Missing from an earlier version's copy: the style's own.
+		headerSize: sizeOf(item.headerSize),
+		bodySize: sizeOf(item.bodySize),
 		createdAt: time(item.createdAt),
 		editedAt: time(item.editedAt)
 	};
@@ -100,6 +106,8 @@ function tableOfRow(row: MarkdownTableRow) {
 		cells: row.cells,
 		align: row.align,
 		style: row.style,
+		headerSize: row.header_size,
+		bodySize: row.body_size,
 		createdAt: row.created_at,
 		editedAt: row.edited_at
 	};
@@ -113,6 +121,8 @@ function rowOf(userId: string, table: Table): MarkdownTableRow {
 		cells: table.cells,
 		align: table.align,
 		style: table.style,
+		header_size: table.headerSize,
+		body_size: table.bodySize,
 		created_at: table.createdAt,
 		edited_at: table.editedAt
 	};
@@ -207,7 +217,12 @@ class Tables {
 	 * A new table, saved at once. Unless told otherwise it takes the look of the last one edited,
 	 * which is likely the one wanted. Gives back its id.
 	 */
-	add(data: TableData, title = '', style = this.sorted[0]?.style ?? DEFAULT_STYLE): string {
+	add(
+		data: TableData,
+		title = '',
+		style = this.sorted[0]?.style ?? DEFAULT_STYLE,
+		sizes: Partial<Sizes> = {}
+	): string {
 		const now = Date.now();
 		const id = newId();
 		this.list.push({
@@ -216,6 +231,8 @@ class Tables {
 			cells: data.cells,
 			align: data.align,
 			style,
+			headerSize: sizeOf(sizes.header),
+			bodySize: sizeOf(sizes.body),
 			createdAt: now,
 			editedAt: now
 		});
@@ -229,7 +246,10 @@ class Tables {
 		const table = this.find(id);
 		if (!table) return undefined;
 		const { cells, align } = $state.snapshot(table);
-		return this.add({ cells, align }, `${titleOf(table)} (copia)`, table.style);
+		return this.add({ cells, align }, `${titleOf(table)} (copia)`, table.style, {
+			header: table.headerSize,
+			body: table.bodySize
+		});
 	}
 
 	/** New cells or alignments: an edit, typed or otherwise. */
@@ -246,6 +266,14 @@ class Tables {
 
 	restyle(id: string, style: string) {
 		this.#edit(id, (table) => (table.style = styleOf(style).id));
+	}
+
+	/** The size of the image's header or body text; 0 goes back to the style's. */
+	resize(id: string, part: keyof Sizes, size: number) {
+		this.#edit(id, (table) => {
+			if (part === 'header') table.headerSize = sizeOf(size);
+			else table.bodySize = sizeOf(size);
+		});
 	}
 
 	remove(id: string) {

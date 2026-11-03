@@ -134,6 +134,13 @@
       "when": 1793655421446,
       "tag": "0018_markdown_table",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793709696211,
+      "tag": "0019_markdown_table_sizes",
+      "breakpoints": true
     }
   ]
 }

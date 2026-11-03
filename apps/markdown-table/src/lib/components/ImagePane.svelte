@@ -3,7 +3,16 @@
 	import { canCopyImage, canShare, copyImage, fileOf, saveImage } from '$lib/image';
 	import type { TableData } from '$lib/markdown';
 	import { render } from '$lib/render';
-	import { styleOf, styles, type Style } from '$lib/styles';
+	import {
+		defaultSizes,
+		MAX_SIZE,
+		MIN_SIZE,
+		sizesOf,
+		styleOf,
+		styles,
+		type Sizes,
+		type Style
+	} from '$lib/styles';
 	import { tables, titleOf, type Table } from '$lib/tables.svelte';
 	import Icon from './Icon.svelte';
 
@@ -22,6 +31,8 @@
 	const REDRAW_DELAY = 150;
 
 	const style = $derived(styleOf(table.style));
+	const sizes = $derived(sizesOf(style, table.headerSize, table.bodySize));
+	const ownSizes = $derived(table.headerSize > 0 || table.bodySize > 0);
 
 	let image = $state<Shown>();
 	let drawing = $state(true);
@@ -39,6 +50,7 @@
 	$effect(() => {
 		const data: TableData = $state.snapshot({ cells: table.cells, align: table.align });
 		const look = style;
+		const text = { ...sizes };
 		const title = table.title;
 		const name = titleOf(table);
 
@@ -47,7 +59,7 @@
 		const timer = setTimeout(
 			async () => {
 				try {
-					const drawn = await render(data, look, title);
+					const drawn = await render(data, look, text, title);
 					if (stale) return;
 					URL.revokeObjectURL(address);
 					address = URL.createObjectURL(drawn.blob);
@@ -88,6 +100,16 @@
 			},
 			() => (notice = 'No se pudo copiar la imagen. Guárdala y compártela desde Fotos.')
 		);
+	}
+
+	function resize(part: keyof Sizes, size: number) {
+		// Back at the style's own size it goes by the style again, and follows it to another one.
+		tables.resize(table.id, part, size === defaultSizes(style)[part] ? 0 : size);
+	}
+
+	function resetSizes() {
+		tables.resize(table.id, 'header', 0);
+		tables.resize(table.id, 'body', 0);
 	}
 
 	/** What the frame around a style's table looks like, for its swatch. */
@@ -166,7 +188,44 @@
 			</button>
 		{/each}
 	</div>
+
+	<div class="heading">
+		<h2 class="section-title">Tamaño de letra</h2>
+		{#if ownSizes}
+			<button class="text-button" type="button" onclick={resetSizes}>Restablecer</button>
+		{/if}
+	</div>
+	<div class="group">
+		{@render stepper('Títulos', 'header')}
+		{@render stepper('Celdas', 'body')}
+	</div>
 </div>
+
+{#snippet stepper(label: string, part: keyof Sizes)}
+	{@const value = sizes[part]}
+	<div class="field inline">
+		<span>{label}</span>
+		<div class="stepper">
+			<button
+				type="button"
+				onclick={() => resize(part, value - 1)}
+				disabled={value <= MIN_SIZE}
+				aria-label={`${label}: letra más pequeña`}
+			>
+				−
+			</button>
+			<output>{value} px</output>
+			<button
+				type="button"
+				onclick={() => resize(part, value + 1)}
+				disabled={value >= MAX_SIZE}
+				aria-label={`${label}: letra más grande`}
+			>
+				+
+			</button>
+		</div>
+	</div>
+{/snippet}
 
 <footer>
 	<div class="actions">
@@ -328,6 +387,48 @@
 
 	.name {
 		font-size: 13px;
+		text-align: center;
+	}
+
+	.heading {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+	}
+
+	.heading .text-button {
+		margin-right: 16px;
+		font-size: 15px;
+	}
+
+	.stepper {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+
+	.stepper button {
+		display: grid;
+		place-items: center;
+		width: 36px;
+		height: 32px;
+		padding: 0;
+		border: 0;
+		border-radius: 8px;
+		background: var(--handle);
+		color: var(--text);
+		font-size: 20px;
+		line-height: 1;
+	}
+
+	.stepper button:disabled {
+		opacity: 0.35;
+	}
+
+	output {
+		min-width: 3.4em;
+		font-size: 17px;
+		font-variant-numeric: tabular-nums;
 		text-align: center;
 	}
 

@@ -543,6 +543,10 @@ export const markdownTables = pgTable(
 		align: jsonb().$type<MarkdownTableAlign[]>().notNull(),
 		/** The look of its image, by its id in `apps/markdown-table/src/lib/styles.ts`. */
 		style: text().notNull().default(''),
+		/** The image's header text, in CSS pixels; 0 goes by its style. */
+		header_size: smallint().notNull().default(0),
+		/** The image's body text, in CSS pixels; 0 goes by its style. */
+		body_size: smallint().notNull().default(0),
 		/** Epoch milliseconds. */
 		created_at: bigint({ mode: 'number' }).notNull().default(0),
 		/** Epoch milliseconds: the last edited comes first. */

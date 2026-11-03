@@ -206,3 +206,30 @@ export const DEFAULT_STYLE = styles[0].id;
 export function styleOf(id: string): Style {
 	return styles.find((style) => style.id === id) ?? styles[0];
 }
+
+/** The image's text sizes, in CSS pixels: the header's and the body's. */
+export interface Sizes {
+	header: number;
+	body: number;
+}
+
+/** How small and how large the user may make the image's text. */
+export const MIN_SIZE = 8;
+export const MAX_SIZE = 40;
+
+/** A size the user set, kept within bounds; 0 (or anything that is not a size) for the style's own. */
+export function sizeOf(value: unknown): number {
+	if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return 0;
+	return Math.min(MAX_SIZE, Math.max(MIN_SIZE, Math.round(value)));
+}
+
+/** The style's own sizes: a header in capitals is smaller than the body. */
+export function defaultSizes(style: Style): Sizes {
+	return { header: style.header.caps ? Math.round(style.size * 0.8) : style.size, body: style.size };
+}
+
+/** The sizes the image is drawn at: the user's where they set one, else the style's. */
+export function sizesOf(style: Style, header: number, body: number): Sizes {
+	const own = defaultSizes(style);
+	return { header: sizeOf(header) || own.header, body: sizeOf(body) || own.body };
+}
