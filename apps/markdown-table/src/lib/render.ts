@@ -6,7 +6,7 @@
 // row is as tall as its tallest cell.
 import { inline, type Run } from './inline';
 import { graphemes, type Align, type TableData } from './markdown';
-import type { Lines, Style } from './styles';
+import type { Lines, Sizes, Style } from './styles';
 
 const FAMILIES = {
 	sans: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
@@ -17,8 +17,7 @@ const FAMILIES = {
 /** Of the text, times its size. */
 const LINE_HEIGHT = 1.45;
 
-/** How wide a cell's text may run before it wraps, and how narrow a column may get. */
-const MAX_TEXT = 320;
+/** How narrow a column's text may get. How wide, before it wraps, the caller says. */
 const MIN_TEXT = 24;
 
 /** Room on either side of a piece of code, inside its background. */
@@ -92,9 +91,9 @@ function setFont(context: CanvasRenderingContext2D, font: string, spacing: strin
 	if ('letterSpacing' in context) context.letterSpacing = spacing;
 }
 
-function fontOf(style: Style, run: Run, header: boolean): string {
+function fontOf(style: Style, sizes: Sizes, run: Run, header: boolean): string {
 	const family = run.code ? FAMILIES.mono : FAMILIES[style.font];
-	let size = header && style.header.caps ? style.size * 0.8 : style.size;
+	let size = header ? sizes.header : sizes.body;
 	if (run.code && style.font !== 'mono') size *= 0.88;
 	const weight = header ? Math.max(style.header.weight, run.bold ? 700 : 0) : run.bold ? 700 : 400;
 	return `${run.italic ? 'italic ' : ''}${weight} ${Math.round(size * 10) / 10}px ${family}`;
@@ -105,12 +104,12 @@ function spacingOf(style: Style, header: boolean): string {
 }
 
 /** A line of a cell as pieces to place: words, the spaces between them, and code with its room. */
-function piecesOf(runs: Run[], style: Style, header: boolean, measure: Measure): Piece[] {
+function piecesOf(runs: Run[], style: Style, sizes: Sizes, header: boolean, measure: Measure): Piece[] {
 	const spacing = spacingOf(style, header);
 	const pieces: Piece[] = [];
 
 	for (const run of runs) {
-		const font = fontOf(style, run, header);
+		const font = fontOf(style, sizes, run, header);
 		const text = header && style.header.caps ? run.text.toLocaleUpperCase('es') : run.text;
 		// A no-break space keeps the words around it together, as it does on a page.
 		const tokens = text.match(/[ \t\n]+|[^ \t\n]+/g) ?? [];
@@ -183,16 +182,19 @@ interface Layout {
 	cells: Line[][][];
 	columns: number[];
 	rows: number[];
-	lineHeight: number;
+	/** Per row: the header's text and the body's may be of different sizes. */
+	lineHeights: number[];
+	/** Per row, the size of its text. */
+	sizes: number[];
 	width: number;
 	height: number;
 	/** Of the window's bar, 0 for none. */
 	bar: number;
 }
 
-function layout(table: TableData, style: Style, measure: Measure): Layout {
+function layout(table: TableData, style: Style, textSizes: Sizes, column: number, measure: Measure): Layout {
 	const read = table.cells.map((row, index) =>
-		row.map((cell) => inline(cell).map((runs) => piecesOf(runs, style, index === 0, measure)))
+		row.map((cell) => inline(cell).map((runs) => piecesOf(runs, style, textSizes, index === 0, measure)))
 	);
 
 	// How wide each cell would be with nothing wrapped: its longest line.
@@ -201,9 +203,12 @@ function layout(table: TableData, style: Style, measure: Measure): Layout {
 			Math.max(...lines.map((pieces) => wrap(pieces, Infinity, measure, spacingOf(style, index === 0))[0].width))
 		)
 	);
+	// The column's width is the user's to set, its padding included: larger text wraps sooner rather
+	// than widening the image, which would only be shown smaller.
+	const most = Math.max(MIN_TEXT, column - 2 * style.padding.x);
 	const columns = table.align.map((_, column) => {
 		const longest = Math.max(0, ...natural.map((row) => row[column]));
-		return Math.ceil(Math.min(MAX_TEXT, Math.max(MIN_TEXT, longest)));
+		return Math.ceil(Math.min(most, Math.max(MIN_TEXT, longest)));
 	});
 
 	const cells = read.map((row, index) =>
@@ -212,15 +217,19 @@ function layout(table: TableData, style: Style, measure: Measure): Layout {
 		)
 	);
 
-	const lineHeight = Math.round(style.size * LINE_HEIGHT);
-	const rows = cells.map((row) => Math.max(...row.map((lines) => lines.length)) * lineHeight + 2 * style.padding.y);
+	const sizes = cells.map((_, index) => (index === 0 ? textSizes.header : textSizes.body));
+	const lineHeights = sizes.map((size) => Math.round(size * LINE_HEIGHT));
+	const rows = cells.map(
+		(row, index) => Math.max(...row.map((lines) => lines.length)) * lineHeights[index] + 2 * style.padding.y
+	);
 	const bar = style.window ? BAR : 0;
 
 	return {
 		cells,
 		columns: columns.map((width) => width + 2 * style.padding.x),
 		rows,
-		lineHeight,
+		lineHeights,
+		sizes,
 		width: columns.reduce((sum, width) => sum + width + 2 * style.padding.x, 0),
 		height: bar + rows.reduce((sum, height) => sum + height, 0),
 		bar
@@ -371,13 +380,14 @@ function drawText(context: CanvasRenderingContext2D, style: Style, layout: Layou
 	layout.cells.forEach((row, index) => {
 		const header = index === 0;
 		const spacing = spacingOf(style, header);
+		const lineHeight = layout.lineHeights[index];
+		const size = layout.sizes[index];
 		let left = 0;
 
 		row.forEach((lines, column) => {
 			lines.forEach((line, number) => {
 				const x = left + startOf(align[column], layout.columns[column], line.width, style.padding.x);
-				const y = top + style.padding.y + number * layout.lineHeight + layout.lineHeight / 2;
-				const size = style.size;
+				const y = top + style.padding.y + number * lineHeight + lineHeight / 2;
 
 				// Code first, its background under every piece of it in a row.
 				for (let i = 0; i < line.pieces.length; i++) {
@@ -425,17 +435,26 @@ function toBlob(canvas: HTMLCanvasElement): Promise<Blob> {
 	);
 }
 
-/** The table as a PNG, in the style given; `title` names it in a window's bar. */
-export async function render(table: TableData, style: Style, title: string): Promise<Image> {
+/**
+ * The table as a PNG, in the style given, its text at `sizes` and no column wider than `column`
+ * (padding included) unless a single word needs it; `title` names it in a window's bar.
+ */
+export async function render(
+	table: TableData,
+	style: Style,
+	sizes: Sizes,
+	column: number,
+	title: string
+): Promise<Image> {
 	const canvas = document.createElement('canvas');
 	const context = canvas.getContext('2d');
 	if (!context) throw new Error('Este navegador no puede crear imágenes.');
 
 	const measure = new Measure(context);
-	const sizes = layout(table, style, measure);
+	const laid = layout(table, style, sizes, column, measure);
 	const padding = style.frame?.padding ?? 0;
-	const width = sizes.width + 2 * padding;
-	const height = sizes.height + 2 * padding;
+	const width = laid.width + 2 * padding;
+	const height = laid.height + 2 * padding;
 
 	const scale = Math.max(0.5, Math.min(MAX_SCALE, Math.sqrt(MAX_AREA / (width * height)), MAX_SIDE / Math.max(width, height)));
 	canvas.width = Math.round(width * scale);
@@ -451,32 +470,32 @@ export async function render(table: TableData, style: Style, title: string): Pro
 		context.shadowBlur = style.shadow.blur;
 		context.shadowOffsetY = style.shadow.y;
 		context.fillStyle = style.background;
-		roundedRect(context, 0, 0, sizes.width, sizes.height, style.radius);
+		roundedRect(context, 0, 0, laid.width, laid.height, style.radius);
 		context.fill();
 		context.restore();
 	}
 
 	context.save();
-	roundedRect(context, 0, 0, sizes.width, sizes.height, style.radius);
+	roundedRect(context, 0, 0, laid.width, laid.height, style.radius);
 	context.clip();
 
 	context.fillStyle = style.background;
-	context.fillRect(0, 0, sizes.width, sizes.height);
-	if (style.window) drawBar(context, style, sizes.width, title, measure);
+	context.fillRect(0, 0, laid.width, laid.height);
+	if (style.window) drawBar(context, style, laid.width, title, measure);
 
 	context.fillStyle = style.header.background;
-	context.fillRect(0, sizes.bar, sizes.width, sizes.rows[0]);
+	context.fillRect(0, laid.bar, laid.width, laid.rows[0]);
 	if (style.stripe) {
 		context.fillStyle = style.stripe;
-		let top = sizes.bar;
-		sizes.rows.forEach((height, index) => {
-			if (index > 0 && index % 2 === 0) context.fillRect(0, top, sizes.width, height);
+		let top = laid.bar;
+		laid.rows.forEach((height, index) => {
+			if (index > 0 && index % 2 === 0) context.fillRect(0, top, laid.width, height);
 			top += height;
 		});
 	}
 
-	drawLines(context, style, sizes);
-	drawText(context, style, sizes, table.align);
+	drawLines(context, style, laid);
+	drawText(context, style, laid, table.align);
 	context.restore();
 
 	try {

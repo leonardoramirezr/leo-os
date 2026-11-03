@@ -1,0 +1,1 @@
+ALTER TABLE "markdown_tables" ADD COLUMN "column_width" smallint DEFAULT 0 NOT NULL;

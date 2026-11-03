@@ -3,7 +3,21 @@
 	import { canCopyImage, canShare, copyImage, fileOf, saveImage } from '$lib/image';
 	import type { TableData } from '$lib/markdown';
 	import { render } from '$lib/render';
-	import { styleOf, styles, type Style } from '$lib/styles';
+	import {
+		columnWidthOf,
+		defaultSizes,
+		defaultWidth,
+		MAX_SIZE,
+		MAX_WIDTH,
+		MIN_SIZE,
+		MIN_WIDTH,
+		sizesOf,
+		styleOf,
+		styles,
+		type Sizes,
+		type Style,
+		WIDTH_STEP
+	} from '$lib/styles';
 	import { tables, titleOf, type Table } from '$lib/tables.svelte';
 	import Icon from './Icon.svelte';
 
@@ -22,6 +36,9 @@
 	const REDRAW_DELAY = 150;
 
 	const style = $derived(styleOf(table.style));
+	const sizes = $derived(sizesOf(style, table.headerSize, table.bodySize));
+	const width = $derived(columnWidthOf(style, table.columnWidth));
+	const ownSizes = $derived(table.headerSize > 0 || table.bodySize > 0 || table.columnWidth > 0);
 
 	let image = $state<Shown>();
 	let drawing = $state(true);
@@ -39,6 +56,8 @@
 	$effect(() => {
 		const data: TableData = $state.snapshot({ cells: table.cells, align: table.align });
 		const look = style;
+		const text = { ...sizes };
+		const column = width;
 		const title = table.title;
 		const name = titleOf(table);
 
@@ -47,7 +66,7 @@
 		const timer = setTimeout(
 			async () => {
 				try {
-					const drawn = await render(data, look, title);
+					const drawn = await render(data, look, text, column, title);
 					if (stale) return;
 					URL.revokeObjectURL(address);
 					address = URL.createObjectURL(drawn.blob);
@@ -88,6 +107,35 @@
 			},
 			() => (notice = 'No se pudo copiar la imagen. Guárdala y compártela desde Fotos.')
 		);
+	}
+
+	function resize(part: keyof Sizes, size: number) {
+		// Back at the style's own size it goes by the style again, and follows it to another one.
+		size = Math.min(MAX_SIZE, Math.max(MIN_SIZE, size));
+		tables.resize(table.id, part, size === defaultSizes(style)[part] ? 0 : size);
+	}
+
+	function widen(next: number) {
+		next = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, next));
+		tables.widen(table.id, next === defaultWidth(style) ? 0 : next);
+	}
+
+	/**
+	 * What was typed into a value, once it is done with: kept within bounds, or put back as it was
+	 * when it is not a number. The field is set by hand, since a value clamped to the one it already
+	 * had changes nothing that would redraw it.
+	 */
+	function typed(field: HTMLInputElement, value: number, min: number, max: number, set: (next: number) => void) {
+		const number = Number.parseInt(field.value.replace(/[^\d]/g, ''), 10);
+		const next = Number.isFinite(number) ? Math.min(max, Math.max(min, number)) : value;
+		if (next !== value) set(next);
+		field.value = String(next);
+	}
+
+	function resetSizes() {
+		tables.resize(table.id, 'header', 0);
+		tables.resize(table.id, 'body', 0);
+		tables.widen(table.id, 0);
 	}
 
 	/** What the frame around a style's table looks like, for its swatch. */
@@ -166,7 +214,64 @@
 			</button>
 		{/each}
 	</div>
+
+	<div class="heading">
+		<h2 class="section-title">Tamaño</h2>
+		{#if ownSizes}
+			<button class="text-button" type="button" onclick={resetSizes}>Restablecer</button>
+		{/if}
+	</div>
+	<div class="group">
+		{@render stepper('Letra de títulos', sizes.header, MIN_SIZE, MAX_SIZE, 1, (next) => resize('header', next))}
+		{@render stepper('Letra de celdas', sizes.body, MIN_SIZE, MAX_SIZE, 1, (next) => resize('body', next))}
+		{@render stepper('Ancho de columnas', width, MIN_WIDTH, MAX_WIDTH, WIDTH_STEP, widen)}
+	</div>
+	<p class="hint">
+		Ninguna columna pasa del ancho elegido: el texto más largo sigue en la línea de abajo, y una columna
+		con poco texto queda más angosta.
+	</p>
 </div>
+
+{#snippet stepper(
+	label: string,
+	value: number,
+	min: number,
+	max: number,
+	step: number,
+	set: (next: number) => void
+)}
+	<div class="field inline">
+		<span>{label}</span>
+		<div class="stepper">
+			<button type="button" onclick={() => set(value - step)} disabled={value <= min} aria-label={`${label}: menos`}>
+				−
+			</button>
+			<label class="value">
+				<input
+					type="text"
+					inputmode="numeric"
+					enterkeyhint="done"
+					autocomplete="off"
+					value={value}
+					aria-label={`${label}, en píxeles`}
+					onfocus={(event) => event.currentTarget.select()}
+					onkeydown={(event) => {
+						if (event.key === 'Enter') event.currentTarget.blur();
+						else if (event.key === 'Escape') {
+							event.currentTarget.value = String(value);
+							event.currentTarget.blur();
+						}
+					}}
+					onchange={(event) => typed(event.currentTarget, value, min, max, set)}
+				/>
+				<span>px</span>
+			</label>
+			<button type="button" onclick={() => set(value + step)} disabled={value >= max} aria-label={`${label}: más`}>
+				+
+			</button>
+		</div>
+	</div>
+{/snippet}
 
 <footer>
 	<div class="actions">
@@ -329,6 +434,70 @@
 	.name {
 		font-size: 13px;
 		text-align: center;
+	}
+
+	.heading {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+	}
+
+	.heading .text-button {
+		margin-right: 16px;
+		font-size: 15px;
+	}
+
+	.stepper {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+
+	.stepper button {
+		display: grid;
+		place-items: center;
+		width: 36px;
+		height: 32px;
+		padding: 0;
+		border: 0;
+		border-radius: 8px;
+		background: var(--handle);
+		color: var(--text);
+		font-size: 20px;
+		line-height: 1;
+	}
+
+	.stepper button:disabled {
+		opacity: 0.35;
+	}
+
+	.value {
+		display: flex;
+		align-items: baseline;
+		gap: 3px;
+		padding: 0 4px;
+		color: var(--muted);
+		font-size: 15px;
+	}
+
+	/* 17px, as everything else: under 16px iOS zooms the page in on focusing it. */
+	.value input {
+		width: 4ch;
+		padding: 4px 0;
+		border: 0;
+		border-bottom: 1px solid var(--border);
+		border-radius: 0;
+		background: none;
+		color: var(--text);
+		font: inherit;
+		font-size: 17px;
+		font-variant-numeric: tabular-nums;
+		text-align: right;
+	}
+
+	.value input:focus {
+		border-bottom-color: var(--accent);
+		outline: none;
 	}
 
 	footer {

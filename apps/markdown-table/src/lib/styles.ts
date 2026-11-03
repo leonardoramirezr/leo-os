@@ -206,3 +206,54 @@ export const DEFAULT_STYLE = styles[0].id;
 export function styleOf(id: string): Style {
 	return styles.find((style) => style.id === id) ?? styles[0];
 }
+
+/** The image's text sizes, in CSS pixels: the header's and the body's. */
+export interface Sizes {
+	header: number;
+	body: number;
+}
+
+/** How small and how large the user may make the image's text. */
+export const MIN_SIZE = 8;
+export const MAX_SIZE = 40;
+
+/** A size the user set, kept within bounds; 0 (or anything that is not a size) for the style's own. */
+export function sizeOf(value: unknown): number {
+	if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return 0;
+	return Math.min(MAX_SIZE, Math.max(MIN_SIZE, Math.round(value)));
+}
+
+/** The style's own sizes: a header in capitals is smaller than the body. */
+export function defaultSizes(style: Style): Sizes {
+	return { header: style.header.caps ? Math.round(style.size * 0.8) : style.size, body: style.size };
+}
+
+/** The sizes the image is drawn at: the user's where they set one, else the style's. */
+export function sizesOf(style: Style, header: number, body: number): Sizes {
+	const own = defaultSizes(style);
+	return { header: sizeOf(header) || own.header, body: sizeOf(body) || own.body };
+}
+
+/** How wide a column's text may run before it wraps, at the style's own width. */
+export const COLUMN_TEXT = 320;
+
+/** How narrow and how wide the user may make the image's columns, padding and all, and by how much at a time. */
+export const MIN_WIDTH = 60;
+export const MAX_WIDTH = 1000;
+export const WIDTH_STEP = 20;
+
+/** A column width the user set, kept within bounds; 0 (or anything that is not one) for the style's own. */
+export function widthOf(value: unknown): number {
+	if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return 0;
+	return Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.round(value)));
+}
+
+/** The widest a column of the style gets, its padding included. */
+export function defaultWidth(style: Style): number {
+	return COLUMN_TEXT + 2 * style.padding.x;
+}
+
+/** The widest the image's columns get: the user's width where they set one, else the style's. */
+export function columnWidthOf(style: Style, width: number): number {
+	return widthOf(width) || defaultWidth(style);
+}
