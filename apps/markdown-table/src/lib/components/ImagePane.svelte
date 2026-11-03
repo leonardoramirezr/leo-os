@@ -120,6 +120,18 @@
 		tables.widen(table.id, next === defaultWidth(style) ? 0 : next);
 	}
 
+	/**
+	 * What was typed into a value, once it is done with: kept within bounds, or put back as it was
+	 * when it is not a number. The field is set by hand, since a value clamped to the one it already
+	 * had changes nothing that would redraw it.
+	 */
+	function typed(field: HTMLInputElement, value: number, min: number, max: number, set: (next: number) => void) {
+		const number = Number.parseInt(field.value.replace(/[^\d]/g, ''), 10);
+		const next = Number.isFinite(number) ? Math.min(max, Math.max(min, number)) : value;
+		if (next !== value) set(next);
+		field.value = String(next);
+	}
+
 	function resetSizes() {
 		tables.resize(table.id, 'header', 0);
 		tables.resize(table.id, 'body', 0);
@@ -234,7 +246,26 @@
 			<button type="button" onclick={() => set(value - step)} disabled={value <= min} aria-label={`${label}: menos`}>
 				−
 			</button>
-			<output>{value} px</output>
+			<label class="value">
+				<input
+					type="text"
+					inputmode="numeric"
+					enterkeyhint="done"
+					autocomplete="off"
+					value={value}
+					aria-label={`${label}, en píxeles`}
+					onfocus={(event) => event.currentTarget.select()}
+					onkeydown={(event) => {
+						if (event.key === 'Enter') event.currentTarget.blur();
+						else if (event.key === 'Escape') {
+							event.currentTarget.value = String(value);
+							event.currentTarget.blur();
+						}
+					}}
+					onchange={(event) => typed(event.currentTarget, value, min, max, set)}
+				/>
+				<span>px</span>
+			</label>
 			<button type="button" onclick={() => set(value + step)} disabled={value >= max} aria-label={`${label}: más`}>
 				+
 			</button>
@@ -440,11 +471,33 @@
 		opacity: 0.35;
 	}
 
-	output {
-		min-width: 4.2em;
+	.value {
+		display: flex;
+		align-items: baseline;
+		gap: 3px;
+		padding: 0 4px;
+		color: var(--muted);
+		font-size: 15px;
+	}
+
+	/* 17px, as everything else: under 16px iOS zooms the page in on focusing it. */
+	.value input {
+		width: 4ch;
+		padding: 4px 0;
+		border: 0;
+		border-bottom: 1px solid var(--border);
+		border-radius: 0;
+		background: none;
+		color: var(--text);
+		font: inherit;
 		font-size: 17px;
 		font-variant-numeric: tabular-nums;
-		text-align: center;
+		text-align: right;
+	}
+
+	.value input:focus {
+		border-bottom-color: var(--accent);
+		outline: none;
 	}
 
 	footer {
